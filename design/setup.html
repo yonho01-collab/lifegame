@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>设置 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      .chipset {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chipset label {
+        position: relative;
+      }
+      .chipset input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .chipset .chip-face {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+      .chipset input:checked + .chip-face {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(201, 168, 106, 0.1);
+      }
+      .dot-progress {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 26px;
+      }
+      .dot-progress i {
+        width: 18px;
+        height: 2px;
+        border-radius: var(--radius-pill);
+        background: var(--line);
+      }
+      .dot-progress i.on {
+        background: var(--primary);
+      }
+      .group + .group {
+        margin-top: 28px;
+      }
+      .group-title {
+        font-size: 14px;
+        color: var(--text);
+        margin: 0 0 4px;
+        letter-spacing: 0.02em;
+      }
+      .group-hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0 0 12px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">21:20</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <main class="page" style="padding-bottom: 150px">
+      <div class="dot-progress" style="margin-top: 14px">
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+      </div>
+
+      <h1 class="title" style="font-size: 28px">先定四个数</h1>
+      <p class="subtitle" style="margin-bottom: 30px">
+        四个都只用来定节律和上限，之后随时能改。<br />
+        第一季是<strong style="color: var(--primary); font-weight: 500">降噪季 · 14 天</strong>：目标不是更努力，是把睡前那一小时拿回来。
+      </p>
+
+      <div class="group">
+        <p class="group-title">睡觉目标</p>
+        <p class="group-hint">现在是 01:42 入睡。先定 00:30，两周后再往前挪。</p>
+        <div class="chipset">
+          <label><input type="radio" name="sleep" /><span class="chip-face">23:30</span></label>
+          <label><input type="radio" name="sleep" checked /><span class="chip-face">00:30</span></label>
+          <label><input type="radio" name="sleep" /><span class="chip-face">01:00</span></label>
+          <label><input type="radio" name="sleep" /><span class="chip-face">先不定</span></label>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">每晚深度时段</p>
+        <p class="group-hint">一天只有这一次，20 分钟起步，两周后加到 30。</p>
+        <div class="chipset">
+          <label><input type="radio" name="slot" /><span class="chip-face">21:30</span></label>
+          <label><input type="radio" name="slot" /><span class="chip-face">22:00</span></label>
+          <label><input type="radio" name="slot" checked /><span class="chip-face">22:45</span></label>
+          <label><input type="radio" name="slot" /><span class="chip-face">23:30</span></label>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">每月体验预算</p>
+        <p class="group-hint">只用于「出门」类的事：展、演出、短途、课。饭钱和日用品不算。</p>
+        <div class="chipset">
+          <label><input type="radio" name="budget" /><span class="chip-face">¥500 以内</span></label>
+          <label><input type="radio" name="budget" checked /><span class="chip-face">¥500–1500</span></label>
+          <label><input type="radio" name="budget" /><span class="chip-face">¥1500 以上</span></label>
+          <label><input type="radio" name="budget" /><span class="chip-face">暂不设</span></label>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">现在能做的运动</p>
+        <p class="group-hint">按现在的真实状态选，不按理想状态。选低了，我会慢慢加。</p>
+        <div class="chipset">
+          <label><input type="radio" name="fitness" checked /><span class="chip-face">几乎不动</span></label>
+          <label><input type="radio" name="fitness" /><span class="chip-face">每周 1–2 次</span></label>
+          <label><input type="radio" name="fitness" /><span class="chip-face">每周 3 次以上</span></label>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top: 30px">
+        这四个只会问一次。之后我不再问，只看你选了哪个、跳过了哪个、做完之后是什么感觉。
+      </p>
+    </main>
+
+    <div class="actionbar">
+      <a class="btn-primary" href="menu.html">生成第一份菜单</a>
+    </div>
+  </body>
+</html>

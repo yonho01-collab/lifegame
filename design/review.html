@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>复盘 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      .radar-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 0 0;
+      }
+      .radar-wrap svg {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        display: block;
+      }
+      .radar-label {
+        font-family: var(--font-sans);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        fill: var(--muted);
+      }
+      .radar-label.is-low {
+        fill: var(--primary);
+      }
+      .stat-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .stat {
+        flex: 1 1 0;
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        min-width: 0;
+      }
+      .stat .n {
+        font-family: var(--font-serif);
+        font-size: 26px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        line-height: 1.2;
+        display: block;
+      }
+      .stat .n small {
+        font-family: var(--font-sans);
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0;
+        font-weight: 400;
+      }
+      .stat .l {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        margin-top: 6px;
+        display: block;
+      }
+      .delta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .delta b {
+        font-weight: 500;
+        color: var(--ok);
+      }
+      .delta b.down {
+        color: var(--danger);
+      }
+      .delta b.flat {
+        color: var(--muted);
+      }
+      .evi {
+        display: flex;
+        gap: 12px;
+        padding: 14px 0;
+        border-top: 1px solid var(--line);
+      }
+      .evi:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .evi .d {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        flex: 0 0 62px;
+        padding-top: 2px;
+      }
+      .evi .t {
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0;
+      }
+      .evi .dim {
+        font-size: 11px;
+        color: var(--primary);
+        letter-spacing: 0.08em;
+        margin-top: 5px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">20:32</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <main class="page has-tabbar">
+      <div class="topline">
+        <span>11月18日 – 11月24日</span>
+        <span>第 3 周</span>
+      </div>
+      <h1 class="title">复盘</h1>
+
+      <div class="stat-row" style="margin-top: 18px">
+        <div class="stat">
+          <span class="n">3<small> / 7 天</small></span>
+          <span class="l">带着期待起床</span>
+        </div>
+        <div class="stat">
+          <span class="n">62<small> 分钟</small></span>
+          <span class="l">深度时段合计</span>
+        </div>
+      </div>
+
+      <section class="card" style="margin-top: 4px">
+        <p class="card-label">五维 · 本周</p>
+        <div class="radar-wrap">
+          <svg viewBox="0 0 240 240" role="img" aria-label="五维生命力雷达：身体 55、专注 35、探索 45、审美 50、连接 30">
+            <polygon points="120,94 144.7,112 135.3,141 104.7,141 95.3,112" fill="none" stroke="#2C2C30" stroke-width="1" />
+            <polygon points="120,68 169.5,103.9 150.6,162.1 89.4,162.1 70.5,103.9" fill="none" stroke="#2C2C30" stroke-width="1" />
+            <polygon points="120,42 194.2,95.9 165.8,183.1 74.2,183.1 45.8,95.9" fill="none" stroke="#2C2C30" stroke-width="1" />
+            <path d="M120 42V120M194.2 95.9 120 120M165.8 183.1 120 120M74.2 183.1 120 120M45.8 95.9 120 120" stroke="#2C2C30" stroke-width="1" />
+            <polygon points="120,77.1 145.97,111.57 140.63,148.39 97.08,151.55 97.74,112.77" fill="rgba(201,168,106,0.18)" stroke="#C9A86A" stroke-width="1.5" stroke-linejoin="round" />
+            <circle cx="120" cy="77.1" r="2.4" fill="#C9A86A" />
+            <circle cx="145.97" cy="111.57" r="2.4" fill="#C9A86A" />
+            <circle cx="140.63" cy="148.39" r="2.4" fill="#C9A86A" />
+            <circle cx="97.08" cy="151.55" r="2.4" fill="#C9A86A" />
+            <circle cx="97.74" cy="112.77" r="2.4" fill="#C9A86A" />
+            <text class="radar-label" x="120" y="18" text-anchor="middle">身体</text>
+            <text class="radar-label is-low" x="218" y="90" text-anchor="middle">专注</text>
+            <text class="radar-label" x="182" y="206" text-anchor="middle">探索</text>
+            <text class="radar-label" x="58" y="206" text-anchor="middle">审美</text>
+            <text class="radar-label is-low" x="22" y="90" text-anchor="middle">连接</text>
+          </svg>
+        </div>
+        <p class="lead" style="margin-top: 6px">
+          专注是本周短板：深度时段 2 次，<strong>全在 22 点后</strong>。连接两周没有真实记录。
+        </p>
+        <hr class="divider" />
+        <div class="delta">
+          <span>身体 <b class="down">−4</b></span>
+          <span>专注 <b>+8</b></span>
+          <span>探索 <b>+12</b></span>
+          <span>审美 <b class="flat">0</b></span>
+          <span>连接 <b class="down">−3</b></span>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 12px">
+        <p class="card-label">这一周</p>
+        <p class="lead">
+          你把睡前那一小时从手机手里拿回来了一半。三次深度时段里有两次在 22 点后——下周先别加时间，先把时段往前挪半小时。
+        </p>
+      </section>
+
+      <p class="section-label">证据 · 3 条</p>
+      <section class="card">
+        <div class="evi">
+          <span class="d">11/18 周二</span>
+          <div>
+            <p class="t">把手机放到客厅，读了 18 分钟。</p>
+            <span class="dim">专注</span>
+          </div>
+        </div>
+        <div class="evi">
+          <span class="d">11/19 周三</span>
+          <div>
+            <p class="t">90 分钟没碰手机，看《海街日记》。</p>
+            <span class="dim">审美</span>
+          </div>
+        </div>
+        <div class="evi">
+          <span class="d">11/22 周六</span>
+          <div>
+            <p class="t">在城南走了一条没走过的街，撞见一家开了 12 年的面包店。</p>
+            <span class="dim">探索</span>
+          </div>
+        </div>
+      </section>
+
+      <a class="btn-primary" href="menu.html" style="margin-top: 20px">看下周菜单</a>
+
+      <a class="card" href="#" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px">
+        <div>
+          <p class="card-label" style="margin-bottom: 4px">生命力年鉴</p>
+          <p class="footnote" style="color: var(--text)">12 条证据 · 从 11 月 1 日开始</p>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+          <path d="M7 4l5 5-5 5" />
+        </svg>
+      </a>
+    </main>
+
+    <nav class="tabbar">
+      <a class="tab" href="today.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="10" cy="10" r="6.2" />
+          <path d="M10 1.4v2.2M10 16.4v2.2M1.4 10h2.2M16.4 10h2.2" />
+        </svg>
+        <span>今天</span>
+      </a>
+      <a class="tab" href="week.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <rect x="2.6" y="4.2" width="14.8" height="13" rx="3" />
+          <path d="M6.4 2.6v3M13.6 2.6v3M2.6 8.6h14.8" />
+        </svg>
+        <span>本周</span>
+      </a>
+      <a class="tab is-active" href="review.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10" cy="10" r="6.8" />
+          <path d="M10 3.2v6.8l4.8 3.4" />
+        </svg>
+        <span>复盘</span>
+      </a>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>本周菜单 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      .cand {
+        display: block;
+        position: relative;
+        margin-bottom: 12px;
+      }
+      .cand input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .cand-body {
+        background: var(--surface);
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 16px;
+        transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+      }
+      .cand input:checked + .cand-body {
+        border-color: rgba(201, 168, 106, 0.55);
+        background: var(--surface-2);
+      }
+      .cand-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .cand h3 {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 1.45;
+        letter-spacing: 0.03em;
+        margin: 0 0 8px;
+      }
+      .why {
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+      .check {
+        width: 26px;
+        height: 26px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: transparent;
+      }
+      .cand input:checked + .cand-body .check {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--on-primary);
+      }
+      .calc {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">20:10</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <div class="navbar">
+      <a class="icon-btn" href="week.html" aria-label="返回本周">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11.5 4.5 6 10l5.5 5.5" />
+        </svg>
+      </a>
+      <span class="nav-title">本周菜单</span>
+    </div>
+
+    <main class="page" style="padding-bottom: 150px">
+      <div class="topline" style="margin-top: 6px">
+        <span>11月30日 周日</span>
+        <span>第 4 周</span>
+      </div>
+
+      <p class="lead" style="color: var(--muted); font-size: 14px">
+        第 3 周：深度时段 2 次，都在 22 点后；有 3 天过了 01:00 才睡。
+        <strong>下周给 4 个候选，最多选 3 个</strong>——选完这周就不再改了。
+      </p>
+
+      <p class="section-label">候选 · 4</p>
+
+      <label class="cand">
+        <input type="checkbox" checked />
+        <div class="cand-body">
+          <div class="cand-head">
+            <span class="tag">专注</span>
+            <span class="check">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+              </svg>
+            </span>
+          </div>
+          <h3>周日下午一口气读完一本薄书</h3>
+          <p class="why">你已经能坐住 20 分钟，还没试过 2 小时整块。这是专注这一维唯一没被碰过的档位。</p>
+          <div class="meta">
+            <span>2 小时</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>在家</span><span class="dot"></span><span>新</span>
+          </div>
+        </div>
+      </label>
+
+      <label class="cand">
+        <input type="checkbox" checked />
+        <div class="cand-body">
+          <div class="cand-head">
+            <span class="tag">探索</span>
+            <span class="check">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+              </svg>
+            </span>
+          </div>
+          <h3>去城市另一头那家开了 30 年的旧书店</h3>
+          <p class="why">这一周你有两次想买纸质书，都停在购物车里没下单。走过去比下单慢，但会留下东西。</p>
+          <div class="meta">
+            <span>90 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>城市</span><span class="dot"></span><span>新</span>
+          </div>
+        </div>
+      </label>
+
+      <label class="cand">
+        <input type="checkbox" />
+        <div class="cand-body">
+          <div class="cand-head">
+            <span class="tag neutral">身体</span>
+            <span class="check">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+              </svg>
+            </span>
+          </div>
+          <h3>一次 40 分钟的力量训练</h3>
+          <p class="why">身体是五维里最低的一维，已经连续 3 周没动。这周不跑步，只做力量——它对睡眠的改善更快。</p>
+          <div class="meta">
+            <span>40 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>健身房 / 酒店</span><span class="dot"></span><span>常规</span>
+          </div>
+        </div>
+      </label>
+
+      <label class="cand">
+        <input type="checkbox" />
+        <div class="cand-body">
+          <div class="cand-head">
+            <span class="tag neutral">审美</span>
+            <span class="check">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+              </svg>
+            </span>
+          </div>
+          <h3>看《完美的日子》，然后走一条没走过的街</h3>
+          <p class="why">审美这一维你现在只靠短视频在补。这部片讲的正好是「一个人在重复的日子里看见美」，和你这个季同一个题目。</p>
+          <div class="meta">
+            <span>110 + 30 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>在家 / 城市</span><span class="dot"></span><span>新</span>
+          </div>
+        </div>
+      </label>
+
+      <div class="row" style="margin-top: 20px; justify-content: center">
+        <a class="btn-ghost" href="#">都不想要 → 说明原因</a>
+      </div>
+      <p class="footnote" style="text-align: center; margin-top: 4px">
+        跳过会告诉我哪里不对：太难 / 太贵 / 没兴趣 / 这段时间不行
+      </p>
+    </main>
+
+    <div class="actionbar">
+      <div class="bar-row" style="margin-bottom: 10px; justify-content: space-between">
+        <span class="calc">已选 <b>2</b> / 3</span>
+        <span class="calc">合计 2 小时 30 分 · ¥0</span>
+      </div>
+      <a class="btn-primary" href="week.html">加入本周</a>
+    </div>
+  </body>
+</html>

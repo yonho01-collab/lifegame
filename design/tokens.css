@@ -1,0 +1,42 @@
+:root {
+  /* 深色高级：近黑底 + 香槟金 */
+  --bg: #0E0E10;
+  --surface: #18181B;
+  --surface-2: #1F1F23;
+  --surface-3: #26262B;
+  --text: #F2EFE9;
+  --muted: #A19C93;
+  --line: #2C2C30;
+  --primary: #C9A86A;
+  --on-primary: #17140E;
+  --accent: #E8E2D6;
+  --ok: #8FA88A;
+  --danger: #C87A70;
+
+  --font-serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-sans: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", system-ui, sans-serif;
+
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-26: 26px;
+  --fs-34: 34px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
