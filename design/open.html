@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>开场 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      .greet {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 34px;
+        line-height: 1.4;
+        letter-spacing: 0.06em;
+        margin: 8px 0 14px;
+      }
+      .sleep {
+        font-size: 15px;
+        line-height: 1.85;
+        color: var(--text);
+        margin: 0 0 26px;
+      }
+      .sleep .muted {
+        color: var(--muted);
+      }
+      .slots {
+        border-top: 1px solid var(--line);
+      }
+      .slot {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-height: 62px;
+        border-bottom: 1px solid var(--line);
+      }
+      .slot .idx {
+        font-size: 13px;
+        color: var(--primary);
+        flex: 0 0 18px;
+        letter-spacing: 0.04em;
+      }
+      .slot .txt {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 17px;
+        line-height: 1.5;
+        color: var(--text);
+        letter-spacing: 0.02em;
+      }
+      .slot .txt.is-empty {
+        color: #6f6a63;
+      }
+      .slot .x {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+      }
+      .slot .tag {
+        flex: 0 0 auto;
+      }
+      .prompt-box {
+        width: 100%;
+        min-height: 84px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        color: var(--text);
+        font-size: 15px;
+        font-family: var(--font-sans);
+        line-height: 1.75;
+        resize: none;
+      }
+      .prompt-box:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+      .prompt-box::placeholder {
+        color: #6f6a63;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">9:12</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <main class="page" style="padding-bottom: 150px">
+      <div class="topline" style="margin-bottom: 6px">
+        <span>11月27日 周五</span>
+        <span>降噪季 4 / 14</span>
+      </div>
+
+      <h1 class="greet">早安。</h1>
+
+      <p class="sleep">
+        昨晚 <strong class="num">01:42</strong> 睡，比目标晚 72 分钟。<br />
+        <span class="muted">今天不追补，先把今晚的睡点往前挪半小时。</span>
+      </p>
+
+      <p class="section-label" style="margin: 0 0 2px">今天想做的 · 最多三件</p>
+
+      <div class="slots">
+        <div class="slot">
+          <span class="idx">①</span>
+          <span class="txt">冥想 10 分钟</span>
+          <a class="x" href="#" aria-label="删除这一件">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="slot">
+          <span class="idx">②</span>
+          <span class="txt">动一动 20 分钟</span>
+          <a class="x" href="#" aria-label="删除这一件">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="slot">
+          <span class="idx">③</span>
+          <span class="txt">写 200 字</span>
+          <span class="tag">创造</span>
+          <a class="x" href="#" aria-label="删除这一件">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin: 10px 0 0">
+        前两件是地基，每天自动填好。第三件留给你自己——不写也行。
+      </p>
+
+      <p class="section-label" style="margin: 28px 0 8px">今天想让它是什么样</p>
+      <textarea class="prompt-box" rows="2">不刷手机，把晚饭吃完再想别的事。</textarea>
+      <p class="footnote" style="margin-top: 8px">可选。写一句，晚上我会拿它问你。</p>
+    </main>
+
+    <div class="actionbar">
+      <a class="btn-primary" href="today.html">开始今天</a>
+    </div>
+  </body>
+</html>

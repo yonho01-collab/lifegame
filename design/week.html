@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="dsh-design" content="app" />
-    <title>这周 · 人生游戏</title>
+    <title>本周 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
       .report {
@@ -29,7 +29,7 @@
       }
       .trend-item {
         background: var(--surface);
-        padding: 14px 16px;
+        padding: 13px 16px;
         display: flex;
         align-items: baseline;
         justify-content: space-between;
@@ -60,57 +60,163 @@
       .down {
         color: var(--danger);
       }
+
       .advice {
-        display: flex;
-        gap: 12px;
         padding: 13px 0;
         border-bottom: 1px solid var(--line);
       }
-      .advice:last-child {
+      .advice:last-of-type {
         border-bottom: 0;
         padding-bottom: 2px;
       }
-      .advice:first-child {
-        padding-top: 2px;
+      .advice-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
       }
-      .advice .num {
+      .advice-head .num {
         font-size: 11px;
         color: var(--primary);
         flex: 0 0 16px;
-        padding-top: 3px;
         letter-spacing: 0.04em;
       }
-      .advice p {
+      .advice-head p {
+        flex: 1 1 auto;
         margin: 0;
         font-size: 14px;
         line-height: 1.7;
         color: var(--text);
       }
-      .note-item {
+      .basis {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        margin: -6px 0 0 28px;
+      }
+      .basis span {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1px;
+      }
+      .basis-panel {
+        margin: 10px 0 4px 28px;
+        padding: 12px 14px;
+        background: var(--surface-2);
+        border-radius: var(--radius-sm);
+      }
+      .basis-panel .bt {
+        font-size: 11px;
+        color: var(--primary);
+        letter-spacing: 0.1em;
+        margin: 0 0 8px;
+      }
+      .basis-panel ul {
+        margin: 0;
+        padding: 0 0 0 14px;
+        list-style: none;
+      }
+      .basis-panel li {
+        font-size: 12px;
+        line-height: 1.85;
+        color: var(--muted);
+        position: relative;
+      }
+      .basis-panel li::before {
+        content: "·";
+        position: absolute;
+        left: -12px;
+        color: var(--primary);
+      }
+
+      .pick {
         display: flex;
+        align-items: center;
         gap: 12px;
-        padding: 12px 0;
+        padding: 14px 0;
         border-bottom: 1px solid var(--line);
       }
-      .note-item:last-child {
+      .pick:last-of-type {
         border-bottom: 0;
         padding-bottom: 2px;
       }
-      .note-item .nd {
+      .pick .ico {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: var(--primary);
+      }
+      .pick .body {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .pick .t {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+        margin: 0 0 3px;
+      }
+      .pick .s {
         font-size: 11px;
+        line-height: 1.5;
         color: var(--muted);
-        flex: 0 0 46px;
-        padding-top: 3px;
+        margin: 0;
+      }
+      .pick .act {
+        flex: 0 0 auto;
+        min-height: 44px;
+        min-width: 60px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        border-radius: var(--radius-pill);
+        border: 1px solid rgba(201, 168, 106, 0.4);
+        color: var(--primary);
+        font-size: 13px;
         letter-spacing: 0.04em;
       }
-      .note-item p {
+      .pick .act.is-on {
+        background: rgba(201, 168, 106, 0.12);
+        border-color: var(--primary);
+      }
+
+      .track {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .track:last-of-type {
+        border-bottom: 0;
+        padding-bottom: 2px;
+      }
+      .track .d {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary);
+        flex: 0 0 auto;
+        transform: translateY(-3px);
+      }
+      .track .t {
+        flex: 1 1 auto;
         font-size: 14px;
-        line-height: 1.65;
+        line-height: 1.6;
         margin: 0;
         color: var(--text);
       }
-      .note-item p.is-empty {
+      .track .s {
+        font-size: 11px;
         color: var(--muted);
+        white-space: nowrap;
+        flex: 0 0 auto;
       }
     </style>
   </head>
@@ -136,14 +242,13 @@
       </span>
     </div>
 
-    <main class="page has-tabbar">
+    <main class="page has-tabbar" style="padding-bottom: 120px">
       <div class="topline" style="margin-bottom: 8px">
         <span>11月23日 – 11月29日</span>
         <span>第 4 周</span>
       </div>
-      <h1 class="title" style="font-size: 28px; margin-bottom: 18px">这周</h1>
+      <h1 class="title" style="font-size: 28px; margin-bottom: 16px">本周</h1>
 
-      <!-- 叙事 -->
       <section class="card">
         <p class="report">
           你动了 <em>4 次</em>，比上周多 1 次。有 3 天在 1 点后睡——那三天第二天的动一动都没做成。<em>睡眠还是这周的地基。</em>
@@ -170,50 +275,110 @@
         </div>
       </div>
 
-      <p class="section-label">三条建议</p>
+      <div class="row" style="margin: 26px 0 8px">
+        <p class="section-label" style="margin: 0">三条建议</p>
+        <a class="btn-ghost" href="week.html" style="font-size: 12px; min-height: 44px">换一批</a>
+      </div>
+
       <section class="card" style="padding: 12px 16px">
         <div class="advice">
-          <span class="num">01</span>
-          <p>下周三降到 8℃ 还下雨，把户外换到周四；那天你 19:00 前能到家。</p>
+          <div class="advice-head">
+            <span class="num">01</span>
+            <p>下周三降到 8℃ 还下雨，把户外换到周四；那天你 19:00 前能到家。</p>
+          </div>
+          <a class="basis" href="#"><span>依据 · 天气 + 日历</span></a>
         </div>
+
         <div class="advice">
-          <span class="num">02</span>
-          <p>你周三、周四上午 10:00 有会：深度时段别排早上，就排 21:30。</p>
+          <div class="advice-head">
+            <span class="num">02</span>
+            <p>你周三、周四上午 10:00 有会：深度时段别排早上，就排 21:30。</p>
+          </div>
+          <a class="basis" href="#"><span>依据 · 日历忙闲</span></a>
         </div>
+
         <div class="advice">
-          <span class="num">03</span>
-          <p>充实最弱，而且两周没有创造过。下周排 2 张创造卡——写、拍、画，任选。</p>
+          <div class="advice-head">
+            <span class="num">03</span>
+            <p>充实最弱，而且两周没有创造过。下周排 2 张创造卡——写、拍、画，任选。</p>
+          </div>
+          <div class="basis-panel">
+            <p class="bt">这条依据</p>
+            <ul>
+              <li>近 14 天 source=create 的今日卡：0 张</li>
+              <li>充实这一维：7 天里达成 3 天，连续 2 周下降</li>
+              <li>你说过：「人生应该有很多过程是用来创造的」</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <p class="footnote" style="margin-top: 10px">
+        建议只来自四类依据：你的记录、日历忙闲、天气、你说过的话。任何一条都能换掉。
+      </p>
+
+      <p class="section-label">本周给你挑了三样 · 点了才跟</p>
+      <section class="card" style="padding: 2px 16px">
+        <div class="pick">
+          <span class="ico">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3.4 4.2c2.4-.9 4.6-.9 6.6.6 2-1.5 4.2-1.5 6.6-.6v11.2c-2.4-.9-4.6-.9-6.6.6-2-1.5-4.2-1.5-6.6-.6V4.2Z" />
+              <path d="M10 4.8v11" />
+            </svg>
+          </span>
+          <div class="body">
+            <p class="t">《禅与摩托车维修艺术》</p>
+            <p class="s">你 3 周前标记过 · 20 分钟起读</p>
+          </div>
+          <a class="act is-on" href="#">已加入</a>
+        </div>
+
+        <div class="pick">
+          <span class="ico">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2.4" y="4.6" width="15.2" height="10.8" rx="2.4" />
+              <path d="M2.4 7.6h15.2M6.6 4.6v3M13.4 4.6v3" />
+            </svg>
+          </span>
+          <div class="body">
+            <p class="t">《完美的日子》</p>
+            <p class="s">110 分钟 · 讲一个人在重复日子里看见美</p>
+          </div>
+          <a class="act" href="#">想看</a>
+        </div>
+
+        <div class="pick">
+          <span class="ico">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 15.6c-.6-2.4.6-4.2 2-5.6M16 15.6c.6-2.4-.6-4.2-2-5.6" />
+              <circle cx="10" cy="5.4" r="1.8" />
+              <path d="M9.4 8.6 7 13.2M10.6 8.6 13 13.2M8.4 16.4 10 13.2l1.6 3.2" />
+            </svg>
+          </span>
+          <div class="body">
+            <p class="t">城南那家开了 30 年的旧书店</p>
+            <p class="s">90 分钟 · 周六上午人少</p>
+          </div>
+          <a class="act" href="#">想做</a>
         </div>
       </section>
 
-      <p class="section-label">这一周你留下的</p>
-      <section class="card" style="padding: 12px 16px">
-        <div class="note-item">
-          <span class="nd">11/23</span>
-          <p>在城南走了一条没走过的街，撞见一家开了 12 年的面包店。</p>
+      <p class="section-label">在跟的 · 2</p>
+      <section class="card" style="padding: 2px 16px">
+        <div class="track">
+          <span class="d"></span>
+          <p class="t">《被讨厌的勇气》读到 60%</p>
+          <span class="s">周日问你</span>
         </div>
-        <div class="note-item">
-          <span class="nd">11/24</span>
-          <p>手机放客厅，读了 18 分钟。</p>
-        </div>
-        <div class="note-item">
-          <span class="nd">11/25</span>
-          <p>给妈打了个电话，聊了 40 分钟。</p>
-        </div>
-        <div class="note-item">
-          <span class="nd">11/26</span>
-          <p>90 分钟没碰手机，看《海街日记》。</p>
-        </div>
-        <div class="note-item">
-          <span class="nd">11/27</span>
-          <p class="is-empty">今天什么都没做，也行。</p>
+        <div class="track">
+          <span class="d"></span>
+          <p class="t">冥想 10 → 15 分钟</p>
+          <span class="s">周一自动加</span>
         </div>
       </section>
 
-      <section class="card" style="margin-top: 12px">
-        <p class="card-label">下周一开始</p>
-        <p class="lead">冥想 10 → 15 分钟。自动加，不用你改设置。</p>
-      </section>
+      <p class="footnote" style="margin-top: 16px; text-align: center">
+        「在跟的」里每件事都会在它该发生的那天出现在「今天」。
+      </p>
     </main>
 
     <nav class="tabbar">
@@ -229,7 +394,7 @@
           <rect x="2.6" y="4.2" width="14.8" height="13" rx="3" />
           <path d="M6.4 2.6v3M13.6 2.6v3M2.6 8.6h14.8" />
         </svg>
-        <span>这周</span>
+        <span>本周</span>
       </a>
       <a class="tab" href="me.html">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
