@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>写 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .write-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        min-height: 52px;
+      }
+      .write-top .name {
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .count {
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .count.is-done {
+        color: var(--primary);
+      }
+      .count svg {
+        opacity: 0;
+      }
+      .count.is-done svg {
+        opacity: 1;
+      }
+
+      .paper {
+        flex: 1 1 auto;
+        margin: 4px 20px 0;
+        padding: 22px 20px;
+        background: var(--surface-2);
+        border-radius: var(--radius-lg);
+        display: flex;
+        flex-direction: column;
+      }
+      .paper textarea {
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 300px;
+        background: none;
+        border: 0;
+        outline: none;
+        resize: none;
+        color: var(--text);
+        font-family: var(--font-serif);
+        font-size: 17px;
+        line-height: 2;
+        letter-spacing: 0.02em;
+      }
+      .paper textarea::placeholder {
+        color: #6b665f;
+      }
+
+      .after {
+        margin: 18px 20px 0;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .after .ct {
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+      .after ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .after li {
+        position: relative;
+        padding-left: 13px;
+        font-size: 12px;
+        line-height: 1.9;
+        color: var(--muted);
+      }
+      .after li::before {
+        content: "·";
+        position: absolute;
+        left: 1px;
+        color: var(--primary);
+      }
+
+      .write-foot {
+        padding: 16px 20px 34px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">19:38</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <div class="write-top">
+      <a class="icon-btn" href="today.html" aria-label="退出" style="margin-left: -8px">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" />
+        </svg>
+      </a>
+      <span class="name">写 200 字</span>
+      <span class="count is-done" id="count">
+        248 字
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+        </svg>
+      </span>
+    </div>
+
+    <div class="paper">
+      <textarea spellcheck="false">今天在地铁上突然想到一件事：我好像是先学会了「把事情做完」，才慢慢学会「把事情做对」。
+
+这两个不是一回事。做完靠的是赶，做对靠的是等。
+
+可我过去十年都在练第一种。所以现在一说「慢一点」，我身体的第一反应是焦虑——因为身体记得的是赶的节奏。
+
+也许耐心不是想通的，是坐出来的。每天坐二十分钟，什么都不做，就在那儿坐着。</textarea>
+    </div>
+
+    <div class="after">
+      <p class="ct">完成后</p>
+      <ul>
+        <li>今天记上一笔，「我」里面第 47 格亮起来</li>
+        <li>算一次创造 —— 本周 1 / 2</li>
+        <li>周报里可能提一句「这周写了 3 次，共 1200 字」</li>
+      </ul>
+    </div>
+
+    <div class="write-foot">
+      <a class="btn-primary" href="today.html">完成</a>
+    </div>
+  </body>
+</html>
