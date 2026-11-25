@@ -7,6 +7,40 @@
     <title>今天 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
+      .watching {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 12px;
+        margin: 0 0 20px;
+        padding: 11px 13px;
+        background: var(--surface);
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .watching .wlabel {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--primary);
+        letter-spacing: 0.14em;
+      }
+      .watching .wdot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+      .watching .wlabel::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--primary);
+      }
       .done-line {
         display: flex;
         align-items: center;
@@ -105,7 +139,16 @@
         <span>11月27日 周五</span>
         <span>降噪季 4 / 14</span>
       </div>
-      <h1 class="title" style="font-size: 28px; margin-bottom: 10px">今天</h1>
+      <h1 class="title" style="font-size: 28px; margin-bottom: 14px">今天</h1>
+
+      <div class="watching">
+        <span class="wlabel">它在看着</span>
+        <span>你 3 天没动</span>
+        <span class="wdot"></span>
+        <span>今晚 19:00 后空窗</span>
+        <span class="wdot"></span>
+        <span>周三降温，户外改周四</span>
+      </div>
 
       <p class="done-line">
         <b>今早已完成</b> 冥想 10 分钟 · 动一动 20 分钟

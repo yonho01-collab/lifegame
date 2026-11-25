@@ -7,144 +7,253 @@
     <title>我 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
-      .goals {
-        font-family: var(--font-serif);
-        font-size: 20px;
-        font-weight: 500;
-        letter-spacing: 0.16em;
-        color: var(--accent);
-        margin: 0 0 6px;
-        line-height: 1.8;
+      .me-head {
+        position: relative;
+        height: 168px;
+        background: #0e0e10 url("assets/morning.jpg") center 82% / cover no-repeat;
       }
-      .goals span {
+      .me-head::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(14, 14, 16, 0.35) 0%, rgba(14, 14, 16, 0.2) 55%, #0e0e10 100%);
+      }
+      .me-head .statusbar {
+        position: relative;
+        z-index: 1;
+      }
+
+      .words {
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        gap: 2px 54px;
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 34px;
+        line-height: 1.5;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin: 6px 0 0;
+      }
+
+      .daycount {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 22px 0 30px;
+      }
+      .daycount .n {
+        font-family: var(--font-serif);
+        font-size: 26px;
+        letter-spacing: 0.04em;
+        color: var(--primary);
+      }
+      .daycount .t {
+        font-size: 12px;
         color: var(--muted);
-        margin: 0 2px;
+        letter-spacing: 0.04em;
+      }
+
+      .traces {
+        display: grid;
+        grid-template-columns: repeat(15, 1fr);
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .traces i {
+        aspect-ratio: 1;
+        border-radius: 2px;
+        background: var(--surface-3);
+      }
+      .traces i.on {
+        background: rgba(201, 168, 106, 0.75);
+      }
+      .traces i.is-today {
+        box-shadow: 0 0 0 1px var(--primary);
+        background: rgba(201, 168, 106, 0.25);
+      }
+      .traces-axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        margin-bottom: 30px;
+      }
+
+      .change {
+        margin: 0;
+      }
+      .change-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .change-row:last-child {
+        border-bottom: 0;
+      }
+      .change-row .k {
+        font-family: var(--font-serif);
+        font-size: 16px;
+        letter-spacing: 0.12em;
+        color: var(--text);
+      }
+      .change-row .v {
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: var(--primary);
+      }
+      .change-row .v.flat {
+        color: var(--muted);
+      }
+
+      .creed-box {
+        margin-top: 26px;
+        padding: 20px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .creed-box .cl {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+        margin: 0 0 10px;
+      }
+      .creed-box .ct {
+        font-family: var(--font-serif);
+        font-size: 16px;
+        line-height: 1.7;
+        letter-spacing: 0.06em;
+        margin: 0;
+        color: var(--text);
+      }
+
+      .link-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 60px;
+        border-bottom: 1px solid var(--line);
+      }
+      .link-row:last-child {
+        border-bottom: 0;
+      }
+      .link-row .k {
+        font-size: 16px;
+        color: var(--text);
+      }
+      .link-row .s {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .link-row .v {
+        font-size: 12px;
+        color: var(--muted);
       }
     </style>
   </head>
   <body>
-    <div class="statusbar">
-      <span class="num">21:04</span>
-      <span class="status-icons">
-        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
-          <rect x="0" y="7" width="3" height="4" rx="1" />
-          <rect x="4.5" y="5" width="3" height="6" rx="1" />
-          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
-          <rect x="13.5" y="0" width="3" height="11" rx="1" />
-        </svg>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
-          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
-          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
-        </svg>
-        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
-          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
-          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
-          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
-        </svg>
-      </span>
-    </div>
-
-    <main class="page has-tabbar">
-      <div class="topline" style="margin-bottom: 8px">
-        <span>设置</span>
+    <header class="me-head">
+      <div class="statusbar">
+        <span class="num">21:04</span>
+        <span class="status-icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+            <rect x="0" y="7" width="3" height="4" rx="1" />
+            <rect x="4.5" y="5" width="3" height="6" rx="1" />
+            <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+            <rect x="13.5" y="0" width="3" height="11" rx="1" />
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+            <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+            <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+            <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+            <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+          </svg>
+        </span>
       </div>
-      <h1 class="title" style="font-size: 28px; margin-bottom: 14px">我</h1>
+    </header>
 
-      <p class="goals">充实<span>·</span>轻盈<span>·</span>专注<span>·</span>健康</p>
-      <p class="footnote" style="margin: 0 0 14px">
-        这四个词是全部的判断标准。任何一件事，先问它让哪一维变好。
+    <main class="page has-tabbar" style="padding-top: 16px">
+      <p class="words">
+        <span>耐心</span><span>轻盈</span><span>专注</span><span>健康</span>
       </p>
 
-      <section class="card" style="padding: 14px 16px; margin-bottom: 20px">
-        <div class="row">
-          <div>
-            <p class="card-label" style="margin-bottom: 4px">信条</p>
-            <p class="lead" style="font-size: 15px">不断创造 · 每周至少 2 次</p>
-          </div>
-          <span class="tag">写 / 拍 / 画</span>
-        </div>
-        <p class="footnote" style="margin-top: 10px">
-          不打卡、不计连续。每周排满 2 张创造卡就算到了——一本书、一张图、一段 30 秒视频都算。
-        </p>
-      </section>
-
-      <section class="card">
-        <div class="row" style="margin-bottom: 10px">
-          <p class="card-label" style="margin: 0">当前季</p>
-          <span class="meta num">3 / 14 天</span>
-        </div>
-        <p class="lead" style="margin-bottom: 12px"><strong>降噪季</strong> · 把睡前那一小时拿回来</p>
-        <div class="progress"><i style="width: 21%"></i></div>
-      </section>
-
-      <section class="card" style="margin-top: 12px">
-        <div class="row">
-          <div>
-            <p class="card-label" style="margin-bottom: 4px">下一季 · 已备好</p>
-            <p class="lead" style="font-size: 15px">重启身体季 · 14 天</p>
-          </div>
-          <span class="tag neutral">待开始</span>
-        </div>
-        <p class="footnote" style="margin-top: 10px">
-          重心从「睡前」转到「白天」：力量渐进、通勤步行、体感轻盈。今日卡池已备齐，不会断层。
-        </p>
-      </section>
-
-      <p class="section-label">五个设置</p>
-      <div class="set-group">
-        <a class="set-row" href="#">
-          <span class="k">日历</span>
-          <span class="v">
-            <span>飞书日历 · 已连</span>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
-          </span>
-        </a>
-        <a class="set-row" href="#">
-          <span class="k">睡觉目标</span>
-          <span class="v">
-            <span class="num">00:30</span>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
-          </span>
-        </a>
-        <a class="set-row" href="#">
-          <span class="k">冥想时长</span>
-          <span class="v">
-            <span class="num">10 分钟</span>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
-          </span>
-        </a>
-        <a class="set-row" href="#">
-          <span class="k">运动水平</span>
-          <span class="v">
-            <span>每周 1–2 次</span>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
-          </span>
-        </a>
-        <a class="set-row" href="#">
-          <span class="k">每月体验预算</span>
-          <span class="v">
-            <span>¥500–1500</span>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
-          </span>
-        </a>
+      <div class="daycount">
+        <span class="n">第 47 天</span>
+        <span class="t">在这里留下 63 条</span>
       </div>
 
-      <p class="section-label">数据</p>
-      <div class="set-group">
-        <div class="set-row">
-          <span class="k">这一季</span>
-          <span class="v"><span class="num">21 天 · 43 条记录</span></span>
-        </div>
-        <a class="set-row" href="#">
-          <span class="k">导出全部记录</span>
-          <span class="v">
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v8M5.8 8 9 11.2 12.2 8M3 13.4v1.2h12v-1.2" /></svg>
-          </span>
-        </a>
+      <div class="traces">
+        <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i>
+        <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i>
+        <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i>
+        <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i>
+        <i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i>
+        <i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="is-today"></i>
+      </div>
+      <div class="traces-axis">
+        <span>11月1日</span>
+        <span>今天</span>
       </div>
 
-      <p class="footnote" style="margin-top: 18px; text-align: center">
-        这里没有积分、没有等级、没有连续天数。只有四个词。
+      <p class="section-label" style="margin-top: 0">从开始到现在</p>
+      <div class="change">
+        <div class="change-row">
+          <span class="k">耐心</span>
+          <span class="v">长了一点</span>
+        </div>
+        <div class="change-row">
+          <span class="k">轻盈</span>
+          <span class="v">长了一点</span>
+        </div>
+        <div class="change-row">
+          <span class="k">专注</span>
+          <span class="v flat">没怎么动</span>
+        </div>
+        <div class="change-row">
+          <span class="k">健康</span>
+          <span class="v">长了很多</span>
+        </div>
+      </div>
+
+      <div class="creed-box">
+        <p class="cl">信条</p>
+        <p class="ct">不断创造，每周至少两次。<br />一本书、一张图、三十秒视频都算。</p>
+      </div>
+
+      <p class="section-label" style="margin-top: 28px">设置</p>
+      <a class="link-row" href="#">
+        <div>
+          <div class="k">节律与预算</div>
+          <div class="s">睡觉目标 00:30 · 冥想 10 分钟 · 月预算 ¥500–1500</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
+      </a>
+      <a class="link-row" href="#">
+        <div>
+          <div class="k">日历</div>
+          <div class="s">飞书日历 · 只读忙闲与标题</div>
+        </div>
+        <span class="v">已连</span>
+      </a>
+      <a class="link-row" href="#">
+        <div>
+          <div class="k">导出全部记录</div>
+          <div class="s">JSON · 永远是你的</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v8M5.8 8 9 11.2 12.2 8M3 13.4v1.2h12v-1.2" /></svg>
+      </a>
+
+      <p class="footnote" style="margin-top: 24px; text-align: center">
+        没有积分、没有等级、没有连续天数。只有四个词。
       </p>
     </main>
 

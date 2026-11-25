@@ -7,19 +7,76 @@
     <title>开场 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
+      body {
+        padding-bottom: 0;
+      }
+      /* ---------- 开屏画面 ---------- */
+      .opening {
+        position: relative;
+        height: min(560px, 64vh);
+        min-height: 430px;
+        background: #0e0e10 url("assets/morning.jpg") center 38% / cover no-repeat;
+        overflow: hidden;
+      }
+      .scrim-top {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 140px;
+        background: linear-gradient(180deg, rgba(10, 10, 12, 0.62), rgba(10, 10, 12, 0));
+      }
+      .scrim-bottom {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 260px;
+        background: linear-gradient(180deg, rgba(10, 10, 12, 0), rgba(10, 10, 12, 0.55) 42%, rgba(14, 14, 16, 0.94) 88%, #0e0e10 100%);
+      }
+      .opening .statusbar {
+        position: relative;
+      }
+      .opening-meta {
+        position: relative;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        color: rgba(242, 239, 233, 0.82);
+        padding: 2px 20px 0;
+      }
+      .quote {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 26px;
+        padding: 0 24px;
+      }
+      .quote p {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 22px;
+        line-height: 1.75;
+        letter-spacing: 0.06em;
+        color: #f6f2ea;
+        margin: 0 0 10px;
+        text-shadow: 0 1px 18px rgba(10, 10, 12, 0.55);
+      }
+      .quote .from {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: rgba(242, 239, 233, 0.62);
+      }
+
+      /* ---------- 下面 ---------- */
       .greet {
         font-family: var(--font-serif);
         font-weight: 500;
-        font-size: 34px;
+        font-size: 30px;
         line-height: 1.4;
         letter-spacing: 0.06em;
-        margin: 8px 0 14px;
+        margin: 4px 0 12px;
       }
       .sleep {
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.85;
         color: var(--text);
-        margin: 0 0 26px;
+        margin: 0 0 24px;
       }
       .sleep .muted {
         color: var(--muted);
@@ -31,7 +88,7 @@
         display: flex;
         align-items: center;
         gap: 14px;
-        min-height: 62px;
+        min-height: 60px;
         border-bottom: 1px solid var(--line);
       }
       .slot .idx {
@@ -43,13 +100,10 @@
       .slot .txt {
         flex: 1 1 auto;
         min-width: 0;
-        font-size: 17px;
+        font-size: 16px;
         line-height: 1.5;
         color: var(--text);
         letter-spacing: 0.02em;
-      }
-      .slot .txt.is-empty {
-        color: #6f6a63;
       }
       .slot .x {
         width: 44px;
@@ -59,13 +113,10 @@
         place-items: center;
         color: var(--muted);
       }
-      .slot .tag {
-        flex: 0 0 auto;
-      }
       .prompt-box {
         width: 100%;
-        min-height: 84px;
-        padding: 16px;
+        min-height: 78px;
+        padding: 15px 16px;
         background: var(--surface);
         border: 1px solid transparent;
         border-radius: var(--radius);
@@ -79,39 +130,41 @@
         outline: none;
         border-color: var(--primary);
       }
-      .prompt-box::placeholder {
-        color: #6f6a63;
-      }
     </style>
   </head>
   <body>
-    <div class="statusbar">
-      <span class="num">9:12</span>
-      <span class="status-icons">
-        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
-          <rect x="0" y="7" width="3" height="4" rx="1" />
-          <rect x="4.5" y="5" width="3" height="6" rx="1" />
-          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
-          <rect x="13.5" y="0" width="3" height="11" rx="1" />
-        </svg>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
-          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
-          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
-        </svg>
-        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
-          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
-          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
-          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
-        </svg>
-      </span>
-    </div>
-
-    <main class="page" style="padding-bottom: 150px">
-      <div class="topline" style="margin-bottom: 6px">
-        <span>11月27日 周五</span>
-        <span>降噪季 4 / 14</span>
+    <header class="opening">
+      <div class="scrim-top"></div>
+      <div class="scrim-bottom"></div>
+      <div class="statusbar">
+        <span class="num">9:12</span>
+        <span class="status-icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+            <rect x="0" y="7" width="3" height="4" rx="1" />
+            <rect x="4.5" y="5" width="3" height="6" rx="1" />
+            <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+            <rect x="13.5" y="0" width="3" height="11" rx="1" />
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+            <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+            <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+            <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+            <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+          </svg>
+        </span>
       </div>
+      <div class="opening-meta">11月27日 周五 · 降噪季 4 / 14</div>
 
+      <div class="quote">
+        <p>你不需要离开房间，<br />只需坐在桌前倾听。</p>
+        <span class="from">弗兰茨 · 卡夫卡</span>
+      </div>
+    </header>
+
+    <main class="page" style="padding-top: 22px; padding-bottom: 40px">
       <h1 class="greet">早安。</h1>
 
       <p class="sleep">
@@ -158,13 +211,11 @@
         前两件是地基，每天自动填好。第三件留给你自己——不写也行。
       </p>
 
-      <p class="section-label" style="margin: 28px 0 8px">今天想让它是什么样</p>
+      <p class="section-label" style="margin: 26px 0 8px">今天想让它是什么样</p>
       <textarea class="prompt-box" rows="2">不刷手机，把晚饭吃完再想别的事。</textarea>
       <p class="footnote" style="margin-top: 8px">可选。写一句，晚上我会拿它问你。</p>
-    </main>
 
-    <div class="actionbar">
-      <a class="btn-primary" href="today.html">开始今天</a>
-    </div>
+      <a class="btn-primary" href="today.html" style="margin-top: 26px">开始今天</a>
+    </main>
   </body>
 </html>
