@@ -9,7 +9,7 @@
 
 const MAX_ITEMS = 6;
 
-export function todayView(v) {
+export function todayView(v, withActions) {
   if (!v || !v.plan) return null;
 
   const plan = v.plan.slice(0, MAX_ITEMS);
@@ -37,6 +37,16 @@ export function todayView(v) {
 
   if (v.alt) {
     children.push({ type: "text", text: `或者：${v.alt}`, tone: "muted" });
+  }
+
+  if (withActions) {
+    children.push({
+      type: "actions",
+      items: [
+        { label: "做了", action: "done", style: "primary" },
+        { label: "换一个", action: "swap" },
+      ],
+    });
   }
 
   return {

@@ -366,4 +366,60 @@ export function apply(ctx) {
       }),
     "lifegame: tool update",
   );
+
+  /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */
+
+  ctx.inject(["dshGo"], (c) => {
+    const model = () => {
+      const day = getDay(todayKey());
+      return viewModel(day);
+    };
+
+    c.dshGo.panel("today", {
+      view: () => todayView(model(), true),
+      actions: {
+        done: async () => {
+          await ready;
+          const day = getDay(todayKey());
+          const item = day.plan.find((p) => !p.done);
+          if (!item) return { toast: "今天都做完了", refresh: "today" };
+          item.done = true;
+          item.doneAt = new Date().toISOString();
+          db.rev += 1;
+          await persist();
+          return { toast: `记下了：${item.title}`, refresh: "today" };
+        },
+        swap: async () => {
+          await ready;
+          const day = getDay(todayKey());
+          const i = ALT_POOL.indexOf(day.alt);
+          day.alt = ALT_POOL[(i + 1) % ALT_POOL.length];
+          db.rev += 1;
+          await persist();
+          return { toast: "换了一条", refresh: "today" };
+        },
+      },
+    });
+
+    c.dshGo.strip("today", (scope, emit) => {
+      let stopped = false;
+      const tick = async () => {
+        try {
+          await ready;
+          if (stopped) return;
+          const day = getDay(todayKey());
+          const done = day.plan.filter((p) => p.done).length;
+          emit({ text: `今天 ${done}/${day.plan.length}`, icon: "today" });
+        } catch {
+          /* 桥接会接住，不抛 */
+        }
+      };
+      tick();
+      const timer = setInterval(tick, 60_000);
+      return () => {
+        stopped = true;
+        clearInterval(timer);
+      };
+    });
+  });
 }

@@ -30,5 +30,33 @@
         "@deepseek-ai/dsh-client-ui-layout"
       ]
     }
+  },
+  "dshGo": {
+    "v": 1,
+    "title": {
+      "zh": "人生游戏",
+      "en": "Lifegame"
+    },
+    "icon": "today",
+    "contributes": {
+      "panels": [
+        {
+          "id": "today",
+          "title": "今天",
+          "icon": "today",
+          "placement": [
+            "chat.panel",
+            "session.tab"
+          ]
+        }
+      ],
+      "composer.strip": [
+        {
+          "id": "today",
+          "icon": "today",
+          "panel": "today"
+        }
+      ]
+    }
   }
 }
