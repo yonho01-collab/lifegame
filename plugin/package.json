@@ -1,0 +1,22 @@
+{
+  "name": "@local/lifegame",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "人生游戏：把「耐心 / 轻盈 / 专注 / 健康」变成每天一屏的节奏导演。侧栏一个页面，Agent 在旁边随时推荐。",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./icon": "./icon.svg",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-sidebar", "@deepseek-ai/dsh-client-ui-layout"]
+    }
+  }
+}

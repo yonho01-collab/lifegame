@@ -1,0 +1,5 @@
+# 人生游戏 · bundle patch
+# 每一行在 DSH「插件」页里都有自己的开关
+- insert:
+    - id: lifegame
+      name: '@local/lifegame'
