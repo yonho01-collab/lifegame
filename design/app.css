@@ -426,3 +426,173 @@ button {
     transition: none !important;
   }
 }
+
+/* ---------- 简报 ---------- */
+.brief {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0;
+}
+.brief .dim {
+  color: var(--muted);
+}
+
+/* ---------- 地基勾选行 ---------- */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--line);
+}
+.check-row:last-of-type {
+  border-bottom: 0;
+}
+.check-row input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.check-row .box {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.check-row input:checked + .box {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.check-row .label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.check-row input:checked ~ .label {
+  color: var(--muted);
+}
+.check-row .hint {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 0 0 auto;
+  letter-spacing: 0.02em;
+}
+.check-row .hint.is-on {
+  color: var(--primary);
+}
+
+/* ---------- 七天格 ---------- */
+.day-bars {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.day-bars i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--surface-3);
+}
+.day-bars i.on {
+  background: var(--primary);
+}
+.day-bars i.is-today {
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* ---------- 维度行 ---------- */
+.dim-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--line);
+}
+.dim-row:last-of-type {
+  border-bottom: 0;
+}
+.dim-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  width: 46px;
+  flex: 0 0 auto;
+}
+.dim-count {
+  font-size: 12px;
+  color: var(--muted);
+  width: 34px;
+  text-align: right;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+.dim-row.is-weak .dim-name {
+  color: var(--primary);
+}
+
+/* ---------- 设置行 ---------- */
+.set-group {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.set-row:last-child {
+  border-bottom: 0;
+}
+.set-row .k {
+  font-size: 15px;
+  color: var(--text);
+}
+.set-row .v {
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- 一句话输入 ---------- */
+.oneliner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+.oneliner input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--text);
+  font-size: 15px;
+  font-family: var(--font-sans);
+}
+.oneliner input::placeholder {
+  color: #6f6a63;
+}

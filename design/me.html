@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="dsh-design" content="app" />
+    <title>我 · 人生游戏</title>
+    <link rel="stylesheet" href="app.css" />
+    <style>
+      .goals {
+        font-family: var(--font-serif);
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 0 0 6px;
+        line-height: 1.8;
+      }
+      .goals span {
+        color: var(--muted);
+        margin: 0 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="statusbar">
+      <span class="num">21:04</span>
+      <span class="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+          <rect x="0" y="7" width="3" height="4" rx="1" />
+          <rect x="4.5" y="5" width="3" height="6" rx="1" />
+          <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="11" rx="1" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+          <path d="M8 11.2 5.5 8.3a3.5 3.5 0 0 1 5 0L8 11.2Z" />
+          <path d="M8 6.4c-1.7 0-3.2.6-4.4 1.8L2.4 6.9A8 8 0 0 1 8 4.5c2.2 0 4.2.9 5.6 2.4l-1.2 1.3A6.2 6.2 0 0 0 8 6.4Z" opacity=".85" />
+        </svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor" />
+          <path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" fill="currentColor" opacity=".4" />
+        </svg>
+      </span>
+    </div>
+
+    <main class="page has-tabbar">
+      <div class="topline" style="margin-bottom: 8px">
+        <span>设置</span>
+      </div>
+      <h1 class="title" style="font-size: 28px; margin-bottom: 14px">我</h1>
+
+      <p class="goals">充实<span>·</span>轻盈<span>·</span>专注<span>·</span>健康</p>
+      <p class="footnote" style="margin: 0 0 22px">
+        这四个词是全部的判断标准。任何一件事，先问它让哪一维变好。
+      </p>
+
+      <section class="card">
+        <div class="row" style="margin-bottom: 10px">
+          <p class="card-label" style="margin: 0">当前季</p>
+          <span class="meta num">3 / 14 天</span>
+        </div>
+        <p class="lead" style="margin-bottom: 12px"><strong>降噪季</strong> · 把睡前那一小时拿回来</p>
+        <div class="progress"><i style="width: 21%"></i></div>
+      </section>
+
+      <section class="card" style="margin-top: 12px">
+        <div class="row">
+          <div>
+            <p class="card-label" style="margin-bottom: 4px">下一季 · 已备好</p>
+            <p class="lead" style="font-size: 15px">重启身体季 · 14 天</p>
+          </div>
+          <span class="tag neutral">待开始</span>
+        </div>
+        <p class="footnote" style="margin-top: 10px">
+          重心从「睡前」转到「白天」：力量渐进、通勤步行、体感轻盈。今日卡池已备齐，不会断层。
+        </p>
+      </section>
+
+      <p class="section-label">四个设置</p>
+      <div class="set-group">
+        <a class="set-row" href="#">
+          <span class="k">睡觉目标</span>
+          <span class="v">
+            <span class="num">00:30</span>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
+          </span>
+        </a>
+        <a class="set-row" href="#">
+          <span class="k">冥想时长</span>
+          <span class="v">
+            <span class="num">10 分钟</span>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
+          </span>
+        </a>
+        <a class="set-row" href="#">
+          <span class="k">运动水平</span>
+          <span class="v">
+            <span>每周 1–2 次</span>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
+          </span>
+        </a>
+        <a class="set-row" href="#">
+          <span class="k">每月体验预算</span>
+          <span class="v">
+            <span>¥500–1500</span>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M7 4l5 5-5 5" /></svg>
+          </span>
+        </a>
+      </div>
+
+      <p class="section-label">数据</p>
+      <div class="set-group">
+        <div class="set-row">
+          <span class="k">这一季</span>
+          <span class="v"><span class="num">21 天 · 43 条记录</span></span>
+        </div>
+        <a class="set-row" href="#">
+          <span class="k">导出全部记录</span>
+          <span class="v">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v8M5.8 8 9 11.2 12.2 8M3 13.4v1.2h12v-1.2" /></svg>
+          </span>
+        </a>
+      </div>
+
+      <p class="footnote" style="margin-top: 18px; text-align: center">
+        这里没有积分、没有等级、没有连续天数。只有四个词。
+      </p>
+    </main>
+
+    <nav class="tabbar">
+      <a class="tab" href="today.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="10" cy="10" r="6.2" />
+          <path d="M10 1.4v2.2M10 16.4v2.2M1.4 10h2.2M16.4 10h2.2" />
+        </svg>
+        <span>今天</span>
+      </a>
+      <a class="tab" href="week.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <rect x="2.6" y="4.2" width="14.8" height="13" rx="3" />
+          <path d="M6.4 2.6v3M13.6 2.6v3M2.6 8.6h14.8" />
+        </svg>
+        <span>这周</span>
+      </a>
+      <a class="tab is-active" href="me.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="10" cy="10" r="3.2" />
+          <path d="M10 1.6v2.6M10 15.8v2.6M1.6 10h2.6M15.8 10h2.6" />
+        </svg>
+        <span>我</span>
+      </a>
+    </nav>
+  </body>
+</html>

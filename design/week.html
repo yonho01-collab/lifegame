@@ -4,124 +4,51 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="dsh-design" content="app" />
-    <title>本周 · 人生游戏</title>
+    <title>这周 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
-      .ev {
+      .note-item {
         display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        padding: 16px;
-        background: var(--surface);
-        border-radius: var(--radius);
-        margin-bottom: 10px;
+        gap: 12px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--line);
       }
-      .ev-mark {
-        width: 22px;
-        height: 22px;
-        flex: 0 0 auto;
-        margin-top: 2px;
-        border-radius: 50%;
-        border: 1px solid var(--line);
-        display: grid;
-        place-items: center;
-        color: transparent;
+      .note-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 2px;
       }
-      .ev.done .ev-mark {
-        border-color: var(--primary);
-        background: var(--primary);
-        color: var(--on-primary);
+      .note-item:first-child {
+        padding-top: 2px;
       }
-      .ev-body {
-        flex: 1 1 auto;
-        min-width: 0;
+      .note-item .nd {
+        font-size: 11px;
+        color: var(--muted);
+        flex: 0 0 46px;
+        padding-top: 3px;
+        letter-spacing: 0.04em;
       }
-      .ev h3 {
-        font-family: var(--font-serif);
-        font-weight: 500;
-        font-size: 16px;
-        line-height: 1.5;
-        letter-spacing: 0.03em;
-        margin: 0 0 8px;
+      .note-item p {
+        font-size: 14px;
+        line-height: 1.65;
+        margin: 0;
         color: var(--text);
       }
-      .ev.done h3 {
-        color: var(--muted);
-        text-decoration: line-through;
-        text-decoration-color: var(--line);
-        text-decoration-thickness: 1px;
-      }
-      .ev-when {
-        font-size: 12px;
-        color: var(--primary);
-        letter-spacing: 0.04em;
-        margin: 0 0 6px;
-      }
-      .ev.done .ev-when {
+      .note-item p.is-empty {
         color: var(--muted);
       }
-      .quote {
-        font-size: 13px;
-        line-height: 1.7;
-        color: var(--muted);
-        border-left: 1px solid var(--line);
-        padding-left: 10px;
-        margin-top: 10px;
-      }
-      .switch-row {
+      .addon {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        padding: 16px;
-        background: var(--surface);
-        border-radius: var(--radius);
-        min-height: 64px;
-      }
-      .switch {
-        position: relative;
-        width: 48px;
-        height: 30px;
-        flex: 0 0 auto;
-      }
-      .switch input {
-        position: absolute;
-        opacity: 0;
-        width: 1px;
-        height: 1px;
-      }
-      .switch span {
-        position: absolute;
-        inset: 0;
-        border-radius: var(--radius-pill);
-        background: var(--surface-3);
+        gap: 12px;
+        padding: 14px 16px;
         border: 1px solid var(--line);
-        transition: background 0.2s var(--ease);
-      }
-      .switch span::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: var(--muted);
-        transition: transform 0.2s var(--ease), background 0.2s var(--ease);
-      }
-      .switch input:checked + span {
-        background: rgba(201, 168, 106, 0.18);
-        border-color: rgba(201, 168, 106, 0.5);
-      }
-      .switch input:checked + span::after {
-        transform: translateX(18px);
-        background: var(--primary);
+        border-radius: var(--radius);
       }
     </style>
   </head>
   <body>
     <div class="statusbar">
-      <span class="num">9:41</span>
+      <span class="num">20:12</span>
       <span class="status-icons">
         <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
           <rect x="0" y="7" width="3" height="4" rx="1" />
@@ -142,79 +69,85 @@
     </div>
 
     <main class="page has-tabbar">
-      <div class="topline">
-        <span>11月24日 – 11月30日</span>
+      <div class="topline" style="margin-bottom: 8px">
+        <span>11月23日 – 11月29日</span>
         <span>第 4 周</span>
       </div>
-      <h1 class="title">本周</h1>
-      <div class="row" style="margin: 12px 0 8px">
-        <span class="footnote">选了 2 件 · 完成 1 件</span>
-        <span class="footnote num">1 / 2</span>
-      </div>
-      <div class="progress" style="margin-bottom: 24px"><i style="width: 50%"></i></div>
+      <h1 class="title" style="font-size: 28px; margin-bottom: 18px">这周</h1>
 
-      <div class="ev done">
-        <span class="ev-mark">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
-          </svg>
-        </span>
-        <div class="ev-body">
-          <p class="ev-when">周三 · 已完成</p>
-          <h3>90 分钟无手机电影</h3>
-          <div class="meta"><span>审美</span><span class="dot"></span><span>90 分钟</span></div>
-          <p class="quote">看《海街日记》。前 20 分钟手一直想去摸口袋，之后就没了。</p>
+      <section class="card" style="padding: 6px 16px">
+        <div class="dim-row">
+          <span class="dim-name">健康</span>
+          <span class="day-bars">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
+          </span>
+          <span class="dim-count">6 / 7</span>
         </div>
-      </div>
-
-      <div class="ev">
-        <span class="ev-mark"></span>
-        <div class="ev-body">
-          <p class="ev-when">周六 10:00</p>
-          <h3>去城市另一头那家开了 30 年的旧书店</h3>
-          <div class="meta"><span>探索</span><span class="dot"></span><span>90 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>城市</span></div>
-          <div class="row" style="margin-top: 12px">
-            <a class="btn-ghost" href="#" style="padding-left: 0">改时间</a>
-            <a class="btn-ghost" href="record.html" style="color: var(--primary)">做完了</a>
-          </div>
+        <div class="dim-row">
+          <span class="dim-name">专注</span>
+          <span class="day-bars">
+            <i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i>
+          </span>
+          <span class="dim-count">4 / 7</span>
         </div>
-      </div>
-
-      <div class="ev">
-        <span class="ev-mark"></span>
-        <div class="ev-body">
-          <p class="ev-when">周日 14:00</p>
-          <h3>一口气读完一本薄书</h3>
-          <div class="meta"><span>专注</span><span class="dot"></span><span>2 小时</span><span class="dot"></span><span>在家</span></div>
-          <div class="row" style="margin-top: 12px">
-            <a class="btn-ghost" href="#" style="padding-left: 0">改时间</a>
-            <a class="btn-ghost" href="record.html" style="color: var(--primary)">做完了</a>
-          </div>
+        <div class="dim-row">
+          <span class="dim-name">轻盈</span>
+          <span class="day-bars">
+            <i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
+          </span>
+          <span class="dim-count">5 / 7</span>
         </div>
-      </div>
-
-      <p class="section-label">这段时间在别处</p>
-
-      <label class="switch-row">
-        <div>
-          <p class="footnote" style="color: var(--text); font-size: 14px; margin-bottom: 4px">出差模式</p>
-          <p class="footnote">打开后菜单换成：城市探索 + 酒店 15 分钟训练 + 碎片阅读</p>
+        <div class="dim-row is-weak">
+          <span class="dim-name">充实</span>
+          <span class="day-bars">
+            <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i>
+          </span>
+          <span class="dim-count">3 / 7</span>
         </div>
-        <span class="switch">
-          <input type="checkbox" />
-          <span></span>
-        </span>
-      </label>
+        <p class="footnote" style="margin: 10px 0 0; line-height: 1.7">
+          健康 = 睡够 + 动了 · 专注 = 冥想 + 沉浸 · 轻盈 = 睡前离床 + 感受 · 充实 = 今天留下东西
+        </p>
+      </section>
 
-      <a class="card" href="menu.html" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px">
-        <div>
-          <p class="card-label" style="margin-bottom: 4px">下周菜单</p>
-          <p class="footnote" style="color: var(--text)">周日 20:00 生成 · 也可以现在就看</p>
+      <section class="card" style="margin-top: 12px; border-left: 1px solid rgba(201, 168, 106, 0.5)">
+        <p class="card-label">这周最弱的一维</p>
+        <p class="lead">
+          充实只达成 3 天。<strong>下周今日卡会往这边偏，但不加剂量</strong>——先把「每天留一件」变成习惯，再说做更多。
+        </p>
+      </section>
+
+      <p class="section-label">留下的 5 条</p>
+      <section class="card" style="padding: 12px 16px">
+        <div class="note-item">
+          <span class="nd">11/23</span>
+          <p>在城南走了一条没走过的街，撞见一家开了 12 年的面包店。</p>
         </div>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-          <path d="M7 4l5 5-5 5" />
+        <div class="note-item">
+          <span class="nd">11/24</span>
+          <p>手机放客厅，读了 18 分钟。</p>
+        </div>
+        <div class="note-item">
+          <span class="nd">11/25</span>
+          <p>给妈打了个电话，聊了 40 分钟。</p>
+        </div>
+        <div class="note-item">
+          <span class="nd">11/26</span>
+          <p>90 分钟没碰手机，看《海街日记》。</p>
+        </div>
+        <div class="note-item">
+          <span class="nd">11/27</span>
+          <p class="is-empty">今天什么都没做，也行。</p>
+        </div>
+      </section>
+
+      <div class="addon" style="margin-top: 12px">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--primary)" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M9 2.4v13.2M2.4 9h13.2" />
         </svg>
-      </a>
+        <p class="footnote" style="color: var(--text); margin: 0">
+          下周一自动加码：冥想 10 → 15 分钟
+        </p>
+      </div>
     </main>
 
     <nav class="tabbar">
@@ -230,14 +163,14 @@
           <rect x="2.6" y="4.2" width="14.8" height="13" rx="3" />
           <path d="M6.4 2.6v3M13.6 2.6v3M2.6 8.6h14.8" />
         </svg>
-        <span>本周</span>
+        <span>这周</span>
       </a>
-      <a class="tab" href="review.html">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="10" cy="10" r="6.8" />
-          <path d="M10 3.2v6.8l4.8 3.4" />
+      <a class="tab" href="me.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="10" cy="10" r="3.2" />
+          <path d="M10 1.6v2.6M10 15.8v2.6M1.6 10h2.6M15.8 10h2.6" />
         </svg>
-        <span>复盘</span>
+        <span>我</span>
       </a>
     </nav>
   </body>

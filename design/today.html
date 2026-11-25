@@ -7,45 +7,20 @@
     <title>今天 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
-      .hero-title {
+      .card-title {
         font-family: var(--font-serif);
         font-weight: 500;
-        font-size: var(--fs-26);
-        line-height: 1.35;
-        letter-spacing: 0.04em;
-        margin: 10px 0 12px;
+        font-size: 19px;
+        line-height: 1.5;
+        letter-spacing: 0.03em;
+        margin: 10px 0 8px;
       }
-      .meal-row {
+      .ghost-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: var(--sp-3);
-        min-height: 64px;
-        padding: 14px var(--sp-4);
-        background: var(--surface);
-        border-radius: var(--radius);
-      }
-      .meal-row .left {
-        min-width: 0;
-      }
-      .meal-row .plus {
-        width: 44px;
-        height: 44px;
-        flex: 0 0 auto;
-        display: grid;
-        place-items: center;
-        color: var(--primary);
-        border: 1px solid rgba(201, 168, 106, 0.35);
-        border-radius: var(--radius-pill);
-      }
-      .closing {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--sp-3);
-        padding: 18px var(--sp-4);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
+        justify-content: center;
+        gap: 28px;
+        margin-top: 12px;
       }
     </style>
   </head>
@@ -72,69 +47,83 @@
     </div>
 
     <main class="page has-tabbar">
-      <div class="topline">
-        <span>11月26日 周三</span>
+      <div class="topline" style="margin-bottom: 8px">
+        <span>11月26日 周四 · 感恩节</span>
         <span>降噪季 3 / 14</span>
       </div>
-      <h1 class="title">今天</h1>
-      <div class="progress" style="margin: 14px 0 22px">
-        <i style="width: 21%"></i>
-      </div>
+      <h1 class="title" style="font-size: 28px; margin-bottom: 12px">今天</h1>
+      <div class="progress" style="margin-bottom: 18px"><i style="width: 21%"></i></div>
 
-      <section class="card">
-        <p class="card-label">昨夜</p>
-        <p class="lead">
-          01:42 入睡，目标 00:30。<strong>今天不追补</strong>，只把睡前那 30 分钟拿回来。
-        </p>
-        <hr class="gold-line" />
-        <p class="footnote">
-          依据：本周 3 天里有 2 天超过 01:00 入睡；这三天第二天的深度时段都是 0。
+      <!-- 昨晚 -->
+      <section class="card" style="padding: 14px 16px">
+        <p class="brief">
+          昨夜 <strong class="num">01:42</strong> 睡。<span class="dim">冥想第 3 天，别断。</span>
         </p>
       </section>
 
-      <section class="card" style="margin-top: 16px; background: var(--surface-2)">
-        <div class="row">
-          <p class="card-label" style="margin: 0">今天一件</p>
-          <span class="meta num">20 分钟</span>
-        </div>
-        <h2 class="hero-title">22:45，把手机放到客厅，读 20 分钟</h2>
-        <div class="meta">
-          <span>《禅与摩托车维修艺术》</span>
-          <span class="dot"></span>
-          <span>0 元</span>
-          <span class="dot"></span>
-          <span>在家</span>
-        </div>
-        <p class="footnote" style="margin-top: 14px">
-          昨天你做到了第一步（睡前手机离床）。今天是第二天——只加 20 分钟，不加速度。
-        </p>
-        <a class="btn-primary" href="focus.html" style="margin-top: 18px">开始</a>
-        <p class="footnote" style="margin-top: 10px; text-align: center">
-          22:45 会再提醒一次 · 现在做也行，一天只做一次
-        </p>
-      </section>
+      <!-- 第一等级：地基 -->
+      <p class="section-label" style="margin: 20px 0 2px">地基 · 每天三件</p>
 
-      <div class="meal-row" style="margin-top: 12px">
-        <div class="left">
-          <p class="card-label" style="margin-bottom: 4px">加餐 · 可选</p>
-          <p class="footnote" style="color: var(--text)">晚饭后下楼走 15 分钟，不带手机</p>
-        </div>
-        <a class="plus" href="record.html" aria-label="记录这次加餐">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-            <path d="M9 3.5v11M3.5 9h11" />
+      <label class="check-row">
+        <input type="checkbox" />
+        <span class="box">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
           </svg>
-        </a>
-      </div>
+        </span>
+        <span class="label">动一动 · 20 分钟</span>
+        <span class="hint">健身房或楼下</span>
+      </label>
 
-      <a class="closing" href="record.html" style="margin-top: 20px">
-        <div>
-          <p class="card-label" style="margin-bottom: 4px">今晚 22:45 · 收工</p>
-          <p class="footnote" style="color: var(--text)">今天做了什么，三行就够</p>
+      <label class="check-row">
+        <input type="checkbox" checked />
+        <span class="box">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+          </svg>
+        </span>
+        <span class="label">冥想 · 10 分钟</span>
+        <span class="hint is-on">今天已做</span>
+      </label>
+
+      <label class="check-row">
+        <input type="checkbox" />
+        <span class="box">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
+          </svg>
+        </span>
+        <span class="label">睡前手机放到客厅</span>
+        <span class="hint">22:45</span>
+      </label>
+
+      <!-- 第二等级：今天一件 -->
+      <p class="section-label" style="margin: 22px 0 8px">今天一件 · 第二等级</p>
+
+      <section class="card" style="background: var(--surface-2)">
+        <div class="row">
+          <span class="tag">充实</span>
+          <span class="meta">感恩节</span>
         </div>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-          <path d="M7 4l5 5-5 5" />
-        </svg>
-      </a>
+        <h2 class="card-title">给一个很久没联系的人发条消息</h2>
+        <p class="footnote" style="margin-bottom: 12px">
+          充实这一维两周没动过。这件事只要 5 分钟，而且今天做它有点意思。
+        </p>
+        <div class="meta" style="margin-bottom: 16px">
+          <span>5 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>在家</span>
+        </div>
+        <a class="btn-primary" href="today.html">做了</a>
+        <div class="ghost-row">
+          <a class="btn-ghost" href="today.html">换一个</a>
+          <a class="btn-ghost" href="today.html">今天不做</a>
+        </div>
+      </section>
+
+      <!-- 一句话 -->
+      <p class="section-label" style="margin: 22px 0 8px">一句话 · 可跳过</p>
+      <div class="oneliner">
+        <input type="text" placeholder="今天留下什么？" aria-label="今天的一句话" />
+      </div>
     </main>
 
     <nav class="tabbar">
@@ -150,14 +139,14 @@
           <rect x="2.6" y="4.2" width="14.8" height="13" rx="3" />
           <path d="M6.4 2.6v3M13.6 2.6v3M2.6 8.6h14.8" />
         </svg>
-        <span>本周</span>
+        <span>这周</span>
       </a>
-      <a class="tab" href="review.html">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="10" cy="10" r="6.8" />
-          <path d="M10 3.2v6.8l4.8 3.4" />
+      <a class="tab" href="me.html">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <circle cx="10" cy="10" r="3.2" />
+          <path d="M10 1.6v2.6M10 15.8v2.6M1.6 10h2.6M15.8 10h2.6" />
         </svg>
-        <span>复盘</span>
+        <span>我</span>
       </a>
     </nav>
   </body>
