@@ -82,7 +82,8 @@ window.__ModuleLoader__.load({
 
 /* 两栏 */
 .lg-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:44px}
-@media (min-width:1000px){ .lg-grid{grid-template-columns:minmax(0,1.45fr) minmax(0,.9fr);gap:64px;align-items:start} }
+@media (min-width:1000px){ .lg-grid{grid-template-columns:minmax(0,1.35fr) minmax(0,.95fr);gap:56px;align-items:start} }
+@media (max-width:999px){ .lg-grid{gap:26px} }
 
 /* 组件 */
 .lg-watch{
@@ -132,7 +133,8 @@ window.__ModuleLoader__.load({
 .lg-plan{list-style:none;margin:0;padding:0}
 .lg-plan li{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--lg-line)}
 .lg-plan li:last-child{border-bottom:0}
-.lg-dot{width:20px;height:20px;flex:0 0 auto;border-radius:50%;border:1px solid var(--lg-line);display:grid;place-items:center;color:transparent}
+.lg-dot{width:22px;height:22px;flex:0 0 auto;border-radius:50%;border:1px solid var(--lg-line);display:grid;place-items:center;color:transparent;background:none;cursor:pointer;padding:0;transition:border-color .15s,background .15s}
+.lg-dot:hover{border-color:var(--lg-accent)}
 .lg-dot.on{border-color:var(--lg-accent);background:var(--lg-accent);color:var(--lg-on-accent)}
 .lg-plan .t{flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.5}
 .lg-plan li.on .t{color:var(--lg-muted)}
@@ -161,6 +163,41 @@ window.__ModuleLoader__.load({
 @media (max-width:820px){ .lg-big{font-size:40px} }
 
 .lg-muted{color:var(--lg-muted)}
+
+/* 现在这条 */
+.lg-nowbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:16px;background:var(--lg-surface);border-radius:10px;font-size:13px}
+.lg-nowbar .k{color:var(--lg-accent);letter-spacing:.16em;font-size:11.5px;flex:0 0 auto}
+.lg-nowbar .v{flex:1 1 auto;min-width:0;color:var(--lg-muted);line-height:1.6}
+.lg-go{flex:0 0 auto;min-height:38px;padding:0 18px;border-radius:8px;border:0;cursor:pointer;background:var(--lg-accent);color:var(--lg-on-accent);font-size:13px;font-weight:600;letter-spacing:.04em}
+
+/* 卡片头 */
+.lg-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.lg-card-head span:first-child{font-size:12px;letter-spacing:.18em;color:var(--lg-muted)}
+.lg-count-n{font-size:12px;color:var(--lg-muted);font-variant-numeric:tabular-nums}
+
+/* 快速输入 */
+.lg-add{display:flex;gap:8px;margin-bottom:8px}
+.lg-add input{flex:1 1 auto;min-width:0;min-height:48px;padding:0 16px;background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;color:var(--lg-text);font-size:15px;font-family:var(--lg-sans);outline:none}
+.lg-add input::placeholder{color:#6b665f}
+.lg-add input:focus{border-color:var(--lg-accent)}
+.lg-add-btn{flex:0 0 auto;min-width:56px;min-height:48px;border-radius:10px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:15px;cursor:pointer}
+.lg-add-btn:hover{color:var(--lg-text);border-color:var(--lg-muted)}
+
+/* 待办列表 */
+.lg-todo{list-style:none;margin:6px 0 0;padding:0}
+.lg-todo li{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--lg-line)}
+.lg-todo li:last-child{border-bottom:0}
+.lg-todo li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55}
+.lg-todo li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
+.lg-del{flex:0 0 auto;width:32px;height:32px;display:grid;place-items:center;border:0;background:none;color:var(--lg-muted);cursor:pointer;font-size:16px;border-radius:8px;opacity:.55}
+.lg-del:hover{color:var(--danger);background:var(--lg-surface-2)}
+.lg-empty{margin:10px 0 2px;font-size:13.5px;line-height:1.8;color:var(--lg-muted)}
+.lg-plan-t{flex:1 1 auto;min-width:0;text-align:left;background:none;border:0;cursor:pointer;color:var(--lg-text);font-size:14.5px;line-height:1.5;padding:0;font-family:var(--lg-sans)}
+.lg-plan-t:hover{color:var(--lg-accent)}
+.lg-row-s{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--lg-line)}
+.lg-row-s:last-child{border-bottom:0}
+.lg-row-s i{font-style:normal;font-size:12px;color:var(--lg-muted);flex:0 0 50px;font-variant-numeric:tabular-nums}
+.lg-row-s span{font-size:13.5px;line-height:1.5;color:var(--lg-muted)}
 
 /* 执行界面：看不见别的，只有这一件 */
 .lg-run{position:fixed;inset:0;z-index:60;background:var(--lg-bg);display:flex;flex-direction:column}
@@ -279,107 +316,154 @@ window.__ModuleLoader__.load({
     /* ================= 今天 ================= */
 
     function TodayView({ state, run, busy }) {
-      const [mode, setMode] = useState(null);
-      const { day, season } = state;
-      const done = day.plan.filter((p) => p.done);
-      const current = day.plan.find((p) => !p.done);
-      const later = [
-        ...day.plan.filter((p) => !p.done && p.id !== current?.id).map((p) => ({ time: p.slot, title: p.title })),
-        ...day.after,
-      ].sort((a, b) => sortKey(a.time) - sortKey(b.time));
+      const [runner, setRunner] = useState(null);
+      const [draft, setDraft] = useState("");
+      const { day } = state;
 
-      const why =
-        current?.id === "create"
-          ? "现在到 20:30 是空的。写完就够，不用写得好。"
-          : current?.kind === "time"
-            ? "不用做到最好，做了就算。这一项只占这么点时间。"
-            : "不用想清楚再开始。";
+      const current = day.plan.find((p) => !p.done);
+      const later = [...(day.after || [])].sort((a, b) => sortKey(a.time) - sortKey(b.time));
+      const todos = Array.isArray(day.todos) ? day.todos : [];
+      const openTodos = todos.filter((t) => !t.done);
+      const doneTodos = todos.filter((t) => t.done);
+      const donePlan = day.plan.filter((p) => p.done).length;
+
+      const go = (item) => setRunner({ item, mode: item.kind === "output" ? "write" : "focus" });
+
+      const addTodo = () => {
+        const text = draft.trim();
+        if (!text) return;
+        setDraft("");
+        run("todoAdd", { text });
+      };
 
       return h(
         "div",
         null,
-        mode && current ? h(Runner, { item: current, mode, onClose: () => setMode(null), run }) : null,
-        h(
-        "div",
-        { className: "lg-grid" },
-        // 主栏
+        runner ? h(Runner, { item: runner.item, mode: runner.mode, onClose: () => setRunner(null), run }) : null,
+
         h(
           "div",
-          null,
-          h(Watching, { items: day.watching || [] }),
+          { className: "lg-grid" },
 
-          done.length
-            ? h("p", { className: "lg-done-line" }, h("em", null, "今早已完成"), "　", done.map((d) => d.title).join(" · "))
-            : null,
-
-          current
-            ? h(
-                "div",
-                null,
-                h("p", { className: "lg-nowtime" }, "现在 ", hm()),
-                h("h2", { className: "lg-nowtitle" }, current.title),
-                h("p", { className: "lg-why" }, why),
-                h(
-                  "div",
-                  { className: "lg-actions" },
-                  h("button", { className: "lg-btn", disabled: busy, onClick: () => setMode(current.kind === "output" ? "write" : "focus") }, "开始"),
-                  h("button", { className: "lg-ghost", onClick: () => run("skipAlt", {}) }, "晚点再说"),
-                ),
-                h(
-                  "div",
-                  { className: "lg-alt" },
-                  h("span", { className: "tag" }, "或者"),
-                  h("span", { className: "txt" }, day.alt),
-                  h("button", { onClick: () => run("skipAlt", {}) }, "换"),
-                ),
-              )
-            : h(
-                "div",
-                null,
-                h("p", { className: "lg-nowtime" }, "今天 · 都做完了"),
-                h("h2", { className: "lg-nowtitle" }, "剩下的交给今晚"),
-                h("p", { className: "lg-why" }, "22:45 手机放客厅，00:15 关灯。今天到这儿。"),
-                h(
-                  "div",
-                  { className: "lg-actions" },
-                  h("button", { className: "lg-ghost", onClick: () => day.plan.forEach((p) => run("toggle", { id: p.id, done: false })) }, "全部撤回重来"),
-                ),
-              ),
-
-          h("p", { className: "lg-sec" }, "之后"),
+          /* ---------- 左：今天要做（自由待办） ---------- */
           h(
             "div",
             null,
-            ...later.map((x, i) => h("div", { className: "lg-row", key: `l${i}` }, h("i", null, x.time), h("span", null, x.title))),
-          ),
-        ),
+            h(Watching, { items: day.watching || [] }),
 
-        // 侧栏
-        h(
-          "div",
-          null,
-          h(
-            "div",
-            { className: "lg-card" },
-            h("p", { className: "lg-card-title" }, "今天的三件"),
             h(
-              "ul",
-              { className: "lg-plan" },
-              ...day.plan.map((p) =>
-                h(
-                  "li",
-                  { key: p.id, className: p.done ? "on" : "" },
-                  h("span", { className: "lg-dot" + (p.done ? " on" : "") }, p.done ? h(Check) : null),
-                  h("span", { className: "t" }, p.title),
-                  h("span", { className: "s" }, p.slot),
-                ),
+              "div",
+              { className: "lg-nowbar" },
+              h("span", { className: "k" }, "现在 ", hm()),
+              h("span", { className: "v" }, current ? `下一件规定事项：${current.title}` : "规定事项都做完了"),
+              current ? h("button", { className: "lg-go", onClick: () => go(current) }, "开始") : null,
+            ),
+
+            h(
+              "div",
+              { className: "lg-card" },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "今天要做"),
+                h("span", { className: "lg-count-n" }, openTodos.length ? `还剩 ${openTodos.length} 件` : "清空了"),
               ),
+              h(
+                "div",
+                { className: "lg-add" },
+                h("input", {
+                  value: draft,
+                  placeholder: "写一件要做的事，回车添加",
+                  onChange: (e) => setDraft(e.target.value),
+                  onKeyDown: (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      addTodo();
+                    }
+                  },
+                }),
+                h("button", { className: "lg-add-btn", onClick: addTodo }, "加"),
+              ),
+              todos.length === 0
+                ? h("p", { className: "lg-empty" }, "还没有。想到什么就写一件，不用分类，也不用排优先级。")
+                : h(
+                    "ul",
+                    { className: "lg-todo" },
+                    ...[...openTodos, ...doneTodos].map((t) =>
+                      h(
+                        "li",
+                        { key: t.id, className: t.done ? "on" : "" },
+                        h(
+                          "button",
+                          {
+                            className: "lg-dot" + (t.done ? " on" : ""),
+                            onClick: () => run("todoToggle", { id: t.id, done: !t.done }),
+                            "aria-label": t.done ? "标记未完成" : "标记完成",
+                          },
+                          t.done ? h(Check) : null,
+                        ),
+                        h("span", { className: "t" }, t.text),
+                        h("button", { className: "lg-del", onClick: () => run("todoRemove", { id: t.id }), "aria-label": "删除" }, "×"),
+                      ),
+                    ),
+                  ),
             ),
           ),
 
-          h("p", { className: "lg-sec" }, "明天给你留了一件"),
-          h("div", { className: "lg-teaser" }, h("p", { className: "a" }, day.teaser), h("p", { className: "b" }, "不用现在决定。")),
-        ),
+          /* ---------- 右：规定事项 ---------- */
+          h(
+            "div",
+            null,
+            h(
+              "div",
+              { className: "lg-card" },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "规定事项"),
+                h("span", { className: "lg-count-n" }, `${donePlan} / ${day.plan.length}`),
+              ),
+              h(
+                "ul",
+                { className: "lg-plan" },
+                ...day.plan.map((p) =>
+                  h(
+                    "li",
+                    { key: p.id, className: p.done ? "on" : "" },
+                    h(
+                      "button",
+                      {
+                        className: "lg-dot" + (p.done ? " on" : ""),
+                        onClick: () => run("toggle", { id: p.id, done: !p.done }),
+                        "aria-label": p.done ? "撤销" : "标记完成",
+                      },
+                      p.done ? h(Check) : null,
+                    ),
+                    h("button", { className: "lg-plan-t", onClick: () => go(p), title: "进入这一件" }, p.title),
+                    h("span", { className: "s" }, p.slot),
+                  ),
+                ),
+              ),
+            ),
+
+            h(
+              "div",
+              { className: "lg-card", style: { marginTop: 16 } },
+              h("div", { className: "lg-card-head" }, h("span", null, "之后"), h("span", { className: "lg-count-n" }, "到点会提醒")),
+              ...later.map((x, i) => h("div", { className: "lg-row-s", key: `l${i}` }, h("i", null, x.time), h("span", null, x.title))),
+            ),
+
+            h(
+              "div",
+              { className: "lg-alt", style: { marginTop: 16 } },
+              h("span", { className: "tag" }, "或者"),
+              h("span", { className: "txt" }, day.alt),
+              h("button", { onClick: () => run("skipAlt", {}) }, "换"),
+            ),
+
+            h("p", { className: "lg-sec" }, "明天给你留了一件"),
+            h("div", { className: "lg-teaser" }, h("p", { className: "a" }, day.teaser), h("p", { className: "b" }, "不用现在决定。")),
+          ),
         ),
       );
     }

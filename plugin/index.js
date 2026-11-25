@@ -85,6 +85,7 @@ function makeDay(date) {
     intention: "",
     plan: defaultPlan(db.profile),
     after: defaultAfter,
+    todos: [],
     alt: "现在下去走 10 分钟，今天的光很好",
     teaser: "去城南那家面包店，坐 20 分钟。",
     watching: ["你 3 天没动", "今晚 19:00 后空窗", "周三降温，户外改周四"],
@@ -157,6 +158,26 @@ function applyOp(op, payload, date) {
       item.doneAt = payload.done ? new Date().toISOString() : null;
       return true;
     }
+    case "todoAdd": {
+      const text = String(payload.text ?? "").trim().slice(0, 200);
+      if (!text) return false;
+      if (!Array.isArray(day.todos)) day.todos = [];
+      day.todos.push({ id: `t${Date.now()}_${day.todos.length}`, text, done: false, at: new Date().toISOString() });
+      return true;
+    }
+    case "todoToggle": {
+      if (!Array.isArray(day.todos)) return false;
+      const t = day.todos.find((x) => x.id === payload.id);
+      if (!t) return false;
+      t.done = !!payload.done;
+      return true;
+    }
+    case "todoRemove": {
+      if (!Array.isArray(day.todos)) return false;
+      const n = day.todos.length;
+      day.todos = day.todos.filter((x) => x.id !== payload.id);
+      return day.todos.length !== n;
+    }
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
@@ -186,6 +207,7 @@ function viewModel(day) {
     watching: day.watching || [],
     plan: day.plan.map((p) => ({ title: p.title, slot: p.slot, done: !!p.done })),
     after: day.after || [],
+    todos: (day.todos || []).slice(0, 8).map((t) => ({ title: t.text, done: !!t.done })),
     alt: day.alt,
   };
 }
@@ -197,6 +219,9 @@ function summaryText(day) {
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
     (day.after || []).length ? `之后：${day.after.map((a) => `${a.time} ${a.title}`).join("；")}。` : "",
+    Array.isArray(day.todos) && day.todos.length
+      ? `自由待办 ${day.todos.filter((t) => t.done).length}/${day.todos.length}：${day.todos.filter((t) => !t.done).slice(0, 4).map((t) => t.text).join("；") || "都做完了"}`
+      : "",
     day.alt ? `或者：${day.alt}` : "",
     day.note ? `今天写下一句：${day.note}` : "",
   ]
@@ -365,6 +390,59 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool update",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_todo",
+        description:
+          "管理「人生游戏」今天左侧的自由待办清单（用户自己写的临时任务，和规定的三件地基不同）。action=add 需要 text；action=done 需要 id 或 text 关键词；action=remove 需要 id；action=list 只读。用户说「加一条待办」「把 xxx 记到待办」「那条做完了」时调它。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["add", "done", "remove", "list"] },
+            text: { type: "string", description: "action=add 的待办内容；action=done 时可用它做关键词匹配" },
+            id: { type: "string" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => todayView(value.view)),
+        },
+        async execute(args) {
+          await ready;
+          const day = getDay(todayKey());
+          if (!Array.isArray(day.todos)) day.todos = [];
+          const a = args && args.action;
+
+          if (a === "add") {
+            const text = String(args.text || "").trim().slice(0, 200);
+            if (!text) return outShape("要加什么？", viewModel(day));
+            day.todos.push({ id: `t${Date.now()}`, text, done: false, at: new Date().toISOString() });
+          } else if (a === "done") {
+            const t =
+              day.todos.find((x) => x.id === args.id) ||
+              day.todos.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
+            if (!t) return outShape("没找到那条待办。", viewModel(day));
+            t.done = true;
+          } else if (a === "remove") {
+            day.todos = day.todos.filter((x) => x.id !== args.id);
+          } else if (a !== "list") {
+            return outShape("不认识的 action。", viewModel(day));
+          }
+
+          if (a !== "list") {
+            db.rev += 1;
+            await persist();
+          }
+          return outShape(summaryText(day), viewModel(day));
+        },
+      }),
+    "lifegame: tool todo",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */
