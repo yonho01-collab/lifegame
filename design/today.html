@@ -7,6 +7,57 @@
     <title>今天 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
+      .now-time {
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        color: var(--primary);
+        margin: 0 0 10px;
+      }
+      .now-title {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 30px;
+        line-height: 1.35;
+        letter-spacing: 0.04em;
+        margin: 0 0 10px;
+      }
+      .now-why {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+      .now-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .now-actions .btn-primary {
+        flex: 1 1 auto;
+        width: auto;
+      }
+      .later-row {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .later-row:last-child {
+        border-bottom: 0;
+      }
+      .later-row .t {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        flex: 0 0 46px;
+        font-variant-numeric: tabular-nums;
+      }
+      .later-row .n {
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.5;
+      }
       .card-title {
         font-family: var(--font-serif);
         font-weight: 500;
@@ -22,11 +73,16 @@
         gap: 28px;
         margin-top: 12px;
       }
+      .teaser {
+        padding: 16px;
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+      }
     </style>
   </head>
   <body>
     <div class="statusbar">
-      <span class="num">9:41</span>
+      <span class="num">19:35</span>
       <span class="status-icons">
         <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
           <rect x="0" y="7" width="3" height="4" rx="1" />
@@ -47,59 +103,42 @@
     </div>
 
     <main class="page has-tabbar">
-      <div class="topline" style="margin-bottom: 8px">
+      <div class="topline" style="margin-bottom: 22px">
         <span>11月26日 周四 · 感恩节</span>
         <span>降噪季 3 / 14</span>
       </div>
-      <h1 class="title" style="font-size: 28px; margin-bottom: 12px">今天</h1>
-      <div class="progress" style="margin-bottom: 18px"><i style="width: 21%"></i></div>
 
-      <!-- 昨晚 -->
-      <section class="card" style="padding: 14px 16px">
-        <p class="brief">
-          昨夜 <strong class="num">01:42</strong> 睡。<span class="dim">冥想第 3 天，别断。</span>
-        </p>
-      </section>
+      <!-- 这一刻 -->
+      <p class="now-time">现在 19:35</p>
+      <h1 class="now-title">动一动 · 20 分钟</h1>
+      <p class="now-why">
+        健身房或楼下走快一点都算。今天还没动过，<br />
+        健康这一维今天还空着。
+      </p>
+      <div class="now-actions">
+        <a class="btn-primary" href="focus.html">开始</a>
+        <a class="btn-ghost" href="today.html">晚点再说</a>
+      </div>
 
-      <!-- 第一等级：地基 -->
-      <p class="section-label" style="margin: 20px 0 2px">地基 · 每天三件</p>
+      <!-- 之后 -->
+      <p class="section-label" style="margin: 26px 0 2px">之后</p>
+      <div>
+        <div class="later-row">
+          <span class="t">21:30</span>
+          <span class="n">冥想 10 分钟</span>
+        </div>
+        <div class="later-row">
+          <span class="t">22:45</span>
+          <span class="n">手机放到客厅</span>
+        </div>
+        <div class="later-row">
+          <span class="t">00:15</span>
+          <span class="n">关灯 · 目标 00:30 前睡着</span>
+        </div>
+      </div>
 
-      <label class="check-row">
-        <input type="checkbox" />
-        <span class="box">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
-          </svg>
-        </span>
-        <span class="label">动一动 · 20 分钟</span>
-        <span class="hint">健身房或楼下</span>
-      </label>
-
-      <label class="check-row">
-        <input type="checkbox" checked />
-        <span class="box">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
-          </svg>
-        </span>
-        <span class="label">冥想 · 10 分钟</span>
-        <span class="hint is-on">今天已做</span>
-      </label>
-
-      <label class="check-row">
-        <input type="checkbox" />
-        <span class="box">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2.6 7.4 5.6 10.4l5.8-6.4" />
-          </svg>
-        </span>
-        <span class="label">睡前手机放到客厅</span>
-        <span class="hint">22:45</span>
-      </label>
-
-      <!-- 第二等级：今天一件 -->
-      <p class="section-label" style="margin: 22px 0 8px">今天一件 · 第二等级</p>
-
+      <!-- 今天一件 -->
+      <p class="section-label" style="margin: 26px 0 8px">今天一件 · 第二等级</p>
       <section class="card" style="background: var(--surface-2)">
         <div class="row">
           <span class="tag">充实</span>
@@ -107,7 +146,7 @@
         </div>
         <h2 class="card-title">给一个很久没联系的人发条消息</h2>
         <p class="footnote" style="margin-bottom: 12px">
-          充实这一维两周没动过。这件事只要 5 分钟，而且今天做它有点意思。
+          充实这一维两周没动过。5 分钟就够，而且今天做它有点意思。
         </p>
         <div class="meta" style="margin-bottom: 16px">
           <span>5 分钟</span><span class="dot"></span><span>¥0</span><span class="dot"></span><span>在家</span>
@@ -119,10 +158,13 @@
         </div>
       </section>
 
-      <!-- 一句话 -->
-      <p class="section-label" style="margin: 22px 0 8px">一句话 · 可跳过</p>
-      <div class="oneliner">
-        <input type="text" placeholder="今天留下什么？" aria-label="今天的一句话" />
+      <!-- 明天 -->
+      <p class="section-label" style="margin: 24px 0 8px">明天给你留了一件</p>
+      <div class="teaser">
+        <p class="lead" style="font-size: 14px; margin-bottom: 6px">
+          去城南那家面包店，坐 20 分钟。
+        </p>
+        <p class="footnote">周六上午人少，面包刚出炉。不用现在决定。</p>
       </div>
     </main>
 

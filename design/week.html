@@ -7,18 +7,94 @@
     <title>这周 · 人生游戏</title>
     <link rel="stylesheet" href="app.css" />
     <style>
-      .note-item {
+      .report {
+        font-family: var(--font-serif);
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1.9;
+        letter-spacing: 0.02em;
+        margin: 0;
+      }
+      .report em {
+        font-style: normal;
+        color: var(--primary);
+      }
+      .trend {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .trend-item {
+        background: var(--surface);
+        padding: 14px 16px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .trend-item .k {
+        font-family: var(--font-serif);
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        color: var(--text);
+      }
+      .trend-item .v {
+        font-size: 13px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .trend-item .v b {
+        font-weight: 500;
+        margin-right: 5px;
+      }
+      .up {
+        color: var(--ok);
+      }
+      .flat {
+        color: var(--muted);
+      }
+      .down {
+        color: var(--danger);
+      }
+      .advice {
         display: flex;
         gap: 12px;
         padding: 13px 0;
         border-bottom: 1px solid var(--line);
       }
-      .note-item:last-child {
+      .advice:last-child {
         border-bottom: 0;
         padding-bottom: 2px;
       }
-      .note-item:first-child {
+      .advice:first-child {
         padding-top: 2px;
+      }
+      .advice .num {
+        font-size: 11px;
+        color: var(--primary);
+        flex: 0 0 16px;
+        padding-top: 3px;
+        letter-spacing: 0.04em;
+      }
+      .advice p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text);
+      }
+      .note-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .note-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 2px;
       }
       .note-item .nd {
         font-size: 11px;
@@ -35,14 +111,6 @@
       }
       .note-item p.is-empty {
         color: var(--muted);
-      }
-      .addon {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
       }
     </style>
   </head>
@@ -75,48 +143,50 @@
       </div>
       <h1 class="title" style="font-size: 28px; margin-bottom: 18px">这周</h1>
 
-      <section class="card" style="padding: 6px 16px">
-        <div class="dim-row">
-          <span class="dim-name">健康</span>
-          <span class="day-bars">
-            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
-          </span>
-          <span class="dim-count">6 / 7</span>
-        </div>
-        <div class="dim-row">
-          <span class="dim-name">专注</span>
-          <span class="day-bars">
-            <i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i>
-          </span>
-          <span class="dim-count">4 / 7</span>
-        </div>
-        <div class="dim-row">
-          <span class="dim-name">轻盈</span>
-          <span class="day-bars">
-            <i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
-          </span>
-          <span class="dim-count">5 / 7</span>
-        </div>
-        <div class="dim-row is-weak">
-          <span class="dim-name">充实</span>
-          <span class="day-bars">
-            <i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i>
-          </span>
-          <span class="dim-count">3 / 7</span>
-        </div>
-        <p class="footnote" style="margin: 10px 0 0; line-height: 1.7">
-          健康 = 睡够 + 动了 · 专注 = 冥想 + 沉浸 · 轻盈 = 睡前离床 + 感受 · 充实 = 今天留下东西
+      <!-- 叙事 -->
+      <section class="card">
+        <p class="report">
+          你动了 <em>4 次</em>，比上周多 1 次。有 3 天在 1 点后睡——那三天第二天的动一动都没做成。<em>睡眠还是这周的地基。</em>
         </p>
       </section>
 
-      <section class="card" style="margin-top: 12px; border-left: 1px solid rgba(201, 168, 106, 0.5)">
-        <p class="card-label">这周最弱的一维</p>
-        <p class="lead">
-          充实只达成 3 天。<strong>下周今日卡会往这边偏，但不加剂量</strong>——先把「每天留一件」变成习惯，再说做更多。
-        </p>
+      <p class="section-label">趋势 · 对比上周</p>
+      <div class="trend">
+        <div class="trend-item">
+          <span class="k">健康</span>
+          <span class="v"><b class="up">↑</b>4 次</span>
+        </div>
+        <div class="trend-item">
+          <span class="k">专注</span>
+          <span class="v"><b class="flat">→</b>4 次</span>
+        </div>
+        <div class="trend-item">
+          <span class="k">轻盈</span>
+          <span class="v"><b class="up">↑</b>5 天</span>
+        </div>
+        <div class="trend-item">
+          <span class="k">充实</span>
+          <span class="v"><b class="down">↓</b>3 天</span>
+        </div>
+      </div>
+
+      <p class="section-label">三条建议</p>
+      <section class="card" style="padding: 12px 16px">
+        <div class="advice">
+          <span class="num">01</span>
+          <p>下周三降到 8℃ 还下雨，把户外换到周四；那天你 19:00 前能到家。</p>
+        </div>
+        <div class="advice">
+          <span class="num">02</span>
+          <p>你周三、周四上午 10:00 有会：深度时段别排早上，就排 21:30。</p>
+        </div>
+        <div class="advice">
+          <span class="num">03</span>
+          <p>充实最弱，而且两周没有创造过。下周排 2 张创造卡——写、拍、画，任选。</p>
+        </div>
       </section>
 
-      <p class="section-label">留下的 5 条</p>
+      <p class="section-label">这一周你留下的</p>
       <section class="card" style="padding: 12px 16px">
         <div class="note-item">
           <span class="nd">11/23</span>
@@ -140,14 +210,10 @@
         </div>
       </section>
 
-      <div class="addon" style="margin-top: 12px">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--primary)" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-          <path d="M9 2.4v13.2M2.4 9h13.2" />
-        </svg>
-        <p class="footnote" style="color: var(--text); margin: 0">
-          下周一自动加码：冥想 10 → 15 分钟
-        </p>
-      </div>
+      <section class="card" style="margin-top: 12px">
+        <p class="card-label">下周一开始</p>
+        <p class="lead">冥想 10 → 15 分钟。自动加，不用你改设置。</p>
+      </section>
     </main>
 
     <nav class="tabbar">
