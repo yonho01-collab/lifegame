@@ -10,13 +10,25 @@
     "./icon": "./icon.svg",
     "./cordis.patch.yml": "./cordis.patch.yml"
   },
-  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg"],
+  "files": [
+    "index.js",
+    "client.js",
+    "view.js",
+    "tool-card.js",
+    "cordis.patch.yml",
+    "icon.svg"
+  ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "immediately": true,
-      "inject": ["@deepseek-ai/dsh-client-ui-sidebar", "@deepseek-ai/dsh-client-ui-layout"]
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
     }
   }
 }

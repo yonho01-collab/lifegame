@@ -12,6 +12,8 @@
  *   - 日期由客户端给（用户本地时区），服务端不猜时区。
  */
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { toolCard } from "./tool-card.js";
+import { todayView } from "./view.js";
 import path from "node:path";
 import os from "node:os";
 
@@ -155,6 +157,9 @@ function applyOp(op, payload, date) {
       item.doneAt = payload.done ? new Date().toISOString() : null;
       return true;
     }
+    case "note":
+      day.note = String(payload.text ?? "").slice(0, 500);
+      return true;
     case "setIntention":
       day.intention = String(payload.text ?? "").slice(0, 200);
       return true;
@@ -166,6 +171,37 @@ function applyOp(op, payload, date) {
     default:
       return false;
   }
+}
+
+/* ---------------- 给 Agent 与手机用的视图模型 ---------------- */
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function viewModel(day) {
+  return {
+    title: `今天 · ${db.season.name} ${db.season.dayIndex}/${db.season.totalDays}`,
+    watching: day.watching || [],
+    plan: day.plan.map((p) => ({ title: p.title, slot: p.slot, done: !!p.done })),
+    after: day.after || [],
+    alt: day.alt,
+  };
+}
+
+function summaryText(day) {
+  const done = day.plan.filter((p) => p.done).length;
+  const cur = day.plan.find((p) => !p.done);
+  return [
+    `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
+    cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
+    (day.after || []).length ? `之后：${day.after.map((a) => `${a.time} ${a.title}`).join("；")}。` : "",
+    day.alt ? `或者：${day.alt}` : "",
+    day.note ? `今天写下一句：${day.note}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /* ---------------- 工具 ---------------- */
@@ -198,7 +234,7 @@ function readBody(req) {
 
 /* ---------------- 插件入口 ---------------- */
 
-export const inject = ["webServer"];
+export const inject = ["webServer", "tools"];
 
 export function apply(ctx) {
   const log = (m) => {
@@ -256,5 +292,78 @@ export function apply(ctx) {
         },
       }),
     "lifegame: op route",
+  );
+
+  /* ---- Agent 工具：这是手机端的入口 ---- */
+
+  const outShape = (text, view) => ({ text, view });
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_today",
+        description:
+          "读取「人生游戏」里今天的安排：三件地基（冥想 / 动一动 / 写点东西）、此刻该做的那一件、之后的时间节点、以及「或者」的轻量替代。用户问「今天要做什么」「我现在该干嘛」「今天怎么样」时调它。返回后手机上会显示一张原生卡片。",
+        parameters: { type: "object", additionalProperties: false, properties: {}, required: [] },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => todayView(value.view)),
+        },
+        async execute() {
+          await ready;
+          const day = getDay(todayKey());
+          return outShape(summaryText(day), viewModel(day));
+        },
+      }),
+    "lifegame: tool today",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_update",
+        description:
+          "改「人生游戏」今天的记录。用户说「做完了」「第一件做完了」「撤回」「换一个」「帮我记一句……」时调它。action=done/undo 时 id 取 meditate / move / create（不确定就省略，默认取下一个未完成的）；action=note 时把用户原话放进 text。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["done", "undo", "swap", "note"] },
+            id: { type: "string", description: "meditate / move / create" },
+            text: { type: "string", description: "action=note 时要记下的一句话" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => todayView(value.view)),
+        },
+        async execute(args) {
+          await ready;
+          const day = getDay(todayKey());
+          const a = args && args.action;
+
+          if (a === "done" || a === "undo") {
+            const item = day.plan.find((p) => p.id === args.id) || day.plan.find((p) => !p.done);
+            if (!item) return outShape("今天没有可标记的项。", viewModel(day));
+            item.done = a === "done";
+            item.doneAt = item.done ? new Date().toISOString() : null;
+          } else if (a === "swap") {
+            const i = ALT_POOL.indexOf(day.alt);
+            day.alt = ALT_POOL[(i + 1) % ALT_POOL.length];
+          } else if (a === "note") {
+            day.note = String(args.text || "").slice(0, 500);
+          } else {
+            return outShape("不认识的 action。", viewModel(day));
+          }
+
+          db.rev += 1;
+          await persist();
+          return outShape(summaryText(day), viewModel(day));
+        },
+      }),
+    "lifegame: tool update",
   );
 }

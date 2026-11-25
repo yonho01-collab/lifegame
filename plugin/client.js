@@ -161,6 +161,27 @@ window.__ModuleLoader__.load({
 @media (max-width:820px){ .lg-big{font-size:40px} }
 
 .lg-muted{color:var(--lg-muted)}
+
+/* 执行界面：看不见别的，只有这一件 */
+.lg-run{position:fixed;inset:0;z-index:60;background:var(--lg-bg);display:flex;flex-direction:column}
+.lg-run-top{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;gap:12px}
+.lg-run-name{font-size:13px;letter-spacing:.14em;color:var(--lg-muted)}
+.lg-count{font-size:13px;letter-spacing:.06em;color:var(--lg-muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px}
+.lg-count.ok{color:var(--lg-accent)}
+.lg-x{width:44px;height:44px;display:grid;place-items:center;color:var(--lg-muted);background:none;border:0;cursor:pointer;border-radius:999px}
+.lg-x:hover{background:var(--lg-surface)}
+.lg-paper{flex:1 1 auto;margin:0 22px;padding:26px 24px;background:var(--lg-surface-2);border-radius:18px;display:flex;flex-direction:column;overflow:hidden}
+.lg-paper textarea{flex:1 1 auto;width:100%;min-height:180px;background:none;border:0;outline:none;resize:none;color:var(--lg-text);font-family:var(--lg-serif);font-size:17.5px;line-height:2;letter-spacing:.02em}
+.lg-paper textarea::placeholder{color:#6b665f}
+.lg-foot{padding:18px 22px 26px}
+.lg-timer{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px 40px}
+.lg-ring{position:relative;width:min(240px,64vw);aspect-ratio:1}
+.lg-ring svg{width:100%;height:100%;display:block}
+.lg-ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.lg-ring-n{font-family:var(--lg-serif);font-size:40px;font-weight:500;letter-spacing:.04em;font-variant-numeric:tabular-nums;line-height:1.24;color:var(--lg-accent)}
+.lg-ring-l{font-size:11px;letter-spacing:.22em;color:var(--lg-muted)}
+.lg-run-item{font-family:var(--lg-serif);font-size:22px;font-weight:500;letter-spacing:.04em;text-align:center;margin:0 0 6px}
+.lg-run-hint{font-size:12.5px;color:var(--lg-muted);letter-spacing:.04em;text-align:center;margin:0}
 .lg-state{padding:120px 0;text-align:center;color:var(--lg-muted);font-size:14px;letter-spacing:.08em}
 `;
 
@@ -187,9 +208,78 @@ window.__ModuleLoader__.load({
       return h("div", { className: "lg-watch" }, ...kids);
     }
 
+    /* ================= 执行界面 ================= */
+
+    const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+    function Runner({ item, mode, onClose, run }) {
+      const total = Math.max(1, (item?.minutes || 20) * 60);
+      const [text, setText] = useState(item?.note || "");
+      const [left, setLeft] = useState(total);
+
+      useEffect(() => {
+        if (mode !== "focus") return;
+        const t = setInterval(() => setLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
+        return () => clearInterval(t);
+      }, [mode]);
+
+      const finish = async () => {
+        if (text.trim()) await run("note", { text: text.trim() });
+        if (item?.id) await run("toggle", { id: item.id, done: true });
+        onClose();
+      };
+
+      const done = mode === "write" ? text.trim().length >= 200 : left === 0;
+      const pct = mode === "write" ? Math.min(1, text.trim().length / 200) : 1 - left / total;
+
+      return h(
+        "div",
+        { className: "lg-run" },
+        h(
+          "div",
+          { className: "lg-run-top" },
+          h("button", { className: "lg-x", onClick: onClose, "aria-label": "退出" },
+            h("svg", { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round" },
+              h("path", { d: "M4.5 4.5l9 9M13.5 4.5l-9 9" }))),
+          h("span", { className: "lg-run-name" }, item?.title || ""),
+          h("span", { className: "lg-count" + (done ? " ok" : "") }, mode === "write" ? `${text.trim().length} 字` : fmt(left)),
+        ),
+
+        mode === "write"
+          ? h("div", { className: "lg-paper" },
+              h("textarea", {
+                value: text,
+                placeholder: "随便写什么。不用写得好。",
+                onChange: (e) => setText(e.target.value),
+                spellCheck: false,
+              }))
+          : h("div", { className: "lg-timer" },
+              h("p", { className: "lg-run-item" }, item?.title || ""),
+              h("p", { className: "lg-run-hint" }, "手机放远一点。这一屏不会响。"),
+              h("div", { className: "lg-ring" },
+                h("svg", { viewBox: "0 0 260 260", "aria-hidden": true },
+                  h("circle", { cx: 130, cy: 130, r: 110, fill: "none", stroke: "#26262b", strokeWidth: 1.5 }),
+                  h("circle", {
+                    cx: 130, cy: 130, r: 110, fill: "none", stroke: "var(--lg-accent)", strokeWidth: 2,
+                    strokeLinecap: "round",
+                    strokeDasharray: `${(2 * Math.PI * 110 * pct).toFixed(1)} 691.15`,
+                    transform: "rotate(-90 130 130)",
+                  })),
+                h("div", { className: "lg-ring-c" },
+                  h("span", { className: "lg-ring-n" }, fmt(left)),
+                  h("span", { className: "lg-ring-l" }, left === 0 ? "时间到了" : "还剩")))),
+
+        h("div", { className: "lg-foot" },
+          h("button", { className: "lg-btn", style: { width: "100%", padding: 0 }, onClick: finish }, done ? "完成" : mode === "write" ? "写完，完成" : "提前结束，算完成"),
+          h("p", { style: { margin: "12px 0 0", textAlign: "center", fontSize: 12, color: "var(--lg-muted)" } },
+            mode === "write" ? "写完会记进今天，也会进「本周」你留下的话。" : "做完了就记一笔，不用回来打勾。")),
+      );
+    }
+
     /* ================= 今天 ================= */
 
     function TodayView({ state, run, busy }) {
+      const [mode, setMode] = useState(null);
       const { day, season } = state;
       const done = day.plan.filter((p) => p.done);
       const current = day.plan.find((p) => !p.done);
@@ -206,6 +296,10 @@ window.__ModuleLoader__.load({
             : "不用想清楚再开始。";
 
       return h(
+        "div",
+        null,
+        mode && current ? h(Runner, { item: current, mode, onClose: () => setMode(null), run }) : null,
+        h(
         "div",
         { className: "lg-grid" },
         // 主栏
@@ -228,7 +322,7 @@ window.__ModuleLoader__.load({
                 h(
                   "div",
                   { className: "lg-actions" },
-                  h("button", { className: "lg-btn", disabled: busy, onClick: () => run("toggle", { id: current.id, done: true }) }, "开始"),
+                  h("button", { className: "lg-btn", disabled: busy, onClick: () => setMode(current.kind === "output" ? "write" : "focus") }, "开始"),
                   h("button", { className: "lg-ghost", onClick: () => run("skipAlt", {}) }, "晚点再说"),
                 ),
                 h(
@@ -285,6 +379,7 @@ window.__ModuleLoader__.load({
 
           h("p", { className: "lg-sec" }, "明天给你留了一件"),
           h("div", { className: "lg-teaser" }, h("p", { className: "a" }, day.teaser), h("p", { className: "b" }, "不用现在决定。")),
+        ),
         ),
       );
     }
