@@ -17,6 +17,13 @@ window.__ModuleLoader__.load({
       return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     };
     const shortDate = (s) => s.slice(5).replace("-", "/");
+    // 凌晨 6 点前的时间视为"次日"，否则 00:15 会被排到最前面
+    const sortKey = (t) => {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || ""));
+      if (!m) return 99999;
+      const hh = Number(m[1]);
+      return (hh < 6 ? hh + 24 : hh) * 60 + Number(m[2]);
+    };
     const newId = () => globalThis.crypto?.randomUUID?.() || `op-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     async function fetchState() {
@@ -137,7 +144,7 @@ window.__ModuleLoader__.load({
 .lg-teaser .b{font-size:12.5px;color:var(--lg-muted);line-height:1.7}
 
 .lg-bars{display:flex;gap:6px;margin:6px 0 0}
-.lg-bars i{flex:1 1 0;height:44px;border-radius:6px;background:var(--lg-surface-2);position:relative;overflow:hidden}
+.lg-bars i{flex:1 1 0;height:64px;border-radius:6px;background:var(--lg-surface-2);position:relative;overflow:hidden}
 .lg-bars i b{position:absolute;left:0;right:0;bottom:0;background:rgba(201,168,106,.55);display:block}
 .lg-bars i.full b{background:var(--lg-accent)}
 .lg-bars-label{display:flex;gap:6px;margin-top:8px}
@@ -189,7 +196,7 @@ window.__ModuleLoader__.load({
       const later = [
         ...day.plan.filter((p) => !p.done && p.id !== current?.id).map((p) => ({ time: p.slot, title: p.title })),
         ...day.after,
-      ].sort((a, b) => String(a.time).localeCompare(String(b.time)));
+      ].sort((a, b) => sortKey(a.time) - sortKey(b.time));
 
       const why =
         current?.id === "create"
@@ -292,6 +299,12 @@ window.__ModuleLoader__.load({
       const fullDays = week.filter((d) => d.total > 0 && d.done === d.total).length;
       const touched = week.filter((d) => d.done > 0).length;
 
+      const best = week.reduce((a, b) => (b.done > a.done ? b : a), week[0] || { done: 0, date: "" });
+      const bestLabel =
+        !best || best.done === 0
+          ? "这周还没有哪一天算得上。不急，明天就可能是。"
+          : `${shortDate(best.date)} 那天做完了 ${best.done} 件，是这周最多的一天。`;
+
       const verdict =
         total === 0
           ? "这一周还没有记录。不用补，从今天开始记一笔就够。"
@@ -334,11 +347,12 @@ window.__ModuleLoader__.load({
           h(
             "div",
             { className: "lg-card" },
-            h("p", { className: "lg-card-title" }, "说明"),
+            h("p", { className: "lg-card-title" }, "这一周最快的一天"),
+            h("p", { style: { margin: "0 0 10px", fontSize: 15, lineHeight: 1.8 } }, bestLabel),
             h(
               "p",
-              { style: { margin: 0, fontSize: 13.5, lineHeight: 1.85, color: "var(--lg-muted)" } },
-              "这一页现在只统计完成情况。四维趋势、可解释建议、推荐三样，按设计稿在下一版接入——它们需要 Agent 参与生成，不是前端自己算的。",
+              { style: { margin: 0, fontSize: 13, lineHeight: 1.85, color: "var(--lg-muted)" } },
+              "不比上周，不排名次。只看得出你在哪天更像你自己。",
             ),
           ),
         ),
