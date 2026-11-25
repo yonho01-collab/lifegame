@@ -86,6 +86,9 @@ function makeDay(date) {
     plan: defaultPlan(db.profile),
     after: defaultAfter,
     todos: [],
+    sessions: [],
+    timer: null,
+    inspiration: null,
     alt: "现在下去走 10 分钟，今天的光很好",
     teaser: "去城南那家面包店，坐 20 分钟。",
     watching: ["你 3 天没动", "今晚 19:00 后空窗", "周三降温，户外改周四"],
@@ -178,6 +181,32 @@ function applyOp(op, payload, date) {
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
     }
+    case "timerStart": {
+      if (day.timer) return false;
+      day.timer = { label: String(payload.label ?? "专注").slice(0, 60), startedAt: new Date().toISOString() };
+      return true;
+    }
+    case "timerStop": {
+      if (!day.timer) return false;
+      const started = new Date(day.timer.startedAt).getTime();
+      const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
+      if (!Array.isArray(day.sessions)) day.sessions = [];
+      day.sessions.push({
+        id: `s${Date.now()}`,
+        label: day.timer.label,
+        startedAt: day.timer.startedAt,
+        endedAt: new Date().toISOString(),
+        seconds,
+      });
+      day.timer = null;
+      return true;
+    }
+    case "setInspiration": {
+      const text = String(payload.text ?? "").trim().slice(0, 240);
+      if (!text) return false;
+      day.inspiration = { text, from: String(payload.from ?? "").slice(0, 60), at: new Date().toISOString() };
+      return true;
+    }
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
@@ -208,6 +237,8 @@ function viewModel(day) {
     plan: day.plan.map((p) => ({ title: p.title, slot: p.slot, done: !!p.done })),
     after: day.after || [],
     todos: (day.todos || []).slice(0, 8).map((t) => ({ title: t.text, done: !!t.done })),
+    focusMinutes: Math.round(((day.sessions || []).reduce((n, x) => n + (x.seconds || 0), 0)) / 60),
+    inspiration: day.inspiration ? day.inspiration.text : null,
     alt: day.alt,
   };
 }
@@ -222,6 +253,8 @@ function summaryText(day) {
     Array.isArray(day.todos) && day.todos.length
       ? `自由待办 ${day.todos.filter((t) => t.done).length}/${day.todos.length}：${day.todos.filter((t) => !t.done).slice(0, 4).map((t) => t.text).join("；") || "都做完了"}`
       : "",
+    (day.sessions || []).length ? `今天已专注 ${Math.round(day.sessions.reduce((n, x) => n + (x.seconds || 0), 0) / 60)} 分钟。` : "",
+    day.inspiration ? `今天的灵感：${day.inspiration.text}` : "",
     day.alt ? `或者：${day.alt}` : "",
     day.note ? `今天写下一句：${day.note}` : "",
   ]
@@ -443,6 +476,86 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool todo",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_timer",
+        description:
+          "「人生游戏」的专注计时。action=start 开始计时（可选 label 说明在做什么）；action=stop 结束并记录用时；action=status 看当前状态与今天累计。用户说「开始计时」「我在写东西」「停一下」「今天专注了多久」时调它。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["start", "stop", "status"] },
+            label: { type: "string", description: "action=start 时在做什么，如「写 200 字」" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => todayView(value.view)),
+        },
+        async execute(args) {
+          await ready;
+          const day = getDay(todayKey());
+          const a = args && args.action;
+          if (a === "start") {
+            if (day.timer) return outShape(`已经在计时了（${day.timer.label}）。`, viewModel(day));
+            day.timer = { label: String(args.label || "专注").slice(0, 60), startedAt: new Date().toISOString() };
+          } else if (a === "stop") {
+            if (!day.timer) return outShape("现在没有在计时。", viewModel(day));
+            const seconds = Math.max(1, Math.round((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000));
+            if (!Array.isArray(day.sessions)) day.sessions = [];
+            day.sessions.push({ id: `s${Date.now()}`, label: day.timer.label, startedAt: day.timer.startedAt, endedAt: new Date().toISOString(), seconds });
+            day.timer = null;
+          } else if (a !== "status") {
+            return outShape("不认识的 action。", viewModel(day));
+          }
+          if (a !== "status") {
+            db.rev += 1;
+            await persist();
+          }
+          return outShape(summaryText(day), viewModel(day));
+        },
+      }),
+    "lifegame: tool timer",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_inspiration",
+        description:
+          "给「人生游戏」写今天的灵感（一句话，会显示在今天页右栏）。内容应该具体、当下、像朋友随口说的一句，不要鸡汤和口号。可写今天的光/天气/节气、他近几天的状态、或是「或者」这类轻量替代。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            text: { type: "string", description: "一句灵感，≤ 80 字，具体、不喊口号" },
+            from: { type: "string", description: "来源，如「天气」「节气」「你的记录」「随口」" },
+          },
+          required: ["text"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => todayView(value.view)),
+        },
+        async execute(args) {
+          await ready;
+          const day = getDay(todayKey());
+          const text = String(args.text || "").trim().slice(0, 240);
+          if (!text) return outShape("要写什么？", viewModel(day));
+          day.inspiration = { text, from: String(args.from || "").slice(0, 60), at: new Date().toISOString() };
+          db.rev += 1;
+          await persist();
+          return outShape(summaryText(day), viewModel(day));
+        },
+      }),
+    "lifegame: tool inspiration",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

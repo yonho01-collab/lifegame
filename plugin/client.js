@@ -164,6 +164,20 @@ window.__ModuleLoader__.load({
 
 .lg-muted{color:var(--lg-muted)}
 
+/* 专注卡 */
+.lg-focus{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.lg-focus .big{font-family:var(--lg-serif);font-size:26px;letter-spacing:.02em;line-height:1.2;color:var(--lg-accent);font-variant-numeric:tabular-nums}
+.lg-focus .unit{font-size:12px;color:var(--lg-muted);margin-left:2px}
+.lg-focus .sub{flex:1 1 100%;font-size:12.5px;color:var(--lg-muted);line-height:1.7;margin:0}
+.lg-focus-btn{margin-left:auto;flex:0 0 auto;min-height:42px;padding:0 18px;border-radius:9px;border:1px solid rgba(201,168,106,.45);background:none;color:var(--lg-accent);font-size:13.5px;cursor:pointer;letter-spacing:.04em}
+.lg-focus-btn:hover{background:rgba(201,168,106,.1)}
+
+/* 灵感 */
+.lg-insp{margin:0}
+.lg-insp .q{font-family:var(--lg-serif);font-size:17px;line-height:1.9;letter-spacing:.03em;color:var(--lg-text);margin:0 0 10px}
+.lg-insp .from{font-size:11.5px;color:var(--lg-muted);letter-spacing:.06em;margin:0}
+.lg-insp .none{font-size:13px;line-height:1.85;color:var(--lg-muted);margin:0}
+
 /* 现在这条 */
 .lg-nowbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:16px;background:var(--lg-surface);border-radius:10px;font-size:13px}
 .lg-nowbar .k{color:var(--lg-accent);letter-spacing:.16em;font-size:11.5px;flex:0 0 auto}
@@ -250,24 +264,35 @@ window.__ModuleLoader__.load({
     const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
     function Runner({ item, mode, onClose, run }) {
+      const isTimer = mode === "timer";
       const total = Math.max(1, (item?.minutes || 20) * 60);
       const [text, setText] = useState(item?.note || "");
-      const [left, setLeft] = useState(total);
+      const [left, setLeft] = useState(isTimer ? 0 : total);
 
       useEffect(() => {
-        if (mode !== "focus") return;
-        const t = setInterval(() => setLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
-        return () => clearInterval(t);
+        if (mode === "focus") {
+          const t = setInterval(() => setLeft((x) => (x > 0 ? x - 1 : 0)), 1000);
+          return () => clearInterval(t);
+        }
+        if (mode === "timer") {
+          const t = setInterval(() => setLeft((x) => x + 1), 1000);
+          return () => clearInterval(t);
+        }
       }, [mode]);
 
       const finish = async () => {
+        if (isTimer) {
+          if (left >= 10) await run("timerStop", {});
+          onClose();
+          return;
+        }
         if (text.trim()) await run("note", { text: text.trim() });
         if (item?.id) await run("toggle", { id: item.id, done: true });
         onClose();
       };
 
-      const done = mode === "write" ? text.trim().length >= 200 : left === 0;
-      const pct = mode === "write" ? Math.min(1, text.trim().length / 200) : 1 - left / total;
+      const done = mode === "write" ? text.trim().length >= 200 : isTimer ? false : left === 0;
+      const pct = mode === "write" ? Math.min(1, text.trim().length / 200) : isTimer ? (left % 3600) / 3600 : 1 - left / total;
 
       return h(
         "div",
@@ -278,7 +303,7 @@ window.__ModuleLoader__.load({
           h("button", { className: "lg-x", onClick: onClose, "aria-label": "退出" },
             h("svg", { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round" },
               h("path", { d: "M4.5 4.5l9 9M13.5 4.5l-9 9" }))),
-          h("span", { className: "lg-run-name" }, item?.title || ""),
+          h("span", { className: "lg-run-name" }, isTimer ? "专注计时" : item?.title || ""),
           h("span", { className: "lg-count" + (done ? " ok" : "") }, mode === "write" ? `${text.trim().length} 字` : fmt(left)),
         ),
 
@@ -291,7 +316,7 @@ window.__ModuleLoader__.load({
                 spellCheck: false,
               }))
           : h("div", { className: "lg-timer" },
-              h("p", { className: "lg-run-item" }, item?.title || ""),
+              h("p", { className: "lg-run-item" }, isTimer ? "现在，只有这一件事" : item?.title || ""),
               h("p", { className: "lg-run-hint" }, "手机放远一点。这一屏不会响。"),
               h("div", { className: "lg-ring" },
                 h("svg", { viewBox: "0 0 260 260", "aria-hidden": true },
@@ -304,12 +329,17 @@ window.__ModuleLoader__.load({
                   })),
                 h("div", { className: "lg-ring-c" },
                   h("span", { className: "lg-ring-n" }, fmt(left)),
-                  h("span", { className: "lg-ring-l" }, left === 0 ? "时间到了" : "还剩")))),
+                  h("span", { className: "lg-ring-l" }, isTimer ? "已专注" : left === 0 ? "时间到了" : "还剩")))),
 
         h("div", { className: "lg-foot" },
-          h("button", { className: "lg-btn", style: { width: "100%", padding: 0 }, onClick: finish }, done ? "完成" : mode === "write" ? "写完，完成" : "提前结束，算完成"),
+          h("button", { className: "lg-btn", style: { width: "100%", padding: 0 }, onClick: finish },
+            isTimer ? (left < 10 ? "太短，不留记录" : "结束并记录") : done ? "完成" : mode === "write" ? "写完，完成" : "提前结束，算完成"),
           h("p", { style: { margin: "12px 0 0", textAlign: "center", fontSize: 12, color: "var(--lg-muted)" } },
-            mode === "write" ? "写完会记进今天，也会进「本周」你留下的话。" : "做完了就记一笔，不用回来打勾。")),
+            isTimer
+              ? "用时会计进今天和本周。少于 10 秒不留记录。"
+              : mode === "write"
+                ? "写完会记进今天，也会进「本周」你留下的话。"
+                : "做完了就记一笔，不用回来打勾。")),
       );
     }
 
@@ -326,6 +356,9 @@ window.__ModuleLoader__.load({
       const openTodos = todos.filter((t) => !t.done);
       const doneTodos = todos.filter((t) => t.done);
       const donePlan = day.plan.filter((p) => p.done).length;
+      const sessions = Array.isArray(day.sessions) ? day.sessions : [];
+      const focusMin = Math.round(sessions.reduce((n, x) => n + (x.seconds || 0), 0) / 60);
+      const longest = sessions.length ? Math.round(Math.max(...sessions.map((x) => x.seconds || 0)) / 60) : 0;
 
       const go = (item) => setRunner({ item, mode: item.kind === "output" ? "write" : "focus" });
 
@@ -357,6 +390,32 @@ window.__ModuleLoader__.load({
               h("span", { className: "k" }, "现在 ", hm()),
               h("span", { className: "v" }, current ? `下一件规定事项：${current.title}` : "规定事项都做完了"),
               current ? h("button", { className: "lg-go", onClick: () => go(current) }, "开始") : null,
+            ),
+
+            h(
+              "div",
+              { className: "lg-card", style: { marginBottom: 16 } },
+              h("div", { className: "lg-card-head" }, h("span", null, "专注"), h("span", { className: "lg-count-n" }, "计时自动记")),
+              h(
+                "div",
+                { className: "lg-focus" },
+                h("span", { className: "big" }, focusMin),
+                h("span", { className: "unit" }, "分钟"),
+                h(
+                  "button",
+                  { className: "lg-focus-btn", onClick: () => setRunner({ item: null, mode: "timer" }) },
+                  day.timer ? "计时中" : "开始专注",
+                ),
+                h(
+                  "p",
+                  { className: "sub" },
+                  day.timer
+                    ? `正在计时：${day.timer.label}`
+                    : sessions.length
+                      ? `今天 ${sessions.length} 段，最长 ${longest} 分钟。`
+                      : "还没有记录。点开始就计时，结束自动记下用时。",
+                ),
+              ),
             ),
 
             h(
@@ -444,6 +503,20 @@ window.__ModuleLoader__.load({
                   ),
                 ),
               ),
+            ),
+
+            h(
+              "div",
+              { className: "lg-card", style: { marginTop: 16 } },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "灵感"),
+                h("span", { className: "lg-count-n" }, day.inspiration ? day.inspiration.from || "" : ""),
+              ),
+              day.inspiration
+                ? h("div", { className: "lg-insp" }, h("p", { className: "q" }, `「${day.inspiration.text}」`), h("p", { className: "from" }, "它替你想到的"))
+                : h("p", { className: "lg-empty" }, "今天的还没到。它一般早上来，也可以直接跟我说「给我一条今天的灵感」。"),
             ),
 
             h(
