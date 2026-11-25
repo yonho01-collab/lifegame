@@ -13,7 +13,7 @@
  */
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { toolCard } from "./tool-card.js";
-import { todayView } from "./view.js";
+import { todayView, weekView } from "./view.js";
 import path from "node:path";
 import os from "node:os";
 
@@ -64,6 +64,7 @@ async function load() {
   }
   if (!Array.isArray(db.appliedOps)) db.appliedOps = [];
   if (!db.days) db.days = {};
+  if (!db.weeks) db.weeks = {};
   await persist();
 }
 
@@ -95,6 +96,24 @@ function makeDay(date) {
   };
 }
 
+function weekKeyOf(d) {
+  const t = new Date(d || new Date());
+  const off = (t.getDay() + 6) % 7; // 周一 = 0
+  t.setDate(t.getDate() - off);
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+
+function getWeek() {
+  const k = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
+  if (!db.weeks[k]) {
+    db.weeks[k] = { key: k, goals: [], comment: null };
+    persist();
+  }
+  const w = db.weeks[k];
+  if (!Array.isArray(w.goals)) w.goals = [];
+  return w;
+}
+
 function getDay(date) {
   const key = date || new Date().toISOString().slice(0, 10);
   if (!db.days[key]) {
@@ -121,6 +140,20 @@ function statsFor(date) {
       total: day ? day.plan.length : 0,
     });
   }
+  const agg = { planDone: 0, planTotal: 0, focusSeconds: 0, sessions: 0, todosDone: 0, todosTotal: 0 };
+  for (const d of week) {
+    const day = db.days[d.date];
+    if (!day) continue;
+    agg.planDone += d.done;
+    agg.planTotal += d.total;
+    const sess = day.sessions || [];
+    agg.sessions += sess.length;
+    agg.focusSeconds += sess.reduce((n, x) => n + (x.seconds || 0), 0);
+    const td = day.todos || [];
+    agg.todosTotal += td.length;
+    agg.todosDone += td.filter((t) => t.done).length;
+  }
+
   const keys = Object.keys(db.days).sort();
   const active = keys.map((k) => {
     const plan = db.days[k].plan || [];
@@ -128,6 +161,7 @@ function statsFor(date) {
   });
   return {
     week,
+    agg,
     days: keys.length,
     records: active.reduce((n, x) => n + x.done, 0),
     active,
@@ -139,6 +173,7 @@ const publicState = (date) => ({
   profile: db.profile,
   season: db.season,
   day: getDay(date),
+  week: getWeek(),
   stats: statsFor(date),
 });
 
@@ -183,7 +218,7 @@ function applyOp(op, payload, date) {
     }
     case "timerStart": {
       if (day.timer) return false;
-      day.timer = { label: String(payload.label ?? "专注").slice(0, 60), startedAt: new Date().toISOString() };
+      day.timer = { label: String(payload.label ?? "").slice(0, 60), startedAt: new Date().toISOString() };
       return true;
     }
     case "timerStop": {
@@ -191,9 +226,10 @@ function applyOp(op, payload, date) {
       const started = new Date(day.timer.startedAt).getTime();
       const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
       if (!Array.isArray(day.sessions)) day.sessions = [];
+      const label = String(payload.label || day.timer.label || "专注").slice(0, 60);
       day.sessions.push({
         id: `s${Date.now()}`,
-        label: day.timer.label,
+        label,
         startedAt: day.timer.startedAt,
         endedAt: new Date().toISOString(),
         seconds,
@@ -201,10 +237,40 @@ function applyOp(op, payload, date) {
       day.timer = null;
       return true;
     }
+    case "sessionLabel": {
+      const sess = (day.sessions || []).find((x) => x.id === payload.id);
+      if (!sess) return false;
+      sess.label = String(payload.label ?? "").slice(0, 60) || "专注";
+      return true;
+    }
     case "setInspiration": {
       const text = String(payload.text ?? "").trim().slice(0, 240);
       if (!text) return false;
       day.inspiration = { text, from: String(payload.from ?? "").slice(0, 60), at: new Date().toISOString() };
+      return true;
+    }
+    case "goalAdd": {
+      const w = getWeek();
+      const text = String(payload.text ?? "").trim().slice(0, 160);
+      if (!text) return false;
+      w.goals.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString() });
+      return true;
+    }
+    case "goalToggle": {
+      const g = getWeek().goals.find((x) => x.id === payload.id);
+      if (!g) return false;
+      g.done = !!payload.done;
+      return true;
+    }
+    case "goalRemove": {
+      const w = getWeek();
+      const n = w.goals.length;
+      w.goals = w.goals.filter((x) => x.id !== payload.id);
+      return w.goals.length !== n;
+    }
+    case "setWeekComment": {
+      const w = getWeek();
+      w.comment = String(payload.text ?? "").slice(0, 1200) || null;
       return true;
     }
     case "note":
@@ -243,10 +309,42 @@ function viewModel(day) {
   };
 }
 
+function weekModel() {
+  const w = getWeek();
+  const st = statsFor(todayKey());
+  return {
+    title: `本周 · ${w.key}`,
+    goals: w.goals.map((g) => ({ title: g.text, done: !!g.done })),
+    comment: w.comment,
+    planDone: st.agg.planDone,
+    planTotal: st.agg.planTotal,
+    focusMinutes: Math.round(st.agg.focusSeconds / 60),
+    sessions: st.agg.sessions,
+    todosDone: st.agg.todosDone,
+    todosTotal: st.agg.todosTotal,
+  };
+}
+
+function weekSummary() {
+  const m = weekModel();
+  return [
+    m.goals.length ? `本周目标：${m.goals.map((g) => `${g.title}${g.done ? "（已达成）" : ""}`).join("；")}` : "本周还没定目标。",
+    `本周规定事项 ${m.planDone}/${m.planTotal}，专注 ${m.focusMinutes} 分钟（${m.sessions} 段），待办 ${m.todosDone}/${m.todosTotal}。`,
+    m.comment ? `写给他的话：${m.comment}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function summaryText(day) {
   const done = day.plan.filter((p) => p.done).length;
   const cur = day.plan.find((p) => !p.done);
+  const wk = getWeek();
+  const goalLine = wk.goals.length
+    ? `本周目标：${wk.goals.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}`
+    : "";
   return [
+    goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
     (day.after || []).length ? `之后：${day.after.map((a) => `${a.time} ${a.title}`).join("；")}。` : "",
@@ -556,6 +654,56 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool inspiration",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_week",
+        description:
+          "「人生游戏」的本周。两个用途：1) 读写本周定下的目标（会用来给今天安排和推荐）；2) 读本周统计并写下给他的建议与鼓励。action=list 只读；action=goal_add 需要 text；action=goal_done 需要 id 或 text；action=comment 需要 text（写进本周页的建议区）。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["list", "goal_add", "goal_done", "comment"] },
+            text: { type: "string", description: "goal_add 的目标内容；comment 的建议正文；goal_done 的关键词" },
+            id: { type: "string" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+          presentationMeta: toolCard((_args, value) => weekView(value.view)),
+        },
+        async execute(args) {
+          await ready;
+          const w = getWeek();
+          const a = args && args.action;
+
+          if (a === "goal_add") {
+            const text = String(args.text || "").trim().slice(0, 160);
+            if (!text) return { text: "要定什么目标？" };
+            w.goals.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString() });
+          } else if (a === "goal_done") {
+            const g = w.goals.find((x) => x.id === args.id) || w.goals.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
+            if (!g) return { text: "没找到那条目标。" };
+            g.done = true;
+          } else if (a === "comment") {
+            w.comment = String(args.text || "").slice(0, 1200) || null;
+          } else if (a !== "list") {
+            return { text: "不认识的 action。" };
+          }
+
+          if (a !== "list") {
+            db.rev += 1;
+            await persist();
+          }
+          return { text: weekSummary(), view: weekModel() };
+        },
+      }),
+    "lifegame: tool week",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

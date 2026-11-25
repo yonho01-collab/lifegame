@@ -163,6 +163,15 @@ window.__ModuleLoader__.load({
 @media (max-width:820px){ .lg-big{font-size:40px} }
 
 .lg-muted{color:var(--lg-muted)}
+.footnote-line{margin:2px 0 10px;font-size:12px;line-height:1.7;color:var(--lg-muted)}
+.lg-stat{list-style:none;margin:0;padding:0}
+.lg-stat li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--lg-line);font-size:14px}
+.lg-stat li:last-child{border-bottom:0}
+.lg-stat .k{color:var(--lg-muted)}
+.lg-stat .v{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.lg-meter{height:3px;border-radius:999px;background:var(--lg-line);overflow:hidden;margin-top:12px}
+.lg-meter i{display:block;height:100%;background:var(--lg-accent);border-radius:999px}
+.lg-comment{margin:0;font-family:var(--lg-serif);font-size:16px;line-height:2;letter-spacing:.02em;white-space:pre-wrap}
 
 /* 专注卡 */
 .lg-focus{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -171,6 +180,12 @@ window.__ModuleLoader__.load({
 .lg-focus .sub{flex:1 1 100%;font-size:12.5px;color:var(--lg-muted);line-height:1.7;margin:0}
 .lg-focus-btn{margin-left:auto;flex:0 0 auto;min-height:42px;padding:0 18px;border-radius:9px;border:1px solid rgba(201,168,106,.45);background:none;color:var(--lg-accent);font-size:13.5px;cursor:pointer;letter-spacing:.04em}
 .lg-focus-btn:hover{background:rgba(201,168,106,.1)}
+.lg-focus-btn.strong{background:var(--lg-accent);border-color:var(--lg-accent);color:var(--lg-on-accent);font-weight:600}
+.lg-live{font-family:var(--lg-serif);font-size:26px;color:var(--lg-accent);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.lg-labelrow{display:flex;gap:8px;margin-top:12px}
+.lg-labelrow input{flex:1 1 auto;min-width:0;min-height:42px;padding:0 14px;background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:9px;color:var(--lg-text);font-size:14px;font-family:var(--lg-sans);outline:none}
+.lg-labelrow input:focus{border-color:var(--lg-accent)}
+.lg-labelrow button{flex:0 0 auto;min-width:64px;min-height:42px;border-radius:9px;border:0;background:var(--lg-accent);color:var(--lg-on-accent);font-size:14px;font-weight:600;cursor:pointer}
 
 /* 灵感 */
 .lg-insp{margin:0}
@@ -356,7 +371,18 @@ window.__ModuleLoader__.load({
       const openTodos = todos.filter((t) => !t.done);
       const doneTodos = todos.filter((t) => t.done);
       const donePlan = day.plan.filter((p) => p.done).length;
+      const [tick, setTick] = useState(0);
+      const [pending, setPending] = useState(null);
+      const [label, setLabel] = useState("");
+
+      useEffect(() => {
+        if (!day.timer) return;
+        const t = setInterval(() => setTick((x) => x + 1), 1000);
+        return () => clearInterval(t);
+      }, [day.timer ? day.timer.startedAt : null]);
+
       const sessions = Array.isArray(day.sessions) ? day.sessions : [];
+      const elapsed = day.timer ? Math.max(0, Math.floor((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000)) : 0;
       const focusMin = Math.round(sessions.reduce((n, x) => n + (x.seconds || 0), 0) / 60);
       const longest = sessions.length ? Math.round(Math.max(...sessions.map((x) => x.seconds || 0)) / 60) : 0;
 
@@ -367,6 +393,14 @@ window.__ModuleLoader__.load({
         if (!text) return;
         setDraft("");
         run("todoAdd", { text });
+      };
+
+      const saveLabel = async () => {
+        if (!pending) return;
+        const v = label.trim();
+        if (v) await run("sessionLabel", { id: pending.id, label: v });
+        setPending(null);
+        setLabel("");
       };
 
       return h(
@@ -395,27 +429,75 @@ window.__ModuleLoader__.load({
             h(
               "div",
               { className: "lg-card", style: { marginBottom: 16 } },
-              h("div", { className: "lg-card-head" }, h("span", null, "专注"), h("span", { className: "lg-count-n" }, "计时自动记")),
               h(
                 "div",
-                { className: "lg-focus" },
-                h("span", { className: "big" }, focusMin),
-                h("span", { className: "unit" }, "分钟"),
-                h(
-                  "button",
-                  { className: "lg-focus-btn", onClick: () => setRunner({ item: null, mode: "timer" }) },
-                  day.timer ? "计时中" : "开始专注",
-                ),
-                h(
-                  "p",
-                  { className: "sub" },
-                  day.timer
-                    ? `正在计时：${day.timer.label}`
-                    : sessions.length
-                      ? `今天 ${sessions.length} 段，最长 ${longest} 分钟。`
-                      : "还没有记录。点开始就计时，结束自动记下用时。",
-                ),
+                { className: "lg-card-head" },
+                h("span", null, "专注"),
+                h("span", { className: "lg-count-n" }, day.timer ? "计时中" : pending ? "刚记下" : "不用全屏"),
               ),
+
+              // 计时中：页内实时走，不用跳全屏
+              day.timer
+                ? h(
+                    "div",
+                    { className: "lg-focus" },
+                    h("span", { className: "lg-live" }, fmt(elapsed)),
+                    h(
+                      "button",
+                      { className: "lg-focus-btn strong", onClick: () => run("timerStop", {}).then((r) => {
+                          const last = r && r.state && r.state.day && r.state.day.sessions && r.state.day.sessions.slice(-1)[0];
+                          if (last) { setPending(last); setLabel(""); }
+                        }) },
+                      "结束",
+                    ),
+                    h("p", { className: "sub" }, "在做事就开着，做完回来点结束——然后填一句在做什么。"),
+                  )
+                : null,
+
+              // 刚结束：补填在做什么
+              !day.timer && pending
+                ? h(
+                    "div",
+                    null,
+                    h(
+                      "div",
+                      { className: "lg-focus" },
+                      h("span", { className: "big" }, Math.max(1, Math.round(pending.seconds / 60))),
+                      h("span", { className: "unit" }, "分钟"),
+                      h("p", { className: "sub" }, "刚才那段在做什么？写一句，方便以后看统计。"),
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-labelrow" },
+                      h("input", {
+                        value: label,
+                        placeholder: "比如：写周报 / 读《禅与摩托车维修艺术》",
+                        onChange: (e) => setLabel(e.target.value),
+                        onKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); saveLabel(); } },
+                        autoFocus: true,
+                      }),
+                      h("button", { onClick: saveLabel }, label.trim() ? "记下" : "跳过"),
+                    ),
+                  )
+                : null,
+
+              // 空闲：今天累计 + 开始
+              !day.timer && !pending
+                ? h(
+                    "div",
+                    { className: "lg-focus" },
+                    h("span", { className: "big" }, focusMin),
+                    h("span", { className: "unit" }, "分钟"),
+                    h("button", { className: "lg-focus-btn", onClick: () => run("timerStart", {}) }, "开始"),
+                    h(
+                      "p",
+                      { className: "sub" },
+                      sessions.length
+                        ? `今天 ${sessions.length} 段，最长 ${longest} 分钟。${sessions[sessions.length - 1].label ? `最近：${sessions[sessions.length - 1].label}` : ""}`
+                        : "开始计时，然后去干活。结束回来补一句做了什么就行。",
+                    ),
+                  )
+                : null,
             ),
 
             h(
@@ -534,8 +616,6 @@ window.__ModuleLoader__.load({
               h("button", { onClick: () => run("skipAlt", {}) }, "换"),
             ),
 
-            h("p", { className: "lg-sec" }, "明天给你留了一件"),
-            h("div", { className: "lg-teaser" }, h("p", { className: "a" }, day.teaser), h("p", { className: "b" }, "不用现在决定。")),
           ),
         ),
       );
@@ -545,67 +625,134 @@ window.__ModuleLoader__.load({
 
     const WD = ["日", "一", "二", "三", "四", "五", "六"];
 
-    function WeekView({ state }) {
-      const week = state.stats?.week || [];
-      const total = week.reduce((n, d) => n + d.done, 0);
-      const fullDays = week.filter((d) => d.total > 0 && d.done === d.total).length;
-      const touched = week.filter((d) => d.done > 0).length;
+    function WeekView({ state, run, busy }) {
+      const [draft, setDraft] = useState("");
+      const week = state.week || { goals: [] };
+      const stats = state.stats || { week: [], agg: {} };
+      const agg = stats.agg || {};
+      const goals = Array.isArray(week.goals) ? week.goals : [];
+      const openGoals = goals.filter((g) => !g.done);
+      const doneGoals = goals.filter((g) => g.done);
 
-      const best = week.reduce((a, b) => (b.done > a.done ? b : a), week[0] || { done: 0, date: "" });
-      const bestLabel =
-        !best || best.done === 0
-          ? "这周还没有哪一天算得上。不急，明天就可能是。"
-          : `${shortDate(best.date)} 那天做完了 ${best.done} 件，是这周最多的一天。`;
+      const addGoal = () => {
+        const t = draft.trim();
+        if (!t) return;
+        setDraft("");
+        run("goalAdd", { text: t });
+      };
 
-      const verdict =
-        total === 0
-          ? "这一周还没有记录。不用补，从今天开始记一笔就够。"
-          : `这一周你完成了 ${total} 项，有 ${touched} 天动过。${fullDays > 0 ? `其中 ${fullDays} 天是全做完了的。` : ""}`;
+      const focusMin = Math.round((agg.focusSeconds || 0) / 60);
+      const planRate = agg.planTotal ? Math.round((agg.planDone / agg.planTotal) * 100) : 0;
 
       return h(
         "div",
         { className: "lg-grid" },
+
+        /* ---------- 左：本周目标 ---------- */
         h(
           "div",
           null,
-          h("p", { className: "lg-why", style: { fontSize: 17, color: "var(--lg-text)", marginBottom: 30 } }, verdict),
-
-          h("p", { className: "lg-sec", style: { marginTop: 0 } }, "最近七天"),
-          h(
-            "div",
-            { className: "lg-bars" },
-            ...week.map((d, i) => {
-              const pct = d.total ? Math.round((d.done / d.total) * 100) : 0;
-              const full = d.total > 0 && d.done === d.total;
-              return h("i", { key: i, className: full ? "full" : "" }, h("b", { style: { height: `${pct}%` } }));
-            }),
-          ),
-          h(
-            "div",
-            { className: "lg-bars-label" },
-            ...week.map((d, i) => h("span", { key: i }, WD[new Date(`${d.date}T00:00:00`).getDay()])),
-          ),
-
-          h("p", { className: "lg-sec" }, "这一周你留下的"),
           h(
             "div",
             { className: "lg-card" },
-            h("p", { className: "lg-teaser-b", style: { margin: 0, fontSize: 13.5, lineHeight: 1.8, color: "var(--lg-muted)" } }, "记录功能还没做。等「一句话」接上，这里会出现你每天写的那句。"),
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "本周目标"),
+              h("span", { className: "lg-count-n" }, openGoals.length ? `还剩 ${openGoals.length} 条` : "都达成了"),
+            ),
+            h(
+              "div",
+              { className: "lg-add" },
+              h("input", {
+                value: draft,
+                placeholder: "这周想定下什么？回车添加",
+                onChange: (e) => setDraft(e.target.value),
+                onKeyDown: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addGoal(); } },
+              }),
+              h("button", { className: "lg-add-btn", onClick: addGoal }, "加"),
+            ),
+            h("p", { className: "footnote-line" }, "定下的目标会成为「今天」安排和推荐的依据。"),
+            goals.length === 0
+              ? h("p", { className: "lg-empty" }, "还没有目标。一条就够——这周想把哪件事往前推一步？")
+              : h(
+                  "ul",
+                  { className: "lg-todo" },
+                  ...[...openGoals, ...doneGoals].map((g) =>
+                    h(
+                      "li",
+                      { key: g.id, className: g.done ? "on" : "" },
+                      h(
+                        "button",
+                        { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("goalToggle", { id: g.id, done: !g.done }) },
+                        g.done ? h(Check) : null,
+                      ),
+                      h("span", { className: "t" }, g.text),
+                      h("button", { className: "lg-del", onClick: () => run("goalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
+                    ),
+                  ),
+                ),
+          ),
+
+          // 七天
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 16 } },
+            h("div", { className: "lg-card-head" }, h("span", null, "最近七天"), h("span", { className: "lg-count-n" }, `${agg.planDone || 0} / ${agg.planTotal || 0} 件`)),
+            h(
+              "div",
+              { className: "lg-bars" },
+              ...(stats.week || []).map((d, i) => {
+                const pct = d.total ? Math.round((d.done / d.total) * 100) : 0;
+                const full = d.total > 0 && d.done === d.total;
+                return h("i", { key: i, className: full ? "full" : "" }, h("b", { style: { height: `${pct}%` } }));
+              }),
+            ),
+            h(
+              "div",
+              { className: "lg-bars-label" },
+              ...(stats.week || []).map((d, i) => h("span", { key: i }, WD[new Date(`${d.date}T00:00:00`).getDay()])),
+            ),
           ),
         ),
+
+        /* ---------- 右：统计 + 建议 ---------- */
         h(
           "div",
           null,
           h(
             "div",
             { className: "lg-card" },
-            h("p", { className: "lg-card-title" }, "这一周最快的一天"),
-            h("p", { style: { margin: "0 0 10px", fontSize: 15, lineHeight: 1.8 } }, bestLabel),
+            h("div", { className: "lg-card-head" }, h("span", null, "这周你做了多少"), h("span", { className: "lg-count-n" }, "")),
             h(
-              "p",
-              { style: { margin: 0, fontSize: 13, lineHeight: 1.85, color: "var(--lg-muted)" } },
-              "不比上周，不排名次。只看得出你在哪天更像你自己。",
+              "ul",
+              { className: "lg-stat" },
+              h("li", null, h("span", { className: "k" }, "规定事项"), h("span", { className: "v" }, `${agg.planDone || 0} / ${agg.planTotal || 0}`)),
+              h("li", null, h("span", { className: "k" }, "专注"), h("span", { className: "v" }, `${focusMin} 分钟 · ${agg.sessions || 0} 段`)),
+              h("li", null, h("span", { className: "k" }, "自由待办"), h("span", { className: "v" }, `${agg.todosDone || 0} / ${agg.todosTotal || 0}`)),
+              h("li", null, h("span", { className: "k" }, "本周目标"), h("span", { className: "v" }, `${doneGoals.length} / ${goals.length}`)),
             ),
+            agg.planTotal
+              ? h("div", { className: "lg-meter" }, h("i", { style: { width: `${planRate}%` } }))
+              : null,
+          ),
+
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 16 } },
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "这周的话"),
+              h("span", { className: "lg-count-n" }, week.comment ? "它写的" : ""),
+            ),
+            week.comment
+              ? h("p", { className: "lg-comment" }, week.comment)
+              : h(
+                  "p",
+                  { className: "lg-empty", style: { margin: 0 } },
+                  "还没写。在对话里说「总结一下这周」，它会看完数据写一段给你——包括建议和该夸你的地方。",
+                ),
           ),
         ),
       );
@@ -725,14 +872,16 @@ window.__ModuleLoader__.load({
 
       const run = useCallback(
         async (op, payload) => {
-          if (busy) return;
+          if (busy) return null;
           setBusy(true);
           try {
             const r = await sendOp(op, payload);
             if (r?.state) setState(r.state);
             else await load();
+            return r;
           } catch {
             await load();
+            return null;
           } finally {
             setBusy(false);
           }

@@ -55,3 +55,28 @@ export function todayView(v, withActions) {
     children,
   };
 }
+
+
+export function weekView(v) {
+  if (!v) return null;
+  const children = [];
+
+  if (v.goals && v.goals.length) {
+    children.push({ type: "list", items: v.goals.map((g) => ({ title: g.title, icon: g.done ? "check" : "flag", tone: g.done ? "good" : undefined })) });
+  } else {
+    children.push({ type: "text", text: "本周还没定目标。", tone: "muted" });
+  }
+
+  children.push({
+    type: "keyValue",
+    items: [
+      ["规定事项", `${v.planDone} / ${v.planTotal}`],
+      ["专注", `${v.focusMinutes} 分钟 · ${v.sessions} 段`],
+      ["自由待办", `${v.todosDone} / ${v.todosTotal}`],
+    ],
+  });
+
+  if (v.comment) children.push({ type: "text", text: v.comment });
+
+  return { type: "stack", title: v.title || "本周", children };
+}
