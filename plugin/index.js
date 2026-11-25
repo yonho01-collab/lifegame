@@ -98,7 +98,43 @@ function getDay(date) {
   return db.days[key];
 }
 
-const publicState = (date) => ({ rev: db.rev, profile: db.profile, season: db.season, day: getDay(date) });
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** 周与「我」用的派生统计。只读，不写盘。 */
+function statsFor(date) {
+  const base = new Date(`${date}T00:00:00`);
+  const week = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(base);
+    d.setDate(d.getDate() - i);
+    const key = ymd(d);
+    const day = db.days[key];
+    week.push({
+      date: key,
+      done: day ? day.plan.filter((p) => p.done).length : 0,
+      total: day ? day.plan.length : 0,
+    });
+  }
+  const keys = Object.keys(db.days).sort();
+  const active = keys.map((k) => {
+    const plan = db.days[k].plan || [];
+    return { date: k, done: plan.filter((p) => p.done).length, total: plan.length };
+  });
+  return {
+    week,
+    days: keys.length,
+    records: active.reduce((n, x) => n + x.done, 0),
+    active,
+  };
+}
+
+const publicState = (date) => ({
+  rev: db.rev,
+  profile: db.profile,
+  season: db.season,
+  day: getDay(date),
+  stats: statsFor(date),
+});
 
 /* ---------------- 操作 ---------------- */
 
