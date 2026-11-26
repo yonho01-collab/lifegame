@@ -319,6 +319,10 @@ window.__ModuleLoader__.load({
 .lg-plan-in{flex:1 1 auto;min-width:0;min-height:34px;padding:4px 10px;background:var(--lg-surface-2);border:1px solid var(--lg-accent);border-radius:7px;color:var(--lg-text);font-size:14.5px;font-family:var(--lg-sans);outline:none}
 .lg-plan-t{flex:1 1 auto;min-width:0;text-align:left;background:none;border:0;cursor:pointer;color:var(--lg-text);font-size:14.5px;line-height:1.5;padding:0;font-family:var(--lg-sans)}
 .lg-plan-t:hover{color:var(--lg-accent)}
+.lg-inline-t{background:none;border:0;padding:0;text-align:left;color:var(--lg-text);font-size:15px;line-height:1.55;font-family:var(--lg-sans);cursor:text;white-space:pre-wrap}
+.lg-inline-t:hover{color:var(--lg-accent)}
+.lg-inline-in{flex:1 1 auto;min-width:0;min-height:32px;padding:3px 9px;background:var(--lg-surface);border:1px solid var(--lg-accent);border-radius:6px;color:var(--lg-text);font-size:14px;font-family:var(--lg-sans);outline:none;box-shadow:0 0 0 3px var(--lg-accent-soft)}
+.lg-inline-in.time{flex:0 0 62px;text-align:center;font-variant-numeric:tabular-nums}
 .lg-row-s{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--lg-line)}
 .lg-row-s:last-child{border-bottom:0}
 .lg-row-s i{font-style:normal;font-size:12px;color:var(--lg-muted);flex:0 0 50px;font-variant-numeric:tabular-nums}
@@ -462,7 +466,9 @@ window.__ModuleLoader__.load({
       const { day } = state;
 
       const current = day.plan.find((p) => !p.done);
-      const later = [...(day.after || [])].sort((a, b) => sortKey(a.time) - sortKey(b.time));
+      const later = (day.after || [])
+        .map((x, i) => ({ ...x, _i: i }))
+        .sort((a, b) => sortKey(a.time) - sortKey(b.time));
       const todos = Array.isArray(day.todos) ? day.todos : [];
       const openTodos = todos.filter((t) => !t.done);
       const doneTodos = todos.filter((t) => t.done);
@@ -474,6 +480,11 @@ window.__ModuleLoader__.load({
       const [expanded, setExpanded] = useState(null);
       const [editingId, setEditingId] = useState(null);
       const [editText, setEditText] = useState("");
+      const [todoEditId, setTodoEditId] = useState(null);
+      const [todoEditText, setTodoEditText] = useState("");
+      const [afterEditIdx, setAfterEditIdx] = useState(null);
+      const [afterEditTime, setAfterEditTime] = useState("");
+      const [afterEditText, setAfterEditText] = useState("");
 
 
       useEffect(() => {
@@ -514,6 +525,22 @@ window.__ModuleLoader__.load({
       };
 
       const startPomo = (text) => run("timerStart", { label: text, minutes: 25 });
+
+      const saveTodoEdit = () => {
+        const id = todoEditId;
+        const v = todoEditText.trim();
+        setTodoEditId(null);
+        if (id && v) run("todoEdit", { id, text: v });
+      };
+
+      const saveAfterEdit = () => {
+        const idx = afterEditIdx;
+        const time = afterEditTime.trim();
+        const title = afterEditText.trim();
+        setAfterEditIdx(null);
+        if (idx === null || !title) return;
+        run("afterEdit", { index: idx, time, title });
+      };
 
       const beginEdit = (p) => {
         setEditingId(p.id);
@@ -682,7 +709,23 @@ window.__ModuleLoader__.load({
                           },
                           t.done ? h(Check) : null,
                         ),
-                        h("span", { className: "t" }, t.text),
+                        todoEditId === t.id
+                          ? h("input", {
+                              className: "lg-inline-in",
+                              value: todoEditText,
+                              autoFocus: true,
+                              onChange: (e) => setTodoEditText(e.target.value),
+                              onBlur: saveTodoEdit,
+                              onKeyDown: (e) => {
+                                if (e.key === "Enter") { e.preventDefault(); saveTodoEdit(); }
+                                if (e.key === "Escape") { e.preventDefault(); setTodoEditId(null); }
+                              },
+                            })
+                          : h(
+                              "button",
+                              { className: "t lg-inline-t", onClick: () => { setTodoEditId(t.id); setTodoEditText(t.text); }, title: "点一下改" },
+                              t.text,
+                            ),
                         t.done
                           ? null
                           : h(
@@ -765,7 +808,44 @@ window.__ModuleLoader__.load({
               "div",
               { className: "lg-card", style: { marginTop: 16 } },
               h("div", { className: "lg-card-head" }, h("span", null, "之后"), h("span", { className: "lg-count-n" }, "到点会提醒")),
-              ...later.map((x, i) => h("div", { className: "lg-row-s", key: `l${i}` }, h("i", null, x.time), h("span", null, x.title))),
+              ...later.map((x, i) =>
+                afterEditIdx === x._i
+                  ? h(
+                      "div",
+                      { className: "lg-row-s editing", key: `e${i}` },
+                      h("input", {
+                        className: "lg-inline-in time",
+                        value: afterEditTime,
+                        autoFocus: true,
+                        onChange: (e) => setAfterEditTime(e.target.value),
+                        onKeyDown: (e) => {
+                          if (e.key === "Enter") { e.preventDefault(); saveAfterEdit(); }
+                          if (e.key === "Escape") { e.preventDefault(); setAfterEditIdx(null); }
+                        },
+                      }),
+                      h("input", {
+                        className: "lg-inline-in",
+                        value: afterEditText,
+                        onChange: (e) => setAfterEditText(e.target.value),
+                        onBlur: saveAfterEdit,
+                        onKeyDown: (e) => {
+                          if (e.key === "Enter") { e.preventDefault(); saveAfterEdit(); }
+                          if (e.key === "Escape") { e.preventDefault(); setAfterEditIdx(null); }
+                        },
+                      }),
+                      h("button", { className: "lg-del", onClick: () => setAfterEditIdx(null), "aria-label": "取消" }, "×"),
+                    )
+                  : h(
+                      "div",
+                      { className: "lg-row-s", key: `l${i}` },
+                      h("i", { onClick: () => { setAfterEditIdx(x._i); setAfterEditTime(x.time); setAfterEditText(x.title); }, title: "点一下改", style: { cursor: "pointer" } }, x.time),
+                      h(
+                        "span",
+                        { onClick: () => { setAfterEditIdx(x._i); setAfterEditTime(x.time); setAfterEditText(x.title); }, title: "点一下改", style: { cursor: "pointer" } },
+                        x.title,
+                      ),
+                    ),
+              ),
             ),
 
             h(

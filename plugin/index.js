@@ -285,6 +285,16 @@ function applyOp(op, payload, date) {
       day.todos.push({ id: `t${Date.now()}_${day.todos.length}`, text, done: false, at: new Date().toISOString() });
       return true;
     }
+    case "todoEdit": {
+      const day = dayOf(payload.date);
+      if (!Array.isArray(day.todos)) return false;
+      const t = day.todos.find((x) => x.id === payload.id);
+      if (!t) return false;
+      const text = String(payload.text ?? "").trim().slice(0, 300);
+      if (!text) return false;
+      t.text = text;
+      return true;
+    }
     case "todoToggle": {
       const day = dayOf(payload.date);
       if (!Array.isArray(day.todos)) return false;
@@ -427,6 +437,18 @@ function applyOp(op, payload, date) {
         }
         await fetchWeather();
       });
+      return true;
+    }
+    case "afterEdit": {
+      if (!Array.isArray(day.after)) return false;
+      const i = Number(payload.index);
+      if (!Number.isInteger(i) || i < 0 || i >= day.after.length) return false;
+      const cur = day.after[i];
+      const time = String(payload.time ?? cur.time ?? "").trim();
+      const title = String(payload.title ?? cur.title ?? "").trim().slice(0, 80);
+      if (time && !/^\d{1,2}:\d{2}$/.test(time)) return false;
+      if (!title) return false;
+      day.after[i] = { time: time || cur.time, title };
       return true;
     }
     case "planEdit": {
