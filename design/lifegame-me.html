@@ -59,7 +59,9 @@
 [data-slot="main"] .lg-tabspark .lg-spark-swap{flex:0 0 auto;height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--dsh-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-tabspark .lg-spark-swap:hover{color:var(--lg-accent-text);border-color:var(--lg-accent-text)}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
-[data-slot="main"] .lg-tab{padding:9px 0;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
+[data-slot="main"] a.lg-tab{text-decoration:none;color:inherit;cursor:pointer}
+[data-slot="main"] a.lg-tab:hover{color:var(--lg-text)}
+[data-slot="main"] .lg-tab{min-width:30px;text-align:center;padding:9px 4px;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
 [data-slot="main"] .lg-tab.on{color:var(--lg-text);border-bottom-color:var(--lg-accent-text)}
 [data-slot="main"] .lg-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:28px;align-items:start}
 [data-slot="main"] .lg-watch{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-md);font-size:12px;color:var(--lg-muted);margin-bottom:12px}
@@ -134,7 +136,7 @@
       <div class="lg">
         <div class="lg-top"><span>11/27 · 人生游戏</span><span class="lg-wxtop"><button class="lg-locbtn">杭州 · 余杭</button><span class="lg-wxline"><span>晴</span><b>16°</b><em>9–19°</em></span></span></div>
         <div class="lg-h1row"><h1 class="lg-h1">我</h1><div class="lg-watch inline"><b>它在看着</b><span>你 3 天没动</span><span class="lg-sep"></span><span>今晚 19:00 后空窗</span><span class="lg-sep"></span><span>周三降温，户外改周四</span></div></div>
-        <div class="lg-tabs"><span class="lg-tab">今天</span><span class="lg-tab">本周</span><span class="lg-tab on">我</span><span class="lg-tabspark"><span class="q">「今天的光是斜的，适合走一段。」</span><span class="from">天气</span><button class="lg-spark-swap">换</button></span></div>
+        <div class="lg-tabs"><a class="lg-tab" href="lifegame.html">今天</a><a class="lg-tab" href="lifegame-week.html">本周</a><span class="lg-tab on">我</span><span class="lg-tabspark"><span class="q">「今天的光是斜的，适合走一段。」</span><span class="from">天气</span><button class="lg-spark-swap">换</button></span></div>
 
         <div class="lg-grid">
           <!-- 左：你走过的 -->
