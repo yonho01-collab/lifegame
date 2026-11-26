@@ -1,0 +1,29 @@
+/* 极简白 —— 大留白、细线、黑白加一点蓝
+   只给插件槽位内用；选择器前缀 [data-slot="main"] 由各屏自带 */
+:root{
+  /* 配色 */
+  --lg-bg:#fafaf9;
+  --lg-surface:#ffffff;
+  --lg-surface-2:#f4f4f5;
+  --lg-surface-3:#efeff1;
+  --lg-text:#18181b;
+  --lg-muted:#6b6b73;
+  --lg-line:#e4e4e7;
+  --lg-ink:#18181b;            /* 主色：按钮底 */
+  --lg-on-ink:#ffffff;
+  --lg-accent:#2563eb;         /* 点缀：图形、大字、选中态、链接 */
+  --lg-on-accent:#ffffff;
+  --lg-hover:#f1f1f3;
+  --lg-placeholder:#a1a1aa;
+  --lg-focus:rgba(37,99,235,.32);
+  --lg-accent-soft:rgba(37,99,235,.08);
+  --lg-danger:#b42318;
+
+  /* 字体 */
+  --lg-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+
+  /* 形状 */
+  --lg-radius:10px;
+  --lg-radius-sm:6px;
+  --lg-shadow:0 1px 2px rgba(24,24,27,.06);
+}

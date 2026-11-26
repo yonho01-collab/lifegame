@@ -51,6 +51,7 @@ const seed = () => ({
     fitnessLevel: "1-2/week",
     location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
     goals: { short: [], long: [] },
+    want: { books: [], movies: [], quotes: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
   days: {},
@@ -73,6 +74,10 @@ async function load() {
   if (!Array.isArray(db.corpus)) db.corpus = [];
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
+  if (!db.profile.want) db.profile.want = { books: [], movies: [], quotes: [] };
+  for (const k of ["books", "movies", "quotes"]) {
+    if (!Array.isArray(db.profile.want[k])) db.profile.want[k] = [];
+  }
   if (!Array.isArray(db.profile.goals.short)) db.profile.goals.short = [];
   if (!Array.isArray(db.profile.goals.long)) db.profile.goals.long = [];
   await persist();
@@ -294,6 +299,33 @@ function applyOp(op, payload, date) {
       const n = day.todos.length;
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
+    }
+    case "wantAdd": {
+      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
+      const title = String(payload.title ?? "").trim().slice(0, 160);
+      if (!title) return false;
+      db.profile.want[kind].unshift({
+        id: `w${Date.now()}`,
+        title,
+        extra: String(payload.extra ?? "").trim().slice(0, 80),
+        done: false,
+        at: new Date().toISOString(),
+      });
+      return true;
+    }
+    case "wantToggle": {
+      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
+      const it = db.profile.want[kind].find((x) => x.id === payload.id);
+      if (!it) return false;
+      it.done = !!payload.done;
+      it.doneAt = it.done ? new Date().toISOString() : null;
+      return true;
+    }
+    case "wantRemove": {
+      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
+      const n = db.profile.want[kind].length;
+      db.profile.want[kind] = db.profile.want[kind].filter((x) => x.id !== payload.id);
+      return db.profile.want[kind].length !== n;
     }
     case "corpusAdd": {
       const text = String(payload.text ?? "").trim().slice(0, 600);
@@ -604,11 +636,17 @@ function summaryText(day) {
     goals.short.length ? `短期目标：${goals.short.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
     goals.long.length ? `长期目标：${goals.long.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
   ].filter(Boolean).join("\n");
+  const want = db.profile.want || { books: [], movies: [], quotes: [] };
+  const wantLine = [
+    want.books.filter((x) => !x.done).length ? `想读（未读）：${want.books.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
+    want.movies.filter((x) => !x.done).length ? `想看（未看）：${want.movies.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
+  ].filter(Boolean).join("\n");
   const w = db.weather;
   const weatherLine = w && w.text ? `天气（${w.place || ""}）：${w.text} ${w.temp != null ? w.temp + "°" : ""}${w.tmax != null ? `（${w.tmin}–${w.tmax}°）` : ""}` : "";
   return [
     weatherLine,
     goalList,
+    wantLine,
     goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
@@ -1549,6 +1587,61 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool corpus",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_want",
+        description:
+          "「我」页的近期清单：想读的书、想看的电影、想记下的名人名言。给阅读/观影建议前先看它。action=list 只读；action=add 需要 kind(books|movies|quotes) 与 title（可带 extra：作者/年份/谁说的）；action=done 需要 kind 与 id；action=remove 需要 kind 与 id。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["list", "add", "done", "remove"] },
+            kind: { type: "string", enum: ["books", "movies", "quotes"] },
+            title: { type: "string" },
+            extra: { type: "string", description: "作者 / 年份 / 谁说的" },
+            id: { type: "string" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+        },
+        async execute(args) {
+          await ready;
+          const want = db.profile.want;
+          const kind = ["books", "movies", "quotes"].includes(args && args.kind) ? args.kind : "";
+          const a = args && args.action;
+          if (a === "add") {
+            if (!kind) return { text: "要加哪一类？books / movies / quotes。" };
+            const title = String(args.title || "").trim().slice(0, 160);
+            if (!title) return { text: "要加什么？" };
+            want[kind].unshift({ id: `w${Date.now()}`, title, extra: String(args.extra || "").trim().slice(0, 80), done: false, at: new Date().toISOString() });
+            db.rev += 1;
+            await persist();
+          } else if (a === "done" || a === "remove") {
+            if (!kind) return { text: "要改哪一类？books / movies / quotes。" };
+            if (a === "done") {
+              const it = want[kind].find((x) => x.id === args.id);
+              if (it) {
+                it.done = true;
+                it.doneAt = new Date().toISOString();
+              }
+            } else {
+              want[kind] = want[kind].filter((x) => x.id !== args.id);
+            }
+            db.rev += 1;
+            await persist();
+          }
+          const fmt = (arr) => (arr.length ? arr.map((x) => `${x.title}${x.extra ? `（${x.extra}）` : ""}${x.done ? " ✓" : ""}`).join("；") : "空");
+          return { text: `想读：${fmt(want.books)}\n想看：${fmt(want.movies)}\n名言：${fmt(want.quotes)}` };
+        },
+      }),
+    "lifegame: tool want",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

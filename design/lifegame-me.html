@@ -6,9 +6,10 @@
 <meta name="dsh-design" content="dshplugin 1280x800">
 <title>我 · 人生游戏</title>
 <link rel="stylesheet" href="dsh-shell.css">
+<link rel="stylesheet" href="tokens.css">
 <!-- 外框（DSH 插件 · 左侧栏入口）：只改 data-slot 里面，别动外框的结构、文字和 dsh-shell.css -->
 <style>
-[data-slot="main"]{--lg-muted:#575c64;--lg-accent-text:#2a55b5}
+[data-slot="main"]{--lg-muted:var(--lg-muted);--lg-accent-text:var(--lg-accent);--lg-bg:var(--lg-bg)}
 [data-theme="dark"] [data-slot="main"]{--lg-muted:#9aa0aa;--lg-accent-text:#9dc0ff}
 [data-slot="main"] .lg{padding:26px 32px 40px;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.18) transparent}
 [data-slot="main"] .lg::-webkit-scrollbar{width:6px}
@@ -18,15 +19,18 @@
 [data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
 [data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
 .lg-traces{display:grid;grid-template-columns:repeat(15,1fr);gap:6px;max-width:660px}
-[data-slot="main"] .lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--dsh-hover);display:block}
-[data-slot="main"] .lg-traces i.on{background:#c9c3b8}
+[data-slot="main"] .lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--lg-surface-2);display:block}
+[data-slot="main"] .lg-traces i.on{background:var(--lg-line)}
 [data-slot="main"] .lg-traces i.full{background:var(--lg-accent-text)}
 [data-slot="main"] .lg-traces i.today{outline:1px solid var(--lg-accent-text);outline-offset:1px}
 [data-slot="main"] .lg-axis{display:flex;justify-content:space-between;max-width:660px;margin-top:10px;color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-big{font-family:var(--dsh-font);font-size:34px;font-weight:600;margin:6px 0 10px;letter-spacing:.02em}
 [data-slot="main"] .lg-x{color:var(--lg-muted);font-size:13px}
+.lg-kinds{display:flex;gap:6px;margin:2px 0 12px}
+[data-slot="main"] .lg-kind{min-height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-kind.on{background:var(--lg-ink);border-color:var(--lg-ink);color:var(--lg-on-ink)}
 [data-slot="main"] .lg-goal{flex:1;min-width:0}
-[data-slot="main"] .lg-goal-t{display:block;color:var(--dsh-fg);font-size:13px}
+[data-slot="main"] .lg-goal-t{display:block;color:var(--lg-text);font-size:13px}
 [data-slot="main"] .lg-goal-meta{display:block;margin-top:4px;color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-steps{display:block;margin-top:8px}
 [data-slot="main"] .lg-step{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;padding:5px 0;color:var(--lg-muted);font-size:12px;line-height:1.6}
@@ -37,7 +41,7 @@
 [data-slot="main"] .lg-step u{flex:0 0 auto;text-decoration:none;border:1px solid var(--dsh-line);border-radius:6px;padding:1px 6px;font-size:12px;white-space:nowrap;color:var(--lg-muted);cursor:pointer}
 [data-slot="main"] .lg-step b{flex:0 0 auto;font-weight:400;font-size:12px;color:var(--lg-accent-text)}
 [data-slot="main"] .lg-corpus{flex:1;min-width:0}
-[data-slot="main"] .lg-corpus .tx{display:block;color:var(--dsh-fg);font-size:13px;line-height:1.7}
+[data-slot="main"] .lg-corpus .tx{display:block;color:var(--lg-text);font-size:13px;line-height:1.7}
 [data-slot="main"] .lg-corpus .src{display:block;margin-top:4px;color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap}
 [data-slot="main"] .lg-watch.inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0;border:0;background:none;margin:0;color:var(--lg-muted);font-size:12px}
@@ -56,7 +60,7 @@
 [data-slot="main"] .lg-tabspark .lg-spark-swap:hover{color:var(--lg-accent-text);border-color:var(--lg-accent-text)}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
 [data-slot="main"] .lg-tab{padding:9px 0;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
-[data-slot="main"] .lg-tab.on{color:var(--dsh-fg);border-bottom-color:var(--lg-accent-text)}
+[data-slot="main"] .lg-tab.on{color:var(--lg-text);border-bottom-color:var(--lg-accent-text)}
 [data-slot="main"] .lg-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:28px;align-items:start}
 [data-slot="main"] .lg-watch{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-md);font-size:12px;color:var(--lg-muted);margin-bottom:12px}
 [data-slot="main"] .lg-watch b{color:var(--lg-accent-text);font-weight:600}
@@ -64,8 +68,8 @@
 [data-slot="main"] .lg-now{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--dsh-radius-md);background:var(--dsh-card);border:1px solid var(--dsh-line);font-size:12px;margin-bottom:14px}
 [data-slot="main"] .lg-now .k{color:var(--lg-accent-text);font-weight:600}
 [data-slot="main"] .lg-now .v{flex:1;color:var(--lg-muted)}
-[data-slot="main"] .lg-btn{height:30px;padding:0 14px;border:0;border-radius:var(--dsh-radius-md);background:var(--dsh-btn);color:var(--dsh-btn-fg);font-size:12px;font-weight:600}
-[data-slot="main"] .lg-card{border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-lg);background:var(--dsh-card);padding:14px 16px;margin-bottom:14px}
+[data-slot="main"] .lg-btn{height:30px;padding:0 14px;border:0;border-radius:var(--dsh-radius-md);background:var(--lg-ink);color:var(--lg-on-ink);font-size:12px;font-weight:600}
+[data-slot="main"] .lg-card{border:1px solid var(--dsh-line);border-radius:var(--lg-radius);background:var(--dsh-card);padding:14px 16px;margin-bottom:14px}
 [data-slot="main"] .lg-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:10px}
 [data-slot="main"] .lg-num{font-size:12px;color:var(--lg-muted)}
 [data-slot="main"] .lg-focus{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
@@ -73,7 +77,7 @@
 [data-slot="main"] .lg-unit{font-size:12px;color:var(--lg-muted)}
 [data-slot="main"] .lg-sub{font-size:12px;color:var(--lg-muted);margin:8px 0 0;flex:1 1 100%}
 [data-slot="main"] .lg-inp{display:flex;gap:8px;margin-bottom:10px}
-[data-slot="main"] .lg-inp input{flex:1;height:32px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-sm);background:var(--dsh-bg);color:var(--dsh-fg);padding:0 10px;font-size:13px;font-family:inherit}
+[data-slot="main"] .lg-inp input{flex:1;height:32px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-sm);background:var(--dsh-bg);color:var(--lg-text);padding:0 10px;font-size:13px;font-family:inherit}
 [data-slot="main"] .lg-inp button{height:32px;padding:0 12px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-sm);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit}
 [data-slot="main"] .lg-list{list-style:none;margin:0;padding:0}
 [data-slot="main"] .lg-li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--dsh-line);font-size:13px}
@@ -94,9 +98,9 @@
 [data-slot="main"] .lg-pomo{flex:0 0 auto;height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--dsh-line);background:none;color:var(--lg-accent-text);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-pomo:hover{border-color:var(--lg-accent-text);color:var(--lg-accent-text)}
 [data-slot="main"] .lg-wx{display:inline-flex;align-items:baseline;gap:8px;color:var(--lg-muted);font-size:12px}
-[data-slot="main"] .lg-wx i{font-style:normal;color:var(--dsh-fg)}
+[data-slot="main"] .lg-wx i{font-style:normal;color:var(--lg-text)}
 [data-slot="main"] .lg-wx b{font-weight:600;font-size:15px;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
-[data-slot="main"] .lg-wx em{font-style:normal;color:var(--dsh-fg)}
+[data-slot="main"] .lg-wx em{font-style:normal;color:var(--lg-text)}
 [data-slot="main"] .lg-loc{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--dsh-line);color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-loc button{background:none;border:0;min-height:26px;padding:3px 0;border-bottom:1px dashed var(--dsh-line);color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-loc .sun{margin-left:auto;font-variant-numeric:tabular-nums}
@@ -233,6 +237,17 @@
             <i class="full"></i>
             </div>
             <div class="lg-axis"><span>10/13</span><span>今天</span></div>
+
+            <div class="lg-card" style="margin-top:26px">
+              <div class="lg-head"><span>近期要读 / 要看</span><span class="lg-num">书 1 · 影 1 · 句 1</span></div>
+              <div class="lg-kinds"><button class="lg-kind on">书单</button><button class="lg-kind">电影</button><button class="lg-kind">名言</button></div>
+              <div class="lg-inp"><input placeholder="书名"><button>加</button></div>
+              <div class="lg-inp"><input placeholder="作者（可空）"></div>
+              <ul class="lg-list">
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">《禅与摩托车维修艺术》</span><span class="lg-x">×</span></li>
+                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">《旅行的艺术》</span><span class="lg-x">×</span></li>
+              </ul>
+            </div>
 
             <div class="lg-card" style="margin-top:26px">
               <div class="lg-head"><span>语料库</span><span class="lg-num">3 条</span></div>
