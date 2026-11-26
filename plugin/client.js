@@ -1066,7 +1066,6 @@ window.__ModuleLoader__.load({
     function WeekView({ state, run }) {
       const week = state.week || { inbox: [], notes: [] };
       const board = state.weekBoard || [];
-      const ws = state.weekStats || {};
       const inbox = Array.isArray(week.inbox) ? week.inbox : [];
       const notes = Array.isArray(week.notes) ? week.notes : [];
       const rec = week.recommend && Array.isArray(week.recommend.items) ? week.recommend : null;
@@ -1109,16 +1108,6 @@ window.__ModuleLoader__.load({
         run("noteEdit", { id, text: v });
       };
 
-      const bar = (label, a, b, hint) => {
-        const pct = b ? Math.min(100, Math.round((a / b) * 100)) : 0;
-        return h(
-          "div",
-          { className: "lg-prow", key: label },
-          h("div", { className: "lg-prow-top" }, h("span", null, label), h("span", { className: "n" }, hint || `${a} / ${b}`)),
-          h("div", { className: "lg-pbar" }, h("i", { style: { width: `${pct}%` } })),
-        );
-      };
-      const focusMin = Math.round((ws.focusSeconds || 0) / 60);
       const dayLabelOf = (d) => (d === today ? "今天" : `周${WD[new Date(`${d}T00:00:00`).getDay()]}`);
 
       return h(
@@ -1127,7 +1116,7 @@ window.__ModuleLoader__.load({
 
         h(
           "div",
-          { className: "lg-grid" },
+          { className: "lg-grid", style: { alignItems: "stretch" } },
 
           /* ---------- 左：Inbox ---------- */
           h(
@@ -1222,29 +1211,13 @@ window.__ModuleLoader__.load({
             ),
           ),
 
-          /* ---------- 右：这周 + 便签 ---------- */
+          /* ---------- 右：便签 ---------- */
           h(
             "div",
-            null,
+            { style: { display: "flex", flexDirection: "column" } },
             h(
               "div",
-              { className: "lg-card" },
-              h("div", { className: "lg-card-head" }, h("span", null, "这周"), h("span", { className: "lg-count-n" }, `${ws.activeDays || 0} 天有记录`)),
-              h(
-                "div",
-                { className: "lg-progress" },
-                bar("从目标推进", ws.fromGoalDone || 0, ws.fromGoal || 0),
-                bar("临时加的事", ws.manualDone || 0, ws.manual || 0),
-                bar("规定事项", ws.planDone || 0, ws.planTotal || 0),
-                bar("今天要做", ws.todoDone || 0, ws.todoTotal || 0),
-                bar("专注", focusMin, Math.max(300, focusMin), `${focusMin} 分钟`),
-                bar("有记录的天", ws.activeDays || 0, 7),
-              ),
-            ),
-
-            h(
-              "div",
-              { className: "lg-card", style: { marginTop: 16 } },
+              { className: "lg-card", style: { display: "flex", flexDirection: "column", flex: "1 1 auto" } },
               h(
                 "div",
                 { className: "lg-card-head" },
@@ -1255,7 +1228,7 @@ window.__ModuleLoader__.load({
                 ? h("p", { className: "lg-empty", style: { margin: 0 } }, "随手写点什么——想法、待查的、不必成为任务的。")
                 : h(
                     "div",
-                    { className: "lg-notes-col" },
+                    { className: "lg-notes-col", style: { flex: "1 1 auto" } },
                     ...notes.map((n) =>
                       h(
                         "div",
