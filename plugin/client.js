@@ -54,17 +54,16 @@ window.__ModuleLoader__.load({
   background:var(--lg-bg); color:var(--lg-text);
   height:100%; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden;
   scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.14) transparent;
+  font-family:var(--lg-sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 .lg-scope::-webkit-scrollbar{width:6px;height:6px}
 .lg-scope::-webkit-scrollbar-track{background:transparent}
 .lg-scope::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
 .lg-scope::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
-  font-family:var(--lg-sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
 .lg-scope *{box-sizing:border-box}
 .lg-page{
-  width:100%; max-width:1120px; margin:0 auto; flex:0 0 auto;
-  padding:calc(var(--dsh-frame-top-clearance,0px) + 34px) 40px 96px;
+  width:100%; max-width:var(--lg-maxw,1560px); min-width:0; margin:0 auto; flex:0 0 auto;
+  padding:calc(var(--dsh-frame-top-clearance,0px) + 30px) clamp(20px,2.6vw,56px) 96px;
 }
 @media (max-width:820px){ .lg-page{padding:calc(var(--dsh-frame-top-clearance,0px) + 20px) 20px 72px} }
 
@@ -77,7 +76,7 @@ window.__ModuleLoader__.load({
 .lg-rule{height:1px;background:linear-gradient(90deg,var(--lg-accent),rgba(201,168,106,0));margin:18px 0 26px}
 
 /* 页签 */
-.lg-tabs{display:flex;gap:4px;margin:0 0 30px;border-bottom:1px solid var(--lg-line)}
+.lg-tabs{display:flex;flex-wrap:nowrap;align-items:stretch;gap:4px;margin:0 0 30px;border-bottom:1px solid var(--lg-line);min-width:0}
 .lg-tab{
   min-height:46px;padding:0 18px;display:inline-flex;align-items:center;
   font-size:15px;letter-spacing:.06em;color:var(--lg-muted);
@@ -89,7 +88,7 @@ window.__ModuleLoader__.load({
 
 /* 两栏 */
 .lg-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:44px}
-@media (min-width:1000px){ .lg-grid{grid-template-columns:minmax(0,1.35fr) minmax(0,.95fr);gap:56px;align-items:start} }
+@media (min-width:1000px){ .lg-grid{grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);gap:clamp(28px,3vw,64px);align-items:start} }
 @media (max-width:999px){ .lg-grid{gap:26px} }
 
 /* 组件 */
@@ -203,8 +202,15 @@ window.__ModuleLoader__.load({
 .lg-locbtn{background:none;border:0;padding:2px 0;min-height:24px;color:var(--lg-muted);font-size:12px;font-family:var(--lg-sans);cursor:pointer;border-bottom:1px dashed var(--lg-line);letter-spacing:.02em}
 .lg-locbtn:hover{color:var(--lg-accent)}
 .lg-locin{width:150px;min-height:26px;padding:2px 8px;background:var(--lg-surface-2);border:1px solid var(--lg-accent);border-radius:6px;color:var(--lg-text);font-size:12px;font-family:var(--lg-sans);outline:none}
-.lg-tabspark{margin-left:auto;align-self:center;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-family:var(--lg-serif);font-size:12.5px;letter-spacing:.03em;color:var(--lg-muted);padding-bottom:2px}
+.lg-tabspark{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:10px;max-width:58%;min-width:0;flex:0 1 auto;padding-bottom:2px}
+.lg-tabspark .q{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--lg-serif);font-size:13px;letter-spacing:.03em;color:var(--lg-muted)}
+.lg-tabspark .from{flex:0 0 auto;font-size:11px;letter-spacing:.08em;color:var(--lg-line);white-space:nowrap}
+.lg-tabspark .lg-spark-swap{flex:0 0 auto;min-height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:11.5px;font-family:var(--lg-sans);cursor:pointer}
+.lg-tabspark .lg-spark-swap:hover{color:var(--lg-accent);border-color:rgba(201,168,106,.45)}
+.lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:24px;flex-wrap:wrap;min-width:0}
+.lg-h1row .lg-watch.inline{min-width:0}
+.lg-watch.inline{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0;padding:0;border:0;background:none;border-radius:0;margin:0;font-size:12px;text-align:right}
+.lg-watch.inline b{color:var(--lg-accent);font-size:11.5px;letter-spacing:.16em;font-weight:500}
 .lg-wx{display:inline-flex;align-items:baseline;gap:8px;font-size:12px;color:var(--lg-muted)}
 .lg-wx i{font-style:normal;color:var(--lg-text)}
 .lg-wx b{font-weight:500;font-size:15px;color:var(--lg-accent);font-variant-numeric:tabular-nums}
@@ -502,8 +508,6 @@ window.__ModuleLoader__.load({
           h(
             "div",
             null,
-            h(Watching, { items: day.watching || [] }),
-
             h(
               "div",
               { className: "lg-nowbar" },
@@ -967,8 +971,12 @@ window.__ModuleLoader__.load({
 
     /* ================= 我 ================= */
 
-    function MeView({ state }) {
+    function MeView({ state, run }) {
       const stats = state.stats || { days: 0, records: 0, active: [] };
+      const goals = (state.profile && state.profile.goals) || { short: [], long: [] };
+      const [draftS, setDraftS] = useState("");
+      const [draftL, setDraftL] = useState("");
+
       const byDate = {};
       (stats.active || []).forEach((a) => (byDate[a.date] = a));
 
@@ -985,18 +993,75 @@ window.__ModuleLoader__.load({
 
       const start = (() => {
         if (!stats.active?.length) return null;
-        const s = stats.active[0].date;
-        return s === todayStr() ? null : shortDate(s);
+        const s0 = stats.active[0].date;
+        return s0 === todayStr() ? null : shortDate(s0);
       })();
+
+      const goalBlock = (scope, title, hint, draft, setDraft) => {
+        const list = goals[scope] || [];
+        const open = list.filter((g) => !g.done);
+        const done = list.filter((g) => g.done);
+        const add = () => {
+          const v = draft.trim();
+          if (!v) return;
+          setDraft("");
+          run("lifeGoalAdd", { scope, text: v });
+        };
+        return h(
+          "div",
+          { className: "lg-card", style: { marginBottom: 16 } },
+          h(
+            "div",
+            { className: "lg-card-head" },
+            h("span", null, title),
+            h("span", { className: "lg-count-n" }, list.length ? `${done.length} / ${list.length}` : "还没写"),
+          ),
+          h(
+            "div",
+            { className: "lg-add" },
+            h("textarea", {
+              value: draft,
+              rows: Math.min(5, Math.max(1, draft.split("\n").length)),
+              placeholder: hint,
+              onChange: (e) => setDraft(e.target.value),
+              onKeyDown: (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); add(); }
+              },
+            }),
+            h("button", { className: "lg-add-btn", onClick: add }, "加"),
+          ),
+          list.length === 0
+            ? null
+            : h(
+                "ul",
+                { className: "lg-todo" },
+                ...[...open, ...done].map((g) =>
+                  h(
+                    "li",
+                    { key: g.id, className: g.done ? "on" : "" },
+                    h(
+                      "button",
+                      { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("lifeGoalToggle", { id: g.id, done: !g.done }) },
+                      g.done ? h(Check) : null,
+                    ),
+                    h("span", { className: "t" }, g.text),
+                    h("button", { className: "lg-del", onClick: () => run("lifeGoalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
+                  ),
+                ),
+              ),
+        );
+      };
 
       return h(
         "div",
         { className: "lg-grid" },
+
+        /* ---------- 左：这九十天 + 四字 ---------- */
         h(
           "div",
           null,
           h("p", { className: "lg-big" }, `第 ${Math.max(stats.days, 1)} 天`),
-          h("p", { className: "lg-why", style: { marginBottom: 34 } }, `在这里留下 ${stats.records} 条。`),
+          h("p", { className: "lg-why", style: { marginBottom: 30 } }, `在这里留下 ${stats.records} 条。`),
 
           h("p", { className: "lg-sec", style: { marginTop: 0 } }, "九十天"),
           h("div", { className: "lg-traces" }, ...cells),
@@ -1015,32 +1080,33 @@ window.__ModuleLoader__.load({
               ),
             ),
           ),
+
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 24 } },
+            h("div", { className: "lg-card-head" }, h("span", null, "设置"), h("span", { className: "lg-count-n" }, "")),
+            h(
+              "p",
+              { style: { margin: 0, fontSize: 13.5, lineHeight: 1.95, color: "var(--lg-muted)" } },
+              `睡觉目标 ${state.profile.sleepTarget}　冥想 ${state.profile.meditationMinutes} 分钟　运动 ${state.profile.moveMinutes} 分钟`,
+            ),
+          ),
         ),
+
+        /* ---------- 右：短期 / 长期目标 ---------- */
         h(
           "div",
           null,
           h(
-            "div",
-            { className: "lg-card" },
-            h("p", { className: "lg-card-title" }, "当前季"),
-            h("p", { style: { margin: "0 0 14px", fontSize: 16, lineHeight: 1.7 } }, `${state.season.name} · ${state.season.dayIndex} / ${state.season.totalDays}`),
-            h("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.85, color: "var(--lg-muted)" } }, "把睡前那一小时拿回来。两周后自动加码。"),
+            "p",
+            { className: "footnote-line", style: { marginTop: 0 } },
+            "写在这里的目标，会成为「今天」安排和建议的依据——它推什么，先看你想到哪儿去。",
           ),
-          h(
-            "div",
-            { className: "lg-card", style: { marginTop: 16 } },
-            h("p", { className: "lg-card-title" }, "设置"),
-            h(
-              "p",
-              { style: { margin: 0, fontSize: 13.5, lineHeight: 1.95, color: "var(--lg-muted)" } },
-              `睡觉目标 ${state.profile.sleepTarget}　冥想 ${state.profile.meditationMinutes} 分钟　动一动 ${state.profile.moveMinutes} 分钟`,
-            ),
-          ),
+          goalBlock("short", "短期目标", "这一阵想做成什么？比如「这两周把早睡调回来」。", draftS, setDraftS),
+          goalBlock("long", "长期目标", "一两年后想成为什么样？比如「能自己拍一支短片」。", draftL, setDraftL),
         ),
       );
     }
-
-    /* ================= 外壳 ================= */
 
     const TABS = [
       { id: "today", label: "今天" },
@@ -1058,6 +1124,7 @@ window.__ModuleLoader__.load({
       const alive = useRef(true);
       const wx = (state && state.weather) || null;
       const locName = (state && state.location && state.location.name) || "";
+      const watching = (state && state.day && state.day.watching) || [];
 
       const load = useCallback(async () => {
         try {
@@ -1173,9 +1240,24 @@ window.__ModuleLoader__.load({
                     : null,
                 ),
               ),
-              h("h1", { className: "lg-h1" }, tab === "today" ? "今天" : tab === "week" ? "本周" : "我"),
+              h(
+                "div",
+                { className: "lg-h1row" },
+                h("h1", { className: "lg-h1" }, tab === "today" ? "今天" : tab === "week" ? "本周" : "我"),
+                watching.length
+                  ? h(
+                      "div",
+                      { className: "lg-watch inline" },
+                      h("b", null, "它在看着"),
+                      ...watching.flatMap((w, i) =>
+                        i === 0
+                          ? [h("span", { key: `w${i}` }, w)]
+                          : [h("span", { className: "lg-sep", key: `s${i}` }), h("span", { key: `w${i}` }, w)],
+                      ),
+                    )
+                  : null,
+              ),
             ),
-            h("span", { className: "lg-season" }, state ? `${state.season.name}　${state.season.dayIndex} / ${state.season.totalDays}` : ""),
           ),
           h("div", { className: "lg-rule" }),
           h(
@@ -1189,7 +1271,13 @@ window.__ModuleLoader__.load({
               ),
             ),
             day && day.inspiration
-              ? h("span", { className: "lg-tabspark", title: day.inspiration.text }, `「${day.inspiration.text}」`)
+              ? h(
+                  "span",
+                  { className: "lg-tabspark", title: day.inspiration.text },
+                  h("span", { className: "q" }, `「${day.inspiration.text}」`),
+                  day.inspiration.from ? h("span", { className: "from" }, day.inspiration.from) : null,
+                  h("button", { className: "lg-spark-swap", onClick: () => run("inspirationRotate", {}), title: "换一条" }, "换"),
+                )
               : null,
           ),
           body,

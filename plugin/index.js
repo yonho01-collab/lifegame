@@ -50,6 +50,7 @@ const seed = () => ({
     budget: "500-1500",
     fitnessLevel: "1-2/week",
     location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
+    goals: { short: [], long: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
   days: {},
@@ -70,6 +71,9 @@ async function load() {
   if (!db.weeks) db.weeks = {};
   if (!Array.isArray(db.readlater)) db.readlater = [];
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
+  if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
+  if (!Array.isArray(db.profile.goals.short)) db.profile.goals.short = [];
+  if (!Array.isArray(db.profile.goals.long)) db.profile.goals.long = [];
   await persist();
   normalizeDays();
 }
@@ -249,6 +253,36 @@ function applyOp(op, payload, date) {
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
     }
+    case "lifeGoalAdd": {
+      const scope = payload.scope === "long" ? "long" : "short";
+      const text = String(payload.text ?? "").trim().slice(0, 160);
+      if (!text) return false;
+      db.profile.goals[scope].push({ id: `lg${Date.now()}`, text, done: false, at: new Date().toISOString() });
+      return true;
+    }
+    case "lifeGoalToggle": {
+      for (const scope of ["short", "long"]) {
+        const g = db.profile.goals[scope].find((x) => x.id === payload.id);
+        if (g) {
+          g.done = !!payload.done;
+          g.doneAt = g.done ? new Date().toISOString() : null;
+          return true;
+        }
+      }
+      return false;
+    }
+    case "lifeGoalRemove": {
+      for (const scope of ["short", "long"]) {
+        const before = db.profile.goals[scope].length;
+        db.profile.goals[scope] = db.profile.goals[scope].filter((x) => x.id !== payload.id);
+        if (db.profile.goals[scope].length !== before) return true;
+      }
+      return false;
+    }
+    case "inspirationRotate": {
+      queueMicrotask(() => rotateInspiration());
+      return true;
+    }
     case "setLocation": {
       const name = String(payload.name ?? "").trim().slice(0, 40);
       if (!name) return false;
@@ -416,7 +450,7 @@ function todayKey() {
 
 function viewModel(day) {
   return {
-    title: `今天 · ${db.season.name} ${db.season.dayIndex}/${db.season.totalDays}`,
+    title: `今天 · ${todayKey()}`,
     watching: day.watching || [],
     plan: day.plan.map((p) => ({ title: p.title, slot: p.slot, done: !!p.done })),
     after: day.after || [],
@@ -461,10 +495,16 @@ function summaryText(day) {
   const goalLine = wk.goals.length
     ? `本周目标：${wk.goals.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}`
     : "";
+  const goals = db.profile.goals || { short: [], long: [] };
+  const goalList = [
+    goals.short.length ? `短期目标：${goals.short.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
+    goals.long.length ? `长期目标：${goals.long.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
+  ].filter(Boolean).join("\n");
   const w = db.weather;
   const weatherLine = w && w.text ? `天气（${w.place || ""}）：${w.text} ${w.temp != null ? w.temp + "°" : ""}${w.tmax != null ? `（${w.tmin}–${w.tmax}°）` : ""}` : "";
   return [
     weatherLine,
+    goalList,
     goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
@@ -595,6 +635,60 @@ async function geocode(name) {
     if (g) return { name, lat: g.lat, lon: g.lon };
   }
   return null;
+}
+
+/* ---------------- 灵感：来源与轮换 ---------------- */
+
+const INSPIRATION_FALLBACK = [
+  "今天的光是斜的，适合走一段。",
+  "窗开着两分钟，脑子会清楚一点。",
+  "先把水烧上，再决定要不要坐下。",
+  "不用今天就想明白，可以先记一句。",
+  "把手机放到另一个房间，十分钟就好。",
+];
+
+async function rotateInspiration() {
+  const day = getDay(todayKey());
+  const goals = db.profile.goals || { short: [], long: [] };
+  const w = db.weather;
+  const prev = day.inspiration && day.inspiration.text ? day.inspiration.text : "";
+  const nowH = new Date().getHours();
+
+  const pick = await pickModel();
+  if (llmRef && pick) {
+    const prompt =
+      "你是给一个人的日常应用写「今天的一句」的人。写一句此刻对他有用的话，30 字以内。\n" +
+      "要求：具体、当下，像朋友随口说的；不要鸡汤、不要口号、不要「加油」「坚持」「相信自己」这类词；不要说教。\n" +
+      "只输出这句话本身，不要引号、不要解释。\n\n" +
+      `现在：${nowH} 点\n` +
+      `天气：${w && w.text ? `${w.text} ${w.temp}°（${w.tmin}–${w.tmax}°）` : "未知"}\n` +
+      (goals.short.length ? `他的短期目标：${goals.short.map((g) => g.text).join("；")}\n` : "") +
+      (goals.long.length ? `他的长期目标：${goals.long.map((g) => g.text).join("；")}\n` : "") +
+      (prev ? `上一句是（不要重复它）：${prev}\n` : "");
+    try {
+      let buf = "";
+      for await (const c of llmRef.stream({ provider: pick.provider, model: pick.model, messages: [{ role: "user", content: [{ type: "text", text: prompt }] }] })) {
+        if (!c) continue;
+        if (typeof c.text === "string") buf += c.text;
+        else if (c.type === "text-delta" && typeof c.delta === "string") buf += c.delta;
+        if (buf.length > 300) break;
+      }
+      const text = buf.replace(/^["「『\s]+|["」』\s]+$/g, "").trim().slice(0, 120);
+      if (text) {
+        day.inspiration = { text, from: "它刚想到的", at: new Date().toISOString() };
+        db.rev += 1;
+        await persist();
+        return;
+      }
+    } catch {
+      /* 落到兜底 */
+    }
+  }
+
+  const text = INSPIRATION_FALLBACK[Math.floor(Math.random() * INSPIRATION_FALLBACK.length)];
+  day.inspiration = { text, from: "随手一条", at: new Date().toISOString() };
+  db.rev += 1;
+  await persist();
 }
 
 /* ---------------- 后台解析：插件自己抓页 + 调模型 ---------------- */
@@ -1185,6 +1279,58 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool readlater",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_goals",
+        description:
+          "用户的短期与长期人生目标（「我」页里写的）。给今天做安排/推荐前先读它，让建议贴着目标走。action=list 只读；action=add 需要 scope(short|long) 与 text；action=done 需要 id；action=remove 需要 id。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["list", "add", "done", "remove"] },
+            scope: { type: "string", enum: ["short", "long"], description: "add 时用：短期还是长期" },
+            text: { type: "string" },
+            id: { type: "string" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+        },
+        async execute(args) {
+          await ready;
+          const g = db.profile.goals;
+          const a = args && args.action;
+          if (a === "add") {
+            const scope = args.scope === "long" ? "long" : "short";
+            const text = String(args.text || "").trim().slice(0, 160);
+            if (!text) return { text: "要写什么目标？" };
+            g[scope].push({ id: `lg${Date.now()}`, text, done: false, at: new Date().toISOString() });
+            db.rev += 1;
+            await persist();
+          } else if (a === "done") {
+            for (const scope of ["short", "long"]) {
+              const it = g[scope].find((x) => x.id === args.id);
+              if (it) { it.done = true; it.doneAt = new Date().toISOString(); }
+            }
+            db.rev += 1;
+            await persist();
+          } else if (a === "remove") {
+            g.short = g.short.filter((x) => x.id !== args.id);
+            g.long = g.long.filter((x) => x.id !== args.id);
+            db.rev += 1;
+            await persist();
+          }
+          const fmt = (arr) => (arr.length ? arr.map((x) => `${x.text}${x.done ? "（已达成）" : ""}`).join("；") : "还没有");
+          return { text: `短期目标：${fmt(g.short)}\n长期目标：${fmt(g.long)}` };
+        },
+      }),
+    "lifegame: tool goals",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

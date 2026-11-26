@@ -17,7 +17,9 @@
 [data-theme="dark"] [data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
 [data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
 [data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
-[data-slot="main"] .lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+[data-slot="main"] .lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap}
+[data-slot="main"] .lg-watch.inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0;border:0;background:none;margin:0;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-watch.inline b{color:var(--lg-accent-text);font-size:12px;font-weight:600;letter-spacing:.1em}
 [data-slot="main"] .lg-season{color:var(--lg-muted);font-size:12px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
 [data-slot="main"] .lg-wxtop{display:inline-flex;align-items:baseline;gap:12px;color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-wxline{display:inline-flex;align-items:baseline;gap:7px}
@@ -25,7 +27,11 @@
 [data-slot="main"] .lg-wxline em{font-style:normal;color:var(--lg-muted)}
 [data-slot="main"] .lg-locbtn{background:none;border:0;border-bottom:1px dashed var(--dsh-line);min-height:24px;padding:2px 0;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-locbtn:hover{color:var(--lg-accent-text)}
-[data-slot="main"] .lg-tabspark{margin-left:auto;align-self:center;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--lg-muted);font-size:12px;padding-bottom:2px}
+[data-slot="main"] .lg-tabspark{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:10px;max-width:60%;min-width:0;padding-bottom:2px}
+[data-slot="main"] .lg-tabspark .q{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-tabspark .from{flex:0 0 auto;color:var(--dsh-line);font-size:12px}
+[data-slot="main"] .lg-tabspark .lg-spark-swap{flex:0 0 auto;height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--dsh-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-tabspark .lg-spark-swap:hover{color:var(--lg-accent-text);border-color:var(--lg-accent-text)}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
 [data-slot="main"] .lg-tab{padding:9px 0;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
 [data-slot="main"] .lg-tab.on{color:var(--dsh-fg);border-bottom-color:var(--lg-accent-text)}
@@ -101,16 +107,12 @@
     <div data-slot="main">
       <div class="lg">
         <div class="lg-top"><span>11/27 · 人生游戏</span><span class="lg-wxtop"><button class="lg-locbtn">杭州 · 余杭</button><span class="lg-wxline"><span>晴</span><b>16°</b><em>9–19°</em></span></span></div>
-        <div class="lg-h1row"><h1 class="lg-h1">今天</h1><span class="lg-season">降噪季 4 / 14</span></div>
-        <div class="lg-tabs"><span class="lg-tab on">今天</span><span class="lg-tab">本周</span><span class="lg-tab">我</span><span class="lg-tabspark">「今天的光是斜的，适合走一段。」</span></div>
+        <div class="lg-h1row"><h1 class="lg-h1">今天</h1><div class="lg-watch inline"><b>它在看着</b><span>你 3 天没动</span><span class="lg-sep"></span><span>今晚 19:00 后空窗</span><span class="lg-sep"></span><span>周三降温，户外改周四</span></div></div>
+        <div class="lg-tabs"><span class="lg-tab on">今天</span><span class="lg-tab">本周</span><span class="lg-tab">我</span><span class="lg-tabspark"><span class="q">「今天的光是斜的，适合走一段。」</span><span class="from">天气</span><button class="lg-spark-swap">换</button></span></div>
 
         <div class="lg-grid">
           <!-- 左：自由待办 -->
           <div>
-            <div class="lg-watch">
-              <b>它在看着</b><span>你 3 天没动</span><span class="lg-sep"></span><span>今晚 19:00 后空窗</span><span class="lg-sep"></span><span>周三降温，户外改周四</span>
-            </div>
-
             <div class="lg-now">
               <span class="k">现在 22:47</span>
               <span class="v">下一件规定事项：写一段话</span>
