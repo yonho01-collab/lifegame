@@ -90,6 +90,7 @@
 [data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
 [data-slot="main"] .lg-row:first-of-type{border-top:0}
 [data-slot="main"] .lg-row i{font-style:normal;width:44px;flex:0 0 auto;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-drag2{width:22px;height:24px;display:inline-grid;place-items:center;color:var(--lg-muted);font-size:13px;cursor:grab;border-radius:4px;margin-left:auto;flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -139,9 +140,9 @@
               <div class="lg-head"><span>今天要做</span><span class="lg-num">还剩 2 件</span></div>
               <div class="lg-inp"><input placeholder="写一件要做的事。回车换行，写好了再点「加」。"><button>加</button></div>
               <ul class="lg-list">
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">把上周的周报补完</span><button class="lg-pomo">开始</button></li>
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">给物业打电话问停水</span><button class="lg-pomo">开始</button></li>
-                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">把相机电池充上</span></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">把上周的周报补完</span><span class="lg-drag2">⠿</span><button class="lg-pomo">开始</button></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">给物业打电话问停水</span><span class="lg-drag2">⠿</span><button class="lg-pomo">开始</button></li>
+                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">把相机电池充上</span><span class="lg-drag2">⠿</span></li>
               </ul>
             </div>
           </div>

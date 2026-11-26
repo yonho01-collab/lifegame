@@ -425,6 +425,20 @@ function applyOp(op, payload, date) {
       return true;
     }
     /** 把某天的一条待办挪到另一天 */
+    /** 通用排序：任意列表内按 id 移到 index */
+    case "reorder": {
+      const key = String(payload.key || "");
+      const id = String(payload.id || "");
+      const index = Number(payload.index);
+      if (!key || !id || !Number.isInteger(index) || index < 0) return false;
+      const arr = listByKey(key);
+      if (!Array.isArray(arr)) return false;
+      const from = arr.findIndex((x) => x && x.id === id);
+      if (from < 0) return false;
+      const [item] = arr.splice(from, 1);
+      arr.splice(Math.min(index, arr.length), 0, item);
+      return true;
+    }
     case "todoMove": {
       const from = String(payload.from || "");
       const to = String(payload.to || "");
@@ -902,6 +916,24 @@ function applyOp(op, payload, date) {
     default:
       return false;
   }
+}
+
+/** 统一列表寻址：前端传一个 key，后端找到对应数组 */
+function listByKey(key) {
+  let m;
+  if (key === "inbox") return getWeek().inbox;
+  if (key === "notes") return getWeek().notes;
+  if (key === "corpus") return db.corpus;
+  if (key === "readlater") return db.readlater;
+  if ((m = key.match(/^todos:(\d{4}-\d{2}-\d{2})$/))) {
+    const d = getDay(m[1]);
+    if (!Array.isArray(d.todos)) d.todos = [];
+    return d.todos;
+  }
+  if ((m = key.match(/^plan:(\d{4}-\d{2}-\d{2})$/))) return getDay(m[1]).plan;
+  if ((m = key.match(/^want:(books|movies|quotes)$/))) return db.profile.want && db.profile.want[m[1]];
+  if ((m = key.match(/^goals:(short|long)$/))) return db.profile.goals && db.profile.goals[m[1]];
+  return null;
 }
 
 function dayOf(dateStr) {

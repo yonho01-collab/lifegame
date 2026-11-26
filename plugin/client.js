@@ -219,6 +219,9 @@ window.__ModuleLoader__.load({
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.lg-todo.sort-on, .lg-cal-tasks.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:6px;background:var(--lg-accent-soft)}
+.lg-notes-col.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:8px;background:var(--lg-accent-soft)}
+.lg-todo > li[draggable="true"]{cursor:grab}
 .lg-drag{flex:0 0 auto;width:20px;height:24px;display:grid;place-items:center;color:var(--lg-muted);font-size:13px;cursor:grab;user-select:none;border-radius:4px;opacity:.75}
 .lg-drag:hover{opacity:1;background:var(--lg-surface-2);color:var(--lg-text)}
 .lg-drag.note{position:absolute;top:4px;right:30px;width:22px;height:24px}
@@ -565,12 +568,62 @@ window.__ModuleLoader__.load({
       );
     }
 
+
+    /* ---------- 统一拖拽排序 ----------
+       载荷格式：sort|<listKey>|<id>
+       列表容器用 sortZone(listKey)；列表项用 dragItem(listKey, id) */
+    const LG_TAG = "sort";
+    const dragItem = (listKey, id, extra) => ({
+      draggable: true,
+      "data-sid": id,
+      onDragStart: (e) => {
+        e.dataTransfer.setData("text/plain", `${LG_TAG}|${listKey}|${id}`);
+        e.dataTransfer.effectAllowed = "copyMove";
+        e.stopPropagation();
+      },
+      ...(extra || {}),
+    });
+    const sortZone = (listKey, run) => ({
+      "data-sortkey": listKey,
+      onDragOver: (e) => {
+        e.preventDefault();
+        if (!e.currentTarget.classList.contains("sort-on")) e.currentTarget.classList.add("sort-on");
+      },
+      onDragLeave: (e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove("sort-on");
+      },
+      onDrop: (e) => {
+        e.currentTarget.classList.remove("sort-on");
+        const [tag, key, id] = (e.dataTransfer.getData("text/plain") || "").split("|");
+        // 不是本列表的东西 → 不拦，冒泡给上层容器（比如日历格子要接跨天）
+        if (tag !== LG_TAG || key !== listKey || !id) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const items = [...e.currentTarget.querySelectorAll("[data-sid]")];
+        let index = items.length;
+        const pts = items.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { top: r.top, mid: r.top + r.height / 2 };
+        });
+        for (let i = 0; i < pts.length; i++) {
+          if (e.clientY < pts[i].mid) { index = i; break; }
+        }
+        run("reorder", { key: listKey, id, index });
+      },
+    });
+    const parseDrag = (raw) => {
+      const [tag, key, id] = String(raw || "").split("|");
+      return tag === LG_TAG && key && id ? { key, id } : null;
+    };
+
     /* ================= 今天 ================= */
 
     function TodayView({ state, run, busy }) {
       const [runner, setRunner] = useState(null);
       const [draft, setDraft] = useState("");
       const { day } = state;
+      const tday = todayStr();
+      const todayTodosKey = `todos:${tday}`;
 
       const current = day.plan.find((p) => !p.done);
       const later = (day.after || [])
@@ -785,8 +838,8 @@ window.__ModuleLoader__.load({
                 onDrop: (e) => {
                   e.preventDefault();
                   setDropOn(false);
-                  const id = e.dataTransfer.getData("text/plain");
-                  if (id) run("readlaterToToday", { id });
+                  const d = parseDrag(e.dataTransfer.getData("text/plain"));
+                  if (d && d.key === "readlater") run("readlaterToToday", { id: d.id });
                 },
               },
               h(
@@ -821,11 +874,11 @@ window.__ModuleLoader__.load({
                 ? h("p", { className: "lg-empty" }, "还没有。想到什么就写一件，不用分类，也不用排优先级。")
                 : h(
                     "ul",
-                    { className: "lg-todo" },
+                    { className: "lg-todo", ...sortZone(todayTodosKey, run) },
                     ...[...openTodos, ...doneTodos].map((t) =>
                       h(
                         "li",
-                        { key: t.id, className: t.done ? "on" : "" },
+                        { key: t.id, className: t.done ? "on" : "", ...dragItem(todayTodosKey, t.id) },
                         h(
                           "button",
                           {
@@ -1020,20 +1073,15 @@ window.__ModuleLoader__.load({
             ? h("p", { className: "lg-empty" }, "看到值得细读的，先把链接丢进来。存下之后我来读一遍，把纲要和要花多少时间写上去。")
             : h(
                 "ul",
-                { className: "lg-todo" },
+                { className: "lg-todo", ...sortZone("readlater", run) },
                 ...rl.map((r) =>
                   h(
                     "li",
                     {
                       key: r.id,
                       className: r.status === "done" ? "on" : "",
-                      draggable: r.status !== "done",
-                      onDragStart: (e) => {
-                        e.dataTransfer.setData("text/plain", r.id);
-                        e.dataTransfer.effectAllowed = "copy";
-                        e.stopPropagation();
-                      },
-                      title: r.status !== "done" ? "可以拖到上方的「今天要做」" : "",
+                      ...(r.status !== "done" ? dragItem("readlater", r.id) : {}),
+                      title: r.status !== "done" ? "可拖到上方「今天要做」，也可上下调整顺序" : "",
                     },
                     h(
                       "button",
@@ -1139,13 +1187,14 @@ window.__ModuleLoader__.load({
       };
       const handleDrop = (e, date) => {
         e.preventDefault();
+        e.stopPropagation();
         setDropDay(null);
-        const raw = e.dataTransfer.getData("text/plain") || "";
-        const parts = raw.split(":");
-        if (parts[0] === "read" && parts[1]) run("readlaterToToday", { id: parts[1], date });
-        else if (parts[0] === "inbox" && parts[1]) run("inboxDate", { id: parts[1], date });
-        else if (parts[0] === "note" && parts[1]) run("noteToDay", { id: parts[1], date });
-        else if (parts[0] === "todo" && parts[1] && parts[2]) run("todoMove", { id: parts[2], from: parts[1], to: date });
+        const d = parseDrag(e.dataTransfer.getData("text/plain"));
+        if (!d) return;
+        if (d.key === "readlater") run("readlaterToToday", { id: d.id, date });
+        else if (d.key === "inbox") run("inboxDate", { id: d.id, date });
+        else if (d.key === "notes") run("noteToDay", { id: d.id, date });
+        else if (d.key.startsWith("todos:")) run("todoMove", { id: d.id, from: d.key.slice(6), to: date });
       };
       const reading = (state.readlater || []).filter((r) => r.status !== "done");
 
@@ -1218,7 +1267,7 @@ window.__ModuleLoader__.load({
                 ? h("p", { className: "lg-empty" }, "空的。可以临时加一件，也可以去「我」页把目标拆一步放进来。")
                 : h(
                     "ul",
-                    { className: "lg-todo" },
+                    { className: "lg-todo", ...sortZone("inbox", run) },
                     ...[...open, ...done].map((g) =>
                       h(
                         "li",
@@ -1259,9 +1308,8 @@ window.__ModuleLoader__.load({
                           "span",
                           {
                             className: "lg-drag",
-                            draggable: true,
-                            onDragStart: (e) => dragSet(e, `inbox:${g.id}`),
-                            title: "拖到下面某一天",
+                            ...dragItem("inbox", g.id, { style: { cursor: "grab" } }),
+                            title: "拖到某一天，或上下调顺序",
                           },
                           "⠿",
                         ),
@@ -1309,7 +1357,7 @@ window.__ModuleLoader__.load({
                 ? h("p", { className: "lg-empty", style: { margin: 0 } }, "随手写点什么——想法、待查的、不必成为任务的。")
                 : h(
                     "div",
-                    { className: "lg-notes-col", style: { flex: "1 1 auto" } },
+                    { className: "lg-notes-col", style: { flex: "1 1 auto" }, ...sortZone("notes", run) },
                     ...notes.map((n) =>
                       h(
                         "div",
@@ -1318,9 +1366,8 @@ window.__ModuleLoader__.load({
                           "span",
                           {
                             className: "lg-drag note",
-                            draggable: true,
-                            onDragStart: (e) => dragSet(e, `note:${n.id}`),
-                            title: "拖到下面某一天",
+                            ...dragItem("notes", n.id),
+                            title: "拖到某一天，或上下调顺序",
                           },
                           "⠿",
                         ),
@@ -1402,16 +1449,15 @@ window.__ModuleLoader__.load({
                 h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${Number(d.date.slice(8, 10))}`)),
                 h(
                   "ul",
-                  { className: "lg-cal-tasks" },
+                  { className: "lg-cal-tasks", ...sortZone(`todos:${d.date}`, run) },
                   ...d.todos.map((t) =>
                     h(
                       "li",
                       {
                         key: t.id,
                         className: t.done ? "on" : "",
-                        draggable: true,
-                        onDragStart: (e) => dragSet(e, `todo:${d.date}:${t.id}`),
-                        title: "拖到别的一天",
+                        ...dragItem(`todos:${d.date}`, t.id),
+                        title: "拖到别的一天，或上下调顺序",
                         style: { cursor: "grab" },
                       },
                       h("button", { className: "lg-dot" + (t.done ? " on" : ""), onClick: () => run("todoToggle", { id: t.id, done: !t.done, date: d.date }), draggable: false }, t.done ? h(Check) : null),
@@ -1588,13 +1634,13 @@ window.__ModuleLoader__.load({
             ? null
             : h(
                 "ul",
-                { className: "lg-todo" },
+                { className: "lg-todo", ...sortZone(`goals:${scope}`, run) },
                 ...[...open, ...done].map((g) => {
                   const steps = Array.isArray(g.steps) ? g.steps : [];
                   const doneSteps = steps.filter((x) => x.done).length;
                   return h(
                     "li",
-                    { key: g.id, className: g.done ? "on" : "", style: { alignItems: "flex-start" } },
+                    { key: g.id, className: g.done ? "on" : "", style: { alignItems: "flex-start" }, ...dragItem(`goals:${scope}`, g.id) },
                     h(
                       "button",
                       { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("lifeGoalToggle", { id: g.id, done: !g.done }) },
@@ -1743,7 +1789,7 @@ window.__ModuleLoader__.load({
               ? h("p", { className: "lg-empty" }, wantKind === "books" ? "还没有想读的书。" : wantKind === "movies" ? "还没有想看的电影。" : "还没有记下的句子。")
               : h(
                   "ul",
-                  { className: "lg-todo" },
+                  { className: "lg-todo", ...sortZone(`want:${wantKind}`, run) },
                   ...(want[wantKind] || []).map((it) =>
                     h(
                       "li",
@@ -1811,7 +1857,7 @@ window.__ModuleLoader__.load({
             corpus.length
               ? h(
                   "ul",
-                  { className: "lg-todo" },
+                  { className: "lg-todo", ...sortZone("corpus", run) },
                   ...corpus.slice(0, 5).map((c) =>
                     h(
                       "li",
@@ -1857,7 +1903,7 @@ window.__ModuleLoader__.load({
             h("p", { className: "footnote-line", style: { margin: "0 0 12px" } }, "「今天」页里的规定事项就是这三条。写「N 分钟」会自动改时长。"),
             h(
               "ul",
-              { className: "lg-todo" },
+              { className: "lg-todo", ...sortZone(`plan:${state.day && state.day.date ? state.day.date : todayStr()}`, run) },
               ...(state.day && Array.isArray(state.day.plan) ? state.day.plan : []).map((p) =>
                 h(
                   "li",
