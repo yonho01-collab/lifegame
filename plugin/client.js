@@ -178,8 +178,23 @@ window.__ModuleLoader__.load({
 .lg-bars-label{display:flex;gap:6px;margin-top:8px}
 .lg-bars-label span{flex:1 1 0;text-align:center;font-size:10.5px;color:var(--lg-muted);letter-spacing:.06em}
 
-.lg-traces{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:8px;max-width:640px}
+.lg-me-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:26px}
+.lg-big.sm{font-size:34px;line-height:1.1;letter-spacing:-.02em;font-weight:400;margin:4px 0 0}
+.lg-me-hero-stats{display:flex;gap:22px;flex-wrap:wrap;padding-bottom:4px}
+.lg-me-hero-stats span{font-size:11.5px;color:var(--lg-muted);letter-spacing:.04em}
+.lg-me-hero-stats b{display:block;font-size:19px;font-weight:500;color:var(--lg-text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.lg-traces-wrap{display:flex;gap:9px;align-items:flex-start}
+.lg-traces-dow{display:grid;grid-template-rows:repeat(7,26px);gap:6px;flex:0 0 auto;text-align:right}
+.lg-traces-dow span{font-size:10px;color:var(--lg-muted);line-height:26px;letter-spacing:.02em}
+.lg-traces{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,26px);grid-auto-columns:26px;gap:6px}
+.lg-months{display:grid;grid-auto-flow:column;grid-auto-columns:26px;gap:6px;margin-top:8px;margin-left:35px}
+.lg-months span{font-size:10.5px;color:var(--lg-muted);letter-spacing:.04em;min-height:12px;white-space:nowrap}
 .lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--lg-surface-2);display:block}
+.lg-traces i.lv1{background:var(--lg-accent-soft)}
+.lg-traces i.lv2{background:rgba(37,99,235,.45)}
+.lg-traces i.lv3{background:var(--lg-accent)}
+.lg-traces i.future{background:transparent}
+.lg-traces i.today{box-shadow:0 0 0 1.5px var(--lg-accent),0 0 0 3px var(--lg-accent-soft)}
 .lg-traces i.on{background:var(--lg-focus)}
 .lg-traces i.full{background:var(--lg-accent)}
 .lg-traces i.today{box-shadow:0 0 0 1px var(--lg-accent);background:var(--lg-accent-soft)}
@@ -432,6 +447,8 @@ window.__ModuleLoader__.load({
 .lg-count-n{font-size:12px;color:var(--lg-muted);font-variant-numeric:tabular-nums}
 
 /* 快速输入 */
+.lg-add.two input{flex:1 1 0;min-width:0}
+.lg-add.two input.note{flex:1.4 1 0}
 .lg-add{display:flex;gap:8px;margin-bottom:8px}
 .lg-add input,.lg-add textarea{flex:1 1 auto;min-width:0;min-height:48px;padding:13px 16px;background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;color:var(--lg-text);font-size:15px;line-height:1.6;font-family:var(--lg-sans);outline:none;resize:none;overflow:hidden}
 .lg-add input::placeholder,.lg-add textarea::placeholder{color:var(--lg-placeholder)}
@@ -1699,7 +1716,7 @@ window.__ModuleLoader__.load({
 
 
       const byDate = {};
-      (stats.active || []).forEach((a) => (byDate[a.date] = a));
+      (stats.series || []).forEach((a) => (byDate[a.date] = a));
 
       const st = stats || {};
       const fmtMin = (sec) => {
@@ -1814,22 +1831,42 @@ window.__ModuleLoader__.load({
           h("span", { className: "v" }, `${a || 0} / ${b || 0}`),
         );
 
-      const cells = [];
-      const base = new Date();
-      for (let i = 89; i >= 0; i--) {
-        const d = new Date(base);
-        d.setDate(d.getDate() - i);
-        const key = ymd(d);
-        const a = byDate[key];
-        const cls = i === 0 ? "today" : a && a.done > 0 ? (a.total > 0 && a.done === a.total ? "full" : "on") : "";
-        cells.push(h("i", { key, className: cls }));
-      }
+      /* 九十天：13 周 × 7 天，按周排（GitHub 式），完成量分四档 */
+      const WEEKS = 13;
+      const tKey = todayStr();
+      const todayObj = new Date(`${tKey}T00:00:00`);
+      const dowMon = (todayObj.getDay() + 6) % 7; // 周一 = 0
+      const weekEnd = new Date(todayObj);
+      weekEnd.setDate(weekEnd.getDate() + (6 - dowMon)); // 本周日
+      const gridStart = new Date(weekEnd);
+      gridStart.setDate(gridStart.getDate() - WEEKS * 7 + 1);
 
-      const start = (() => {
-        if (!stats.active?.length) return null;
-        const s0 = stats.active[0].date;
-        return s0 === todayStr() ? null : shortDate(s0);
-      })();
+      const cells = [];
+      const monthMarks = [];
+      for (let w = 0; w < WEEKS; w++) {
+        const colFirst = new Date(gridStart);
+        colFirst.setDate(colFirst.getDate() + w * 7);
+        monthMarks.push(
+          colFirst.getMonth() !== new Date(gridStart.getTime() + Math.max(0, w - 1) * 7 * 864e5).getMonth()
+            ? `${colFirst.getMonth() + 1}月`
+            : "",
+        );
+        for (let d = 0; d < 7; d++) {
+          const day = new Date(gridStart);
+          day.setDate(day.getDate() + w * 7 + d);
+          const key = ymd(day);
+          if (day > todayObj) {
+            cells.push(h("i", { key: `${key}_f`, className: "future" }));
+            continue;
+          }
+          const a = byDate[key];
+          const n = a ? a.done : 0;
+          const lv = n <= 0 ? "" : n <= 1 ? "lv1" : n <= 3 ? "lv2" : "lv3";
+          cells.push(h("i", { key, className: (key === tKey ? "today " : "") + lv, title: n ? `${shortDate(key)} · 完成 ${n} 件` : shortDate(key) }));
+        }
+      }
+      const startLabel = `${gridStart.getMonth() + 1}/${gridStart.getDate()}`;
+      const start = startLabel;
 
       const goalBlock = (scope, title, hint, draft, setDraft) => {
         const stepScope = scope;
@@ -1951,13 +1988,44 @@ window.__ModuleLoader__.load({
         h(
           "div",
           null,
-          h("p", { className: "lg-eyebrow-sm" }, "你走过的"),
-          h("p", { className: "lg-big" }, `第 ${Math.max(stats.days, 1)} 天`),
-          h("p", { className: "lg-why", style: { marginBottom: 30 } }, `在这里留下 ${(st.planDone || 0) + (st.todoDone || 0)} 条完成记录。`),
+          h(
+            "div",
+            { className: "lg-me-hero" },
+            h("div", null,
+              h("p", { className: "lg-eyebrow-sm" }, "你走过的"),
+              h("p", { className: "lg-big sm" }, `第 ${Math.max(st.days || 0, 1)} 天`),
+            ),
+            h(
+              "div",
+              { className: "lg-me-hero-stats" },
+              h("span", null, h("b", null, st.activeDays || 0), "天有记录"),
+              h("span", null, h("b", null, (st.planDone || 0) + (st.todoDone || 0)), "件完成"),
+              h("span", null, h("b", null, Math.round((st.focusSeconds || 0) / 3600)), "小时专注"),
+            ),
+          ),
 
           h("p", { className: "lg-sec", style: { marginTop: 0 } }, "九十天"),
-          h("div", { className: "lg-traces" }, ...cells),
-          h("div", { className: "lg-axis" }, h("span", null, start || "今天"), h("span", null, "今天")),
+          h(
+            "div",
+            { className: "lg-traces-wrap" },
+            h(
+              "div",
+              { className: "lg-traces-dow" },
+              ...["一", "二", "三", "四", "五", "六", "日"].map((d, i) =>
+                h("span", { key: d }, i === 0 || i === 2 || i === 4 ? d : ""),
+              ),
+            ),
+            h(
+              "div",
+              null,
+              h("div", { className: "lg-traces" }, ...cells),
+              h(
+                "div",
+                { className: "lg-months" },
+                ...monthMarks.map((m, i) => h("span", { key: `m${i}` }, m)),
+              ),
+            ),
+          ),
 
           h(
             "div",
@@ -2019,7 +2087,7 @@ window.__ModuleLoader__.load({
                 )
               : h(
                   "div",
-                  { className: "lg-add" },
+                  { className: "lg-add two" },
                   h("input", {
                     value: collectTitle,
                     placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].title : "标题",
@@ -2030,18 +2098,18 @@ window.__ModuleLoader__.load({
                       addCollect();
                     },
                   }),
-                  h("button", { className: "lg-add-btn", onClick: addCollect }, "加"),
-                ),
-            collectKind === "image"
-              ? null
-              : h(
-                  "div",
-                  { className: "lg-labelrow" },
                   h("input", {
                     value: collectNote,
+                    className: "note",
                     placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].note : "备注（可空）",
                     onChange: (e) => setCollectNote(e.target.value),
+                    onKeyDown: (e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      addCollect();
+                    },
                   }),
+                  h("button", { className: "lg-add-btn", onClick: addCollect }, "加"),
                 ),
             (collect[collectKind] || []).length === 0
               ? h("p", { className: "lg-empty" }, COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].empty : "还没有。")
@@ -2140,20 +2208,11 @@ window.__ModuleLoader__.load({
                     "div",
                     { className: "lg-stats" },
               statCell("连续", st.streak ? `${st.streak} 天` : "—", `最长 ${st.longestStreak || 0} 天`),
-              statCell("规定事项", `${st.planDone || 0} / ${st.planTotal || 0}`, ratio(st.planDone, st.planTotal)),
-              statCell("待办", `${st.todoDone || 0} / ${st.todoTotal || 0}`, ratio(st.todoDone, st.todoTotal)),
-              statCell("专注", focusTotal, `${st.sessions || 0} 段`),
-              statCell("最长一段", focusLongest, st.daysWithFocus ? `${st.daysWithFocus} 天有专注` : "还没专注过"),
+              statCell("专注", focusTotal, `${st.sessions || 0} 段 · ${st.daysWithFocus || 0} 天有`),
+              statCell("最长一段", focusLongest, "单次"),
               statCell("读过", `${st.readDone || 0} / ${st.readTotal || 0}`, st.readTotal ? ratio(st.readDone, st.readTotal) : "还没有存的"),
-              statCell("收藏", `${statCollect} 条`, "书 / 影 / 文 / 图 / 穿 / 乐 / 技"),
               statCell("目标推进", `${goalStepDone} 步`, `共 ${goalStepTotal} 步`),
-            ),
-            h(
-              "div",
-              { className: "lg-stats-bars" },
-              miniBar("活跃", st.activeDays || 0, st.days || 0),
-              miniBar("规定事项", st.planDone || 0, st.planTotal || 0),
-              miniBar("待办", st.todoDone || 0, st.todoTotal || 0),
+              statCell("活跃", `${st.activeDays || 0} / ${st.days || 0}`, `${ratio(st.activeDays, st.days)} 的天`),
             ),
                 )
               : null,

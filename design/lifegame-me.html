@@ -147,6 +147,24 @@
 [data-slot="main"] .lg-drop-img{display:flex;align-items:center;gap:12px;padding:16px;border:1px dashed var(--lg-line);border-radius:var(--lg-radius);background:var(--lg-surface-2)}
 [data-slot="main"] .lg-drop-img-btn{min-height:30px;padding:0 14px;border-radius:var(--lg-radius);border:1px solid var(--lg-line);background:var(--lg-surface);color:var(--lg-text);font-size:12px;display:inline-flex;align-items:center;cursor:pointer}
 [data-slot="main"] .lg-drop-img-hint{font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-me-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:26px}
+[data-slot="main"] .lg-big.sm{font-size:34px;line-height:1.1;letter-spacing:-.02em;font-weight:400;margin:4px 0 0}
+[data-slot="main"] .lg-me-hero-stats{display:flex;gap:22px;flex-wrap:wrap;padding-bottom:4px}
+[data-slot="main"] .lg-me-hero-stats span{font-size:12px;color:var(--lg-muted);letter-spacing:.04em}
+[data-slot="main"] .lg-me-hero-stats b{display:block;font-size:19px;font-weight:500;color:var(--lg-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-traces-wrap{display:flex;gap:9px;align-items:flex-start}
+[data-slot="main"] .lg-traces-dow{display:grid;grid-template-rows:repeat(7,26px);gap:6px;text-align:right}
+[data-slot="main"] .lg-traces-dow span{font-size:12px;color:var(--lg-muted);line-height:26px}
+[data-slot="main"] .lg-traces{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,26px);grid-auto-columns:26px;gap:6px}
+[data-slot="main"] .lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--lg-surface-2);display:block}
+[data-slot="main"] .lg-traces i.lv1{background:var(--lg-accent-soft)}
+[data-slot="main"] .lg-traces i.lv2{background:rgba(37,99,235,.45)}
+[data-slot="main"] .lg-traces i.lv3{background:var(--lg-accent)}
+[data-slot="main"] .lg-traces i.today{box-shadow:0 0 0 1.5px var(--lg-accent),0 0 0 3px var(--lg-accent-soft)}
+[data-slot="main"] .lg-months{display:grid;grid-auto-flow:column;grid-auto-columns:26px;gap:6px;margin-top:8px}
+[data-slot="main"] .lg-months span{font-size:12px;color:var(--lg-muted);white-space:nowrap;min-height:12px}
+[data-slot="main"] .lg-inp.two input{flex:1 1 0;min-width:0}
+[data-slot="main"] .lg-inp.two input.note{flex:1.4 1 0}
 </style>
 </head>
 <body>
@@ -177,103 +195,13 @@
         <div class="lg-grid">
           <!-- 左：你走过的 -->
           <div>
-            <p class="lg-eyebrow-sm">你走过的</p>
-            <p class="lg-big">第 47 天</p>
-            <p class="lg-why" style="margin-bottom:30px">在这里留下 63 条。</p>
+            <div class="lg-me-hero">
+              <div><p class="lg-eyebrow-sm">你走过的</p><p class="lg-big sm">第 47 天</p></div>
+              <div class="lg-me-hero-stats"><span><b>12</b>天有记录</span><span><b>134</b>件完成</span><span><b>6</b>小时专注</span></div>
+            </div>
 
             <p class="lg-sec" style="margin-top:0">九十天</p>
-            <div class="lg-traces">
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class=""></i>
-            <i class="on"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="on"></i>
-            <i class=""></i>
-            <i class="on"></i>
-            <i class="full"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class="on"></i>
-            <i class="full"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="on"></i>
-            <i class=""></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class="on"></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            <i class="full"></i>
-            </div>
+            <div class="lg-traces-wrap"><div class="lg-traces-dow"><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span><span></span></div><div><div class="lg-traces"><i class=""></i><i class=""></i><i class="lv1"></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="lv2"></i><i class=""></i><i class=""></i><i class="lv1"></i><i class="lv3"></i><i class="lv1"></i><i class=""></i><i class="lv3"></i><i class=""></i><i class="lv2"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="lv2"></i><i class=""></i><i class="lv1"></i><i class="lv1"></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class="lv2"></i><i class="lv1"></i><i class=""></i><i class="lv1"></i><i class="lv1"></i><i class="lv3"></i><i class="lv2"></i><i class=""></i><i class="lv3"></i><i class=""></i><i class=""></i><i class="lv2"></i><i class=""></i><i class=""></i><i class=""></i><i class="lv1"></i><i class="lv2"></i><i class="lv1"></i><i class="lv3"></i><i class=""></i><i class="lv1"></i><i class="lv1"></i><i class="lv1"></i><i class=""></i><i class="lv2"></i><i class="lv3"></i><i class=""></i><i class="lv1"></i><i class=""></i><i class="lv1"></i><i class="lv1"></i><i class="lv3"></i><i class="lv2"></i><i class=""></i><i class=""></i><i class="lv1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="lv2"></i><i class=""></i><i class=""></i><i class=""></i><i class="today lv3"></i><i class=""></i><i class=""></i><i class="lv1"></i></div><div class="lg-months"><span>9月</span><span></span><span></span><span>10月</span><span></span><span></span><span></span><span></span><span>11月</span><span></span><span></span><span></span><span></span></div></div></div>
             <div class="lg-axis"><span>10/13</span><span>今天</span></div>
 
 
@@ -286,8 +214,7 @@
                 <button class="lg-kind">文章<i>1</i></button><button class="lg-kind">图片</button>
                 <button class="lg-kind">技能<i>1</i></button>
               </div>
-              <div class="lg-inp"><input placeholder="书名"><button>加</button></div>
-              <div class="lg-labelrow"><input placeholder="作者 / 为什么想读"></div>
+              <div class="lg-inp two"><input placeholder="书名"><input class="note" placeholder="作者 / 为什么想读"><button>加</button></div>
               <ul class="lg-list">
                 <li class="lg-li"><span class="lg-dot"></span><span class="t">程序员修炼之道</span><span class="lg-drag2">⠿</span><span class="lg-x">×</span></li>
               </ul>
@@ -350,21 +277,7 @@
                   </div>
                 </div>
               </div>
-              <div class="lg-stats">
-                <div class="lg-stat"><span class="k">连续</span><b>—</b><span class="s">最长 5 天</span></div>
-                <div class="lg-stat"><span class="k">规定事项</span><b>96 / 141</b><span class="s">68%</span></div>
-                <div class="lg-stat"><span class="k">待办</span><b>38 / 67</b><span class="s">57%</span></div>
-                <div class="lg-stat"><span class="k">专注</span><b>6 小时 20 分</b><span class="s">22 段</span></div>
-                <div class="lg-stat"><span class="k">最长一段</span><b>1 小时 30 分</b><span class="s">9 天有专注</span></div>
-                <div class="lg-stat"><span class="k">读过</span><b>2 / 5</b><span class="s">40%</span></div>
-                <div class="lg-stat"><span class="k">收藏</span><b>5 条</b><span class="s">书 / 影 / 文 / 图 / 穿 / 乐 / 技</span></div>
-                <div class="lg-stat"><span class="k">目标推进</span><b>1 步</b><span class="s">共 3 步</span></div>
-              </div>
-              <div class="lg-stats-bars">
-                <div class="lg-minibar-row"><span class="k">活跃</span><span class="lg-pbar"><i style="width:26%"></i></span><span class="v">12 / 47</span></div>
-                <div class="lg-minibar-row"><span class="k">规定事项</span><span class="lg-pbar"><i style="width:68%"></i></span><span class="v">96 / 141</span></div>
-                <div class="lg-minibar-row"><span class="k">待办</span><span class="lg-pbar"><i style="width:57%"></i></span><span class="v">38 / 67</span></div>
-              </div>
+              <div class="lg-stats"><div class="lg-stat"><span class="k">连续</span><b>—</b><span class="s">最长 5 天</span></div><div class="lg-stat"><span class="k">专注</span><b>6 小时 20 分</b><span class="s">22 段 · 9 天有</span></div><div class="lg-stat"><span class="k">最长一段</span><b>1 小时 30 分</b><span class="s">单次</span></div><div class="lg-stat"><span class="k">读过</span><b>2 / 5</b><span class="s">40%</span></div><div class="lg-stat"><span class="k">目标推进</span><b>1 步</b><span class="s">共 3 步</span></div><div class="lg-stat"><span class="k">活跃</span><b>12 / 47</b><span class="s">26% 的天</span></div></div>
             </div>
 
           <!-- 右：你定义的远方 -->
