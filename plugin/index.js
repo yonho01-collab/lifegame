@@ -70,6 +70,7 @@ async function load() {
   if (!db.days) db.days = {};
   if (!db.weeks) db.weeks = {};
   if (!Array.isArray(db.readlater)) db.readlater = [];
+  if (!Array.isArray(db.corpus)) db.corpus = [];
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
   if (!Array.isArray(db.profile.goals.short)) db.profile.goals.short = [];
@@ -111,6 +112,42 @@ function weekKeyOf(d) {
   const off = (t.getDay() + 6) % 7; // 周一 = 0
   t.setDate(t.getDate() - off);
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+
+function findGoalStep(goalId, stepId) {
+  const g = db.profile.goals || { short: [], long: [] };
+  for (const scope of ["short", "long"]) {
+    const goal = (g[scope] || []).find((x) => x.id === goalId);
+    if (!goal) continue;
+    if (!Array.isArray(goal.steps)) goal.steps = [];
+    const step = goal.steps.find((x) => x.id === stepId);
+    if (step) return { goal, scope, step };
+  }
+  return {};
+}
+
+/** 本周七天的看板：日历要用 */
+function weekBoard() {
+  const wk = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
+  const base = new Date(`${wk}T00:00:00`);
+  const out = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const day = db.days[key];
+    const todos = (day && Array.isArray(day.todos) ? day.todos : []).map((t) => ({ id: t.id, text: t.text, done: !!t.done }));
+    const plan = day && Array.isArray(day.plan) ? day.plan : [];
+    out.push({
+      date: key,
+      today: key === todayKey(),
+      past: key < todayKey(),
+      todos,
+      planDone: plan.filter((p) => p.done).length,
+      planTotal: plan.length,
+    });
+  }
+  return out;
 }
 
 function getWeek() {
@@ -208,7 +245,9 @@ const publicState = (date) => ({
   season: db.season,
   day: getDay(date),
   week: getWeek(),
+  weekBoard: weekBoard(),
   readlater: db.readlater.slice(0, 40),
+  corpus: db.corpus.slice(0, 30),
   weather: db.weather,
   location: db.profile.location,
   stats: statsFor(date),
@@ -236,11 +275,13 @@ function applyOp(op, payload, date) {
     case "todoAdd": {
       const text = String(payload.text ?? "").trim().slice(0, 200);
       if (!text) return false;
+      const day = dayOf(payload.date);
       if (!Array.isArray(day.todos)) day.todos = [];
       day.todos.push({ id: `t${Date.now()}_${day.todos.length}`, text, done: false, at: new Date().toISOString() });
       return true;
     }
     case "todoToggle": {
+      const day = dayOf(payload.date);
       if (!Array.isArray(day.todos)) return false;
       const t = day.todos.find((x) => x.id === payload.id);
       if (!t) return false;
@@ -248,10 +289,48 @@ function applyOp(op, payload, date) {
       return true;
     }
     case "todoRemove": {
+      const day = dayOf(payload.date);
       if (!Array.isArray(day.todos)) return false;
       const n = day.todos.length;
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
+    }
+    case "corpusAdd": {
+      const text = String(payload.text ?? "").trim().slice(0, 600);
+      if (!text) return false;
+      db.corpus.unshift({
+        id: `c${Date.now()}`,
+        text,
+        source: String(payload.source ?? "").slice(0, 120),
+        tag: String(payload.tag ?? "").slice(0, 30),
+        at: new Date().toISOString(),
+      });
+      return true;
+    }
+    case "corpusRemove": {
+      const n = db.corpus.length;
+      db.corpus = db.corpus.filter((x) => x.id !== payload.id);
+      return db.corpus.length !== n;
+    }
+    case "goalBreakdown": {
+      queueMicrotask(() => breakdownGoal(String(payload.id || "")));
+      return true;
+    }
+    case "goalStepToWeek": {
+      const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
+      if (!step) return false;
+      const w = getWeek();
+      if (!w.goals.some((g) => g.fromStep === step.id)) {
+        w.goals.push({ id: `g${Date.now()}`, text: step.text, done: false, fromStep: step.id, fromGoal: goal.id, at: new Date().toISOString() });
+      }
+      step.placed = true;
+      return true;
+    }
+    case "goalStepToggle": {
+      const { step } = findGoalStep(payload.goalId, payload.stepId);
+      if (!step) return false;
+      step.done = !!payload.done;
+      return true;
     }
     case "lifeGoalAdd": {
       const scope = payload.scope === "long" ? "long" : "short";
@@ -439,6 +518,11 @@ function applyOp(op, payload, date) {
     default:
       return false;
   }
+}
+
+function dayOf(dateStr) {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || "")) ? String(dateStr) : todayKey();
+  return getDay(d);
 }
 
 /* ---------------- 给 Agent 与手机用的视图模型 ---------------- */
@@ -637,6 +721,76 @@ async function geocode(name) {
   return null;
 }
 
+/* ---------------- 目标回推（拆解成可落到周的一步步） ---------------- */
+
+async function breakdownGoal(goalId) {
+  const g = db.profile.goals || { short: [], long: [] };
+  let goal = null;
+  let scope = "short";
+  for (const k of ["short", "long"]) {
+    const hit = (g[k] || []).find((x) => x.id === goalId);
+    if (hit) {
+      goal = hit;
+      scope = k;
+    }
+  }
+  if (!goal) return;
+
+  const pick = await pickModel();
+  const corpusSample = (db.corpus || []).slice(0, 6).map((c) => `· ${c.text}${c.source ? `（${c.source}）` : ""}`).join("\n");
+  const others = [...g.short, ...g.long].filter((x) => x.id !== goalId).map((x) => x.text).join("；");
+
+  if (llmRef && pick) {
+    const prompt =
+      "你在帮一个人把他的目标拆成「可以放进一周里做的事」。\n" +
+      "原则：\n" +
+      "1. 只拆成 3-5 步，每步小到一周内能完成；\n" +
+      "2. 每步是具体的动作，不是「坚持」「努力」这种词；\n" +
+      "3. 按先后顺序，第一步是这周就能开始的；\n" +
+      "4. 不要一次给完整路线，只给最近的几步。\n" +
+      "只输出 JSON：{\"steps\":[\"步骤1\",\"步骤2\"]}，不要解释。\n\n" +
+      `目标（${scope === "long" ? "长期" : "短期"}）：${goal.text}\n` +
+      (others ? `他的其他目标：${others}\n` : "") +
+      (corpusSample ? `他收集的一些人生建议：\n${corpusSample}\n` : "");
+    try {
+      let buf = "";
+      for await (const c of llmRef.stream({ provider: pick.provider, model: pick.model, messages: [{ role: "user", content: [{ type: "text", text: prompt }] }] })) {
+        if (!c) continue;
+        if (typeof c.text === "string") buf += c.text;
+        else if (c.type === "text-delta" && typeof c.delta === "string") buf += c.delta;
+        if (buf.length > 2000) break;
+      }
+      const a = buf.indexOf("{");
+      const b = buf.lastIndexOf("}");
+      if (a >= 0 && b > a) {
+        const obj = JSON.parse(buf.slice(a, b + 1));
+        const steps = (Array.isArray(obj.steps) ? obj.steps : []).slice(0, 5).map((t, i) => ({
+          id: `st${Date.now()}_${i}`,
+          text: String(t).slice(0, 120),
+          done: false,
+        }));
+        if (steps.length) {
+          goal.steps = steps;
+          goal.brokenAt = new Date().toISOString();
+          db.rev += 1;
+          await persist();
+          return;
+        }
+      }
+    } catch {
+      /* 落到兜底 */
+    }
+  }
+
+  goal.steps = [
+    { id: `st${Date.now()}_0`, text: `先想清楚「${goal.text}」达成时是什么样子`, done: false },
+    { id: `st${Date.now()}_1`, text: "找出这周能做的最小一步，放进本周", done: false },
+  ];
+  goal.brokenAt = new Date().toISOString();
+  db.rev += 1;
+  await persist();
+}
+
 /* ---------------- 灵感：来源与轮换 ---------------- */
 
 const INSPIRATION_FALLBACK = [
@@ -664,6 +818,7 @@ async function rotateInspiration() {
       `天气：${w && w.text ? `${w.text} ${w.temp}°（${w.tmin}–${w.tmax}°）` : "未知"}\n` +
       (goals.short.length ? `他的短期目标：${goals.short.map((g) => g.text).join("；")}\n` : "") +
       (goals.long.length ? `他的长期目标：${goals.long.map((g) => g.text).join("；")}\n` : "") +
+      ((db.corpus || []).length ? `他收集的一些人生建议（可借用其中一句的意思，但要说成自己的话）：\n${db.corpus.slice(0, 4).map((c) => `· ${c.text}`).join("\n")}\n` : "") +
       (prev ? `上一句是（不要重复它）：${prev}\n` : "");
     try {
       let buf = "";
@@ -1331,6 +1486,49 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool goals",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_corpus",
+        description:
+          "「许愿系统」的语料库：关于如何过好一生的建议、人生类书籍里的观点、阅读/旅行/健身等方向的内容。用户想往里加东西、或需要引用这些建议来给建议时用。action=list 只读；action=add 需要 text（可带 source/tag）；action=remove 需要 id。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["list", "add", "remove"] },
+            text: { type: "string" },
+            source: { type: "string", description: "出处，如书名、作者、链接" },
+            tag: { type: "string", description: "方向，如 阅读 / 旅行 / 健身 / 人生" },
+            id: { type: "string" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+        },
+        async execute(args) {
+          await ready;
+          const a = args && args.action;
+          if (a === "add") {
+            const text = String(args.text || "").trim().slice(0, 600);
+            if (!text) return { text: "要加什么？" };
+            db.corpus.unshift({ id: `c${Date.now()}`, text, source: String(args.source || "").slice(0, 120), tag: String(args.tag || "").slice(0, 30), at: new Date().toISOString() });
+            db.rev += 1;
+            await persist();
+          } else if (a === "remove") {
+            db.corpus = db.corpus.filter((x) => x.id !== args.id);
+            db.rev += 1;
+            await persist();
+          }
+          const lines = db.corpus.slice(0, 12).map((c) => `· [${c.tag || "未分类"}] ${c.text}${c.source ? ` —— ${c.source}` : ""}`);
+          return { text: `语料库共 ${db.corpus.length} 条。\n${lines.join("\n") || "（还是空的）"}` };
+        },
+      }),
+    "lifegame: tool corpus",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

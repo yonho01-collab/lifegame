@@ -171,6 +171,41 @@ window.__ModuleLoader__.load({
 .lg-muted{color:var(--lg-muted)}
 .lg-eyebrow-sm{margin:0 0 8px;font-size:11.5px;letter-spacing:.2em;color:var(--lg-muted)}
 .footnote-line{margin:2px 0 10px;font-size:12px;line-height:1.7;color:var(--lg-muted)}
+.lg-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.lg-cal-day{background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;padding:10px 9px;min-height:150px;display:flex;flex-direction:column;gap:8px}
+.lg-cal-day.today{border-color:rgba(201,168,106,.5)}
+.lg-cal-day.past{opacity:.62}
+.lg-cal-head{display:flex;align-items:baseline;justify-content:space-between;font-size:11.5px;color:var(--lg-muted);letter-spacing:.06em}
+.lg-cal-head b{font-weight:500;color:var(--lg-text);font-size:12px}
+.lg-cal-day.today .lg-cal-head b{color:var(--lg-accent)}
+.lg-cal-tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lg-cal-tasks li{display:flex;align-items:flex-start;gap:5px;font-size:12px;line-height:1.55}
+.lg-cal-tasks li .tx{flex:1 1 auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.lg-cal-tasks li.on .tx{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line)}
+.lg-cal-tasks li .lg-dot{width:15px;height:15px;margin-top:1px}
+.lg-cal-tasks li .lg-del{display:none;width:18px;height:18px;font-size:12px}
+.lg-cal-tasks li:hover .lg-del{display:grid;place-items:center}
+.lg-cal-add{margin-top:auto;display:flex;gap:4px}
+.lg-cal-add input{flex:1 1 auto;min-width:0;min-height:28px;padding:2px 8px;background:var(--lg-surface);border:1px solid var(--lg-line);border-radius:6px;color:var(--lg-text);font-size:12px;font-family:var(--lg-sans);outline:none}
+.lg-cal-add input:focus{border-color:var(--lg-accent)}
+.lg-cal-add input::placeholder{color:#5f5a54}
+.lg-cal-add button{flex:0 0 auto;min-height:28px;padding:0 8px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;cursor:pointer}
+.lg-cal-add button:hover{color:var(--lg-accent);border-color:rgba(201,168,106,.45)}
+@media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.lg-goal-body{flex:1 1 auto;min-width:0}
+.lg-goal-t{display:block;width:100%;text-align:left;background:none;border:0;padding:0;color:var(--lg-text);font-size:15px;line-height:1.5;font-family:var(--lg-sans);cursor:pointer;white-space:pre-wrap}
+.lg-goal-t:hover{color:var(--lg-accent)}
+.lg-goal-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11.5px;color:var(--lg-muted)}
+.lg-goal-meta .dot{opacity:.5}
+.lg-steps{list-style:none;margin:10px 0 2px;padding:0;color:var(--lg-muted);counter-reset:st}
+.lg-steps li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:13px;line-height:1.6;border:0;counter-increment:st}
+.lg-steps li::before{content:counter(st);flex:0 0 14px;color:var(--lg-line);font-size:11.5px;line-height:1.75;font-variant-numeric:tabular-nums}
+.lg-steps li .tx{flex:1 1 auto;min-width:0}
+.lg-steps li.on .tx{color:var(--lg-line);text-decoration:line-through}
+.lg-toweek{flex:0 0 auto;min-height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:11.5px;cursor:pointer}
+.lg-toweek:hover{color:var(--lg-accent);border-color:rgba(201,168,106,.45)}
+.lg-placed{flex:0 0 auto;font-size:11.5px;color:var(--lg-accent);opacity:.8}
 .lg-stat{list-style:none;margin:0;padding:0}
 .lg-stat li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--lg-line);font-size:14px}
 .lg-stat li:last-child{border-bottom:0}
@@ -837,26 +872,38 @@ window.__ModuleLoader__.load({
 
     const WD = ["日", "一", "二", "三", "四", "五", "六"];
 
-    function WeekView({ state, run, busy }) {
-      const [draft, setDraft] = useState("");
+    function WeekView({ state, run }) {
+      const [goalDraft, setGoalDraft] = useState("");
+      const [drafts, setDrafts] = useState({});
       const week = state.week || { goals: [] };
-      const stats = state.stats || { week: [], agg: {} };
-      const agg = stats.agg || {};
+      const board = state.weekBoard || [];
+      const agg = (state.stats && state.stats.agg) || {};
       const goals = Array.isArray(week.goals) ? week.goals : [];
       const openGoals = goals.filter((g) => !g.done);
       const doneGoals = goals.filter((g) => g.done);
 
       const addGoal = () => {
-        const t = draft.trim();
+        const t = goalDraft.trim();
         if (!t) return;
-        setDraft("");
+        setGoalDraft("");
         run("goalAdd", { text: t });
+      };
+
+      const addTo = (date) => {
+        const v = (drafts[date] || "").trim();
+        if (!v) return;
+        setDrafts({ ...drafts, [date]: "" });
+        run("todoAdd", { text: v, date });
       };
 
       const focusMin = Math.round((agg.focusSeconds || 0) / 60);
       const planRate = agg.planTotal ? Math.round((agg.planDone / agg.planTotal) * 100) : 0;
+      const dayNum = (d) => Number(d.slice(8, 10));
 
       return h(
+        "div",
+        null,
+        h(
         "div",
         { className: "lg-grid" },
 
@@ -871,22 +918,21 @@ window.__ModuleLoader__.load({
               "div",
               { className: "lg-card-head" },
               h("span", null, "本周目标"),
-              h("span", { className: "lg-count-n" }, openGoals.length ? `还剩 ${openGoals.length} 条` : "都达成了"),
+              h("span", { className: "lg-count-n" }, openGoals.length ? `还剩 ${openGoals.length} 条` : goals.length ? "都达成了" : "还没定"),
             ),
             h(
               "div",
               { className: "lg-add" },
               h("input", {
-                value: draft,
-                placeholder: "这周想定下什么？回车添加",
-                onChange: (e) => setDraft(e.target.value),
+                value: goalDraft,
+                placeholder: "这周想推成什么？回车添加",
+                onChange: (e) => setGoalDraft(e.target.value),
                 onKeyDown: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addGoal(); } },
               }),
               h("button", { className: "lg-add-btn", onClick: addGoal }, "加"),
             ),
-            h("p", { className: "footnote-line" }, "定下的目标会成为「今天」安排和推荐的依据。"),
             goals.length === 0
-              ? h("p", { className: "lg-empty" }, "还没有目标。一条就够——这周想把哪件事往前推一步？")
+              ? h("p", { className: "lg-empty" }, "还没有。可以从「我」页的目标里点「放到本周」带过来。")
               : h(
                   "ul",
                   { className: "lg-todo" },
@@ -894,11 +940,7 @@ window.__ModuleLoader__.load({
                     h(
                       "li",
                       { key: g.id, className: g.done ? "on" : "" },
-                      h(
-                        "button",
-                        { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("goalToggle", { id: g.id, done: !g.done }) },
-                        g.done ? h(Check) : null,
-                      ),
+                      h("button", { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("goalToggle", { id: g.id, done: !g.done }) }, g.done ? h(Check) : null),
                       h("span", { className: "t" }, g.text),
                       h("button", { className: "lg-del", onClick: () => run("goalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
                     ),
@@ -906,29 +948,9 @@ window.__ModuleLoader__.load({
                 ),
           ),
 
-          // 七天
-          h(
-            "div",
-            { className: "lg-card", style: { marginTop: 16 } },
-            h("div", { className: "lg-card-head" }, h("span", null, "最近七天"), h("span", { className: "lg-count-n" }, `${agg.planDone || 0} / ${agg.planTotal || 0} 件`)),
-            h(
-              "div",
-              { className: "lg-bars" },
-              ...(stats.week || []).map((d, i) => {
-                const pct = d.total ? Math.round((d.done / d.total) * 100) : 0;
-                const full = d.total > 0 && d.done === d.total;
-                return h("i", { key: i, className: full ? "full" : "" }, h("b", { style: { height: `${pct}%` } }));
-              }),
-            ),
-            h(
-              "div",
-              { className: "lg-bars-label" },
-              ...(stats.week || []).map((d, i) => h("span", { key: i }, WD[new Date(`${d.date}T00:00:00`).getDay()])),
-            ),
-          ),
         ),
 
-        /* ---------- 右：统计 + 建议 ---------- */
+        /* ---------- 右：统计 + 这周的话 ---------- */
         h(
           "div",
           null,
@@ -944,28 +966,62 @@ window.__ModuleLoader__.load({
               h("li", null, h("span", { className: "k" }, "自由待办"), h("span", { className: "v" }, `${agg.todosDone || 0} / ${agg.todosTotal || 0}`)),
               h("li", null, h("span", { className: "k" }, "本周目标"), h("span", { className: "v" }, `${doneGoals.length} / ${goals.length}`)),
             ),
-            agg.planTotal
-              ? h("div", { className: "lg-meter" }, h("i", { style: { width: `${planRate}%` } }))
-              : null,
+            agg.planTotal ? h("div", { className: "lg-meter" }, h("i", { style: { width: `${planRate}%` } })) : null,
           ),
 
           h(
             "div",
             { className: "lg-card", style: { marginTop: 16 } },
-            h(
-              "div",
-              { className: "lg-card-head" },
-              h("span", null, "这周的话"),
-              h("span", { className: "lg-count-n" }, week.comment ? "它写的" : ""),
-            ),
+            h("div", { className: "lg-card-head" }, h("span", null, "这周的话"), h("span", { className: "lg-count-n" }, week.comment ? "它写的" : "")),
             week.comment
               ? h("p", { className: "lg-comment" }, week.comment)
-              : h(
-                  "p",
-                  { className: "lg-empty", style: { margin: 0 } },
-                  "还没写。在对话里说「总结一下这周」，它会看完数据写一段给你——包括建议和该夸你的地方。",
-                ),
+              : h("p", { className: "lg-empty", style: { margin: 0 } }, "还没写。在对话里说「总结一下这周」，它会看完数据写一段给你——包括建议和该夸你的地方。"),
           ),
+        ),
+        ),
+
+        /* ---------- 整宽：这一周 ---------- */
+        h(
+          "div",
+          null,
+          h("p", { className: "lg-sec", style: { marginTop: 8 } }, "这一周"),
+          h(
+            "div",
+            { className: "lg-cal" },
+            ...board.map((d) => {
+              const dt = new Date(`${d.date}T00:00:00`);
+              return h(
+                "div",
+                { key: d.date, className: "lg-cal-day" + (d.today ? " today" : "") + (d.past && !d.today ? " past" : "") },
+                h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${dayNum(d.date)}`)),
+                h(
+                  "ul",
+                  { className: "lg-cal-tasks" },
+                  ...d.todos.map((t) =>
+                    h(
+                      "li",
+                      { key: t.id, className: t.done ? "on" : "" },
+                      h("button", { className: "lg-dot" + (t.done ? " on" : ""), onClick: () => run("todoToggle", { id: t.id, done: !t.done, date: d.date }) }, t.done ? h(Check) : null),
+                      h("span", { className: "tx" }, t.text),
+                      h("button", { className: "lg-del", onClick: () => run("todoRemove", { id: t.id, date: d.date }), "aria-label": "删除" }, "×"),
+                    ),
+                  ),
+                ),
+                h(
+                  "div",
+                  { className: "lg-cal-add" },
+                  h("input", {
+                    value: drafts[d.date] || "",
+                    placeholder: "加一件",
+                    onChange: (e) => setDrafts({ ...drafts, [d.date]: e.target.value }),
+                    onKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); addTo(d.date); } },
+                  }),
+                  h("button", { onClick: () => addTo(d.date), "aria-label": "添加" }, "加"),
+                ),
+              );
+            }),
+          ),
+          h("p", { className: "footnote-line" }, "在这七天里写下的，就是那一天的「今天要做」——两边是同一份。"),
         ),
       );
     }
@@ -977,6 +1033,10 @@ window.__ModuleLoader__.load({
       const goals = (state.profile && state.profile.goals) || { short: [], long: [] };
       const [draftS, setDraftS] = useState("");
       const [draftL, setDraftL] = useState("");
+      const [openGoal, setOpenGoal] = useState(null);
+      const [corpusText, setCorpusText] = useState("");
+      const [corpusSrc, setCorpusSrc] = useState("");
+      const corpus = (state && state.corpus) || [];
 
       const byDate = {};
       (stats.active || []).forEach((a) => (byDate[a.date] = a));
@@ -1036,19 +1096,60 @@ window.__ModuleLoader__.load({
             : h(
                 "ul",
                 { className: "lg-todo" },
-                ...[...open, ...done].map((g) =>
-                  h(
+                ...[...open, ...done].map((g) => {
+                  const steps = Array.isArray(g.steps) ? g.steps : [];
+                  const doneSteps = steps.filter((x) => x.done).length;
+                  return h(
                     "li",
-                    { key: g.id, className: g.done ? "on" : "" },
+                    { key: g.id, className: g.done ? "on" : "", style: { alignItems: "flex-start" } },
                     h(
                       "button",
                       { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("lifeGoalToggle", { id: g.id, done: !g.done }) },
                       g.done ? h(Check) : null,
                     ),
-                    h("span", { className: "t" }, g.text),
+                    h(
+                      "div",
+                      { className: "lg-goal-body" },
+                      h(
+                        "button",
+                        { className: "lg-goal-t", onClick: () => setOpenGoal(openGoal === g.id ? null : g.id), title: "点开看回推的步骤" },
+                        g.text,
+                      ),
+                      steps.length
+                        ? h("div", { className: "lg-goal-meta" }, `${doneSteps} / ${steps.length} 步已做`, h("span", { className: "dot" }, "·"), openGoal === g.id ? "收起" : "展开")
+                        : h("div", { className: "lg-goal-meta" }, "还没拆过"),
+                      openGoal === g.id
+                        ? steps.length
+                          ? h(
+                              "ol",
+                              { className: "lg-steps" },
+                              ...steps.map((st) =>
+                                h(
+                                  "li",
+                                  { key: st.id, className: st.done ? "on" : "" },
+                                  h(
+                                    "button",
+                                    { className: "lg-dot" + (st.done ? " on" : ""), onClick: () => run("goalStepToggle", { goalId: g.id, stepId: st.id, done: !st.done }) },
+                                    st.done ? h(Check) : null,
+                                  ),
+                                  h("span", { className: "tx" }, st.text),
+                                  st.placed
+                                    ? h("span", { className: "lg-placed" }, "已在本周")
+                                    : h("button", { className: "lg-toweek", onClick: () => run("goalStepToWeek", { goalId: g.id, stepId: st.id }) }, "放到本周"),
+                                ),
+                              ),
+                            )
+                          : h("p", { className: "lg-empty", style: { margin: "8px 0 0" } }, "点右侧「拆解」，它会往前推几步。")
+                        : null,
+                    ),
+                    h(
+                      "button",
+                      { className: "lg-pomo", style: { opacity: 1 }, onClick: () => run("goalBreakdown", { id: g.id }), title: "让模型把这个目标拆成几步" },
+                      steps.length ? "重拆" : "拆解",
+                    ),
                     h("button", { className: "lg-del", onClick: () => run("lifeGoalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
-                  ),
-                ),
+                  );
+                }),
               ),
         );
       };
@@ -1069,6 +1170,71 @@ window.__ModuleLoader__.load({
           h("div", { className: "lg-traces" }, ...cells),
           h("div", { className: "lg-axis" }, h("span", null, start || "今天"), h("span", null, "今天")),
 
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 26 } },
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "语料库"),
+              h("span", { className: "lg-count-n" }, corpus.length ? `${corpus.length} 条` : "空的"),
+            ),
+            h(
+              "p",
+              { className: "footnote-line", style: { margin: "0 0 10px" } },
+              "它给你建议时从这里取。放一句你觉得对的话、一个观点、一本书里的建议。",
+            ),
+            h(
+              "div",
+              { className: "lg-add" },
+              h("textarea", {
+                value: corpusText,
+                rows: Math.min(4, Math.max(1, corpusText.split("\n").length)),
+                placeholder: "一句建议、一个观点，或一段摘抄。回车换行。",
+                onChange: (e) => setCorpusText(e.target.value),
+              }),
+              h("button", {
+                className: "lg-add-btn",
+                onClick: () => {
+                  const v = corpusText.trim();
+                  if (!v) return;
+                  setCorpusText("");
+                  run("corpusAdd", { text: v, source: corpusSrc.trim() });
+                  setCorpusSrc("");
+                },
+              }, "加"),
+            ),
+            h(
+              "div",
+              { className: "lg-labelrow" },
+              h("input", {
+                value: corpusSrc,
+                placeholder: "出处（可空）：书名 / 作者 / 谁说的",
+                onChange: (e) => setCorpusSrc(e.target.value),
+              }),
+            ),
+            corpus.length
+              ? h(
+                  "ul",
+                  { className: "lg-todo" },
+                  ...corpus.slice(0, 5).map((c) =>
+                    h(
+                      "li",
+                      { key: c.id, style: { alignItems: "flex-start" } },
+                      h(
+                        "div",
+                        { style: { flex: "1 1 auto", minWidth: 0 } },
+                        h("p", { style: { margin: 0, fontSize: 13, lineHeight: 1.75, color: "var(--lg-text)", whiteSpace: "pre-wrap" } }, c.text),
+                        c.source || c.tag
+                          ? h("p", { style: { margin: "4px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, [c.tag, c.source].filter(Boolean).join(" · "))
+                          : null,
+                      ),
+                      h("button", { className: "lg-del", onClick: () => run("corpusRemove", { id: c.id }), "aria-label": "删除" }, "×"),
+                    ),
+                  ),
+                )
+              : null,
+          ),
         ),
 
         /* ---------- 右：短期 / 长期目标 ---------- */
