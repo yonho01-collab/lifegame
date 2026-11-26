@@ -316,6 +316,25 @@ function applyOp(op, payload, date) {
       queueMicrotask(() => breakdownGoal(String(payload.id || "")));
       return true;
     }
+    case "goalStepToToday": {
+      const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
+      if (!step) return false;
+      const day = getDay(todayKey());
+      if (!Array.isArray(day.todos)) day.todos = [];
+      if (!day.todos.some((t) => t.fromStep === step.id)) {
+        day.todos.push({
+          id: `t${Date.now()}`,
+          text: step.text,
+          done: false,
+          at: new Date().toISOString(),
+          fromStep: step.id,
+          fromGoal: goal.id,
+        });
+      }
+      step.placed = true;
+      step.placedTo = "today";
+      return true;
+    }
     case "goalStepToWeek": {
       const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
       if (!step) return false;
@@ -324,6 +343,7 @@ function applyOp(op, payload, date) {
         w.goals.push({ id: `g${Date.now()}`, text: step.text, done: false, fromStep: step.id, fromGoal: goal.id, at: new Date().toISOString() });
       }
       step.placed = true;
+      step.placedTo = "week";
       return true;
     }
     case "goalStepToggle": {

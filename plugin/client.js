@@ -1059,6 +1059,7 @@ window.__ModuleLoader__.load({
       })();
 
       const goalBlock = (scope, title, hint, draft, setDraft) => {
+        const stepScope = scope;
         const list = goals[scope] || [];
         const open = list.filter((g) => !g.done);
         const done = list.filter((g) => g.done);
@@ -1134,8 +1135,15 @@ window.__ModuleLoader__.load({
                                   ),
                                   h("span", { className: "tx" }, st.text),
                                   st.placed
-                                    ? h("span", { className: "lg-placed" }, "已在本周")
-                                    : h("button", { className: "lg-toweek", onClick: () => run("goalStepToWeek", { goalId: g.id, stepId: st.id }) }, "放到本周"),
+                                    ? h("span", { className: "lg-placed" }, st.placedTo === "today" ? "已在今天" : "已在本周")
+                                    : h(
+                                        "span",
+                                        { style: { display: "inline-flex", gap: 6, flex: "0 0 auto" } },
+                                        stepScope === "short"
+                                          ? h("button", { className: "lg-toweek", onClick: () => run("goalStepToToday", { goalId: g.id, stepId: st.id }), title: "直接放进今天要做" }, "放到今天")
+                                          : null,
+                                        h("button", { className: "lg-toweek", onClick: () => run("goalStepToWeek", { goalId: g.id, stepId: st.id }) }, "放到本周"),
+                                      ),
                                 ),
                               ),
                             )

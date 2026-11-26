@@ -29,11 +29,12 @@
 [data-slot="main"] .lg-goal-t{display:block;color:var(--dsh-fg);font-size:13px}
 [data-slot="main"] .lg-goal-meta{display:block;margin-top:4px;color:var(--lg-muted);font-size:12px}
 [data-slot="main"] .lg-steps{display:block;margin-top:8px}
-[data-slot="main"] .lg-step{display:flex;align-items:flex-start;gap:8px;padding:5px 0;color:var(--lg-muted);font-size:12px;line-height:1.6}
+[data-slot="main"] .lg-step{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;padding:5px 0;color:var(--lg-muted);font-size:12px;line-height:1.6}
 [data-slot="main"] .lg-step i{flex:0 0 12px;font-style:normal;color:var(--lg-muted)}
-[data-slot="main"] .lg-step em{flex:1;font-style:normal}
+[data-slot="main"] .lg-step em{flex:1;min-width:0;font-style:normal;line-height:1.5}
 [data-slot="main"] .lg-step.done em{color:var(--lg-muted);text-decoration:line-through}
-[data-slot="main"] .lg-step u{flex:0 0 auto;text-decoration:none;border:1px solid var(--dsh-line);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--lg-muted);cursor:pointer}
+[data-slot="main"] .lg-step-acts{flex:1 1 100%;display:inline-flex;gap:6px;margin-left:20px;margin-top:2px}
+[data-slot="main"] .lg-step u{flex:0 0 auto;text-decoration:none;border:1px solid var(--dsh-line);border-radius:6px;padding:1px 6px;font-size:12px;white-space:nowrap;color:var(--lg-muted);cursor:pointer}
 [data-slot="main"] .lg-step b{flex:0 0 auto;font-weight:400;font-size:12px;color:var(--lg-accent-text)}
 [data-slot="main"] .lg-corpus{flex:1;min-width:0}
 [data-slot="main"] .lg-corpus .tx{display:block;color:var(--dsh-fg);font-size:13px;line-height:1.7}
@@ -262,8 +263,8 @@
                     <span class="lg-goal-meta">1 / 3 步已做 · 收起</span>
                     <span class="lg-steps">
                       <span class="lg-step done"><i>1</i><em>这周先做到 01:00 前，记录三天的实际入睡时间</em><b>已在本周</b></span>
-                      <span class="lg-step"><i>2</i><em>把手机充电器移到客厅，连续四天</em><u>放到本周</u></span>
-                      <span class="lg-step"><i>3</i><em>找一件睡前可做 10 分钟的事替代刷手机</em><u>放到本周</u></span>
+                      <span class="lg-step"><i>2</i><em>把手机充电器移到客厅</em><span class="lg-step-acts"><u>放到今天</u><u>放到本周</u></span></span>
+                      <span class="lg-step"><i>3</i><em>睡前用 10 分钟的事替代刷手机</em><span class="lg-step-acts"><u>放到今天</u><u>放到本周</u></span></span>
                     </span>
                   </span>
                   <button class="lg-pomo">重拆</button>
