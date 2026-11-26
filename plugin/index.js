@@ -737,6 +737,81 @@ function applyOp(op, payload, date) {
       it.placed = date;
       return true;
     }
+    case "readlaterAdd": {
+      const url = String(payload.url ?? "").trim().slice(0, 2000);
+      if (!/^https?:\/\//i.test(url)) return false;
+      if (db.readlater.some((x) => x.url === url)) return false;
+      const newId = `r${Date.now()}`;
+      db.readlater.unshift({
+        id: newId,
+        url,
+        title: String(payload.title ?? "").slice(0, 200) || "",
+        status: "pending",
+        summary: "",
+        outline: [],
+        minutes: 0,
+        addedAt: new Date().toISOString(),
+      });
+      queueMicrotask(() => kickParse(newId));
+      return true;
+    }
+    case "readlaterRemove": {
+      const n = db.readlater.length;
+      db.readlater = db.readlater.filter((x) => x.id !== payload.id);
+      return db.readlater.length !== n;
+    }
+    case "readlaterDone": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      r.status = payload.done ? "done" : r.summary ? "ready" : "pending";
+      r.doneAt = payload.done ? new Date().toISOString() : null;
+      return true;
+    }
+    case "readlaterRetry": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      r.status = "pending";
+      r.tries = 0;
+      queueMicrotask(() => kickParse(r.id));
+      return true;
+    }
+    case "readlaterEnrich": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      if (payload.title) r.title = String(payload.title).slice(0, 200);
+      r.summary = String(payload.summary ?? "").slice(0, 600);
+      r.outline = Array.isArray(payload.outline) ? payload.outline.slice(0, 12).map((x) => String(x).slice(0, 120)) : [];
+      r.minutes = Math.max(1, Math.min(120, Number(payload.minutes) || 0)) || 0;
+      r.status = r.status === "done" ? "done" : "ready";
+      r.enrichedAt = new Date().toISOString();
+      return true;
+    }
+    /** 把一篇稍后阅读丢进某天的「今天要做」 */
+    case "readlaterToToday": {
+      const r = (db.readlater || []).find((x) => x.id === payload.id);
+      if (!r) return false;
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : todayKey();
+      const day = getDay(date);
+      if (!Array.isArray(day.todos)) day.todos = [];
+      const text = r.title ? `读：${r.title}` : `读：${r.url}`;
+      if (!day.todos.some((t) => t.fromRead === r.id)) {
+        day.todos.push({
+          id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          text,
+          done: false,
+          at: new Date().toISOString(),
+          fromRead: r.id,
+          minutes: r.minutes || 0,
+        });
+      }
+      r.placed = date;
+      return true;
+    }
+
+    case "recommendWeek": {
+      queueMicrotask(() => recommendWeek());
+      return true;
+    }
     case "noteAdd": {
       const w = getWeek();
       w.notes.unshift({
