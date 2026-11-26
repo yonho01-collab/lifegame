@@ -219,7 +219,9 @@ window.__ModuleLoader__.load({
 .lg-cal-add button:hover{color:var(--lg-accent);border-color:var(--lg-line)}
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
-.lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding:2px 0 0;border:0;background:none;text-align:left;font-family:var(--lg-sans);cursor:pointer;min-height:24px;display:inline-flex;align-items:center}
+.lg-plan-no:hover{color:var(--lg-accent)}
+.lg-inline-in.slot{flex:0 0 56px;min-width:56px;max-width:64px}
 .lg-todo > li, .lg-plan > li, .lg-cal-tasks > li, .lg-recs > li, .lg-notes-col > .lg-note-mini, .lg-drag{-webkit-user-select:none;user-select:none}
 .lg-todo textarea, .lg-todo input, .lg-note-mini textarea, .lg-plan input{-webkit-user-select:text;user-select:text}
 .lg-todo.sort-on, .lg-cal-tasks.sort-on, .lg-plan.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:6px;background:var(--lg-accent-soft)}
@@ -1609,6 +1611,8 @@ window.__ModuleLoader__.load({
       const [wantKind, setWantKind] = useState("books");
       const [planTplEdit, setPlanTplEdit] = useState(null);
       const [planTplText, setPlanTplText] = useState("");
+      const [slotEdit, setSlotEdit] = useState(null);
+      const [slotText, setSlotText] = useState("");
       const [wantTitle, setWantTitle] = useState("");
       const [wantExtra, setWantExtra] = useState("");
 
@@ -1944,7 +1948,32 @@ window.__ModuleLoader__.load({
                 h(
                   "li",
                   { key: p.id },
-                  h("span", { className: "lg-plan-no" }, p.slot),
+                  slotEdit === p.id
+                    ? h("input", {
+                        className: "lg-inline-in time slot",
+                        value: slotText,
+                        autoFocus: true,
+                        placeholder: "09:30",
+                        onChange: (e) => setSlotText(e.target.value),
+                        onBlur: () => {
+                          const v = slotText.trim();
+                          setSlotEdit(null);
+                          if (v) run("planTemplate", { id: p.id, slot: v });
+                        },
+                        onKeyDown: (e) => {
+                          if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                          if (e.key === "Escape") { e.preventDefault(); setSlotEdit(null); }
+                        },
+                      })
+                    : h(
+                        "button",
+                        {
+                          className: "lg-plan-no",
+                          onClick: () => { setSlotEdit(p.id); setSlotText(p.slot); },
+                          title: "点一下改时间",
+                        },
+                        p.slot,
+                      ),
                   planTplEdit === p.id
                     ? h("input", {
                         className: "lg-inline-in",

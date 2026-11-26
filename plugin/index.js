@@ -30,10 +30,11 @@ let chain = Promise.resolve();
 
 const defaultPlan = (p) => {
   const tpl = (p && p.customPlan) || {};
+  const slots = (p && p.customSlots) || {};
   return [
-    { id: "meditate", title: tpl.meditate || `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: "09:30", done: false },
-    { id: "move", title: tpl.move || `运动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
-    { id: "create", title: tpl.create || "写一段话", kind: "output", minutes: 25, slot: "19:35", done: false },
+    { id: "meditate", title: tpl.meditate || `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: slots.meditate || "09:30", done: false },
+    { id: "move", title: tpl.move || `运动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: slots.move || "09:50", done: false },
+    { id: "create", title: tpl.create || "写一段话", kind: "output", minutes: 25, slot: slots.create || "19:35", done: false },
   ];
 };
 
@@ -55,6 +56,7 @@ const seed = () => ({
     location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
     goals: { short: [], long: [] },
     customPlan: {},
+    customSlots: {},
     want: { books: [], movies: [], quotes: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
@@ -79,6 +81,7 @@ async function load() {
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
   if (!db.profile.customPlan) db.profile.customPlan = {};
+  if (!db.profile.customSlots) db.profile.customSlots = {};
   if (!db.profile.want) db.profile.want = { books: [], movies: [], quotes: [] };
   for (const k of ["books", "movies", "quotes"]) {
     if (!Array.isArray(db.profile.want[k])) db.profile.want[k] = [];
@@ -263,21 +266,25 @@ function normalizeDays() {
       changed += 1;
     }
   }
+  const tpl = db.profile.customPlan || {};
+  const slots = db.profile.customSlots || {};
   for (const key of Object.keys(db.days)) {
     const day = db.days[key];
     if (!day || !Array.isArray(day.plan)) continue;
     for (const item of day.plan) {
-      const before = `${item.title}|${item.minutes}`;
+      const before = `${item.title}|${item.minutes}|${item.slot}`;
+      // 用户在「我」页改过模板就尊重模板，别用默认值覆盖
       if (item.id === "meditate") {
-        item.title = `冥想 ${db.profile.meditationMinutes} 分钟`;
+        item.title = tpl.meditate || `冥想 ${db.profile.meditationMinutes} 分钟`;
         item.minutes = db.profile.meditationMinutes;
       } else if (item.id === "move") {
-        item.title = `运动 ${db.profile.moveMinutes} 分钟`;
+        item.title = tpl.move || `运动 ${db.profile.moveMinutes} 分钟`;
         item.minutes = db.profile.moveMinutes;
       } else if (item.id === "create") {
-        item.title = "写一段话";
+        item.title = tpl.create || "写一段话";
       }
-      if (`${item.title}|${item.minutes}` !== before) changed += 1;
+      if (slots[item.id]) item.slot = slots[item.id];
+      if (`${item.title}|${item.minutes}|${item.slot}` !== before) changed += 1;
     }
   }
   if (changed) persist();
@@ -654,12 +661,32 @@ function applyOp(op, payload, date) {
       day.after[i] = { time: time || cur.time, title };
       return true;
     }
-    /** 改「每天的规矩」：写入模板，并同步今天 */
+    /** 改「每天的规矩」：标题和/或时间，写入模板，并同步今天 */
     case "planTemplate": {
       const id = String(payload.id || "");
       if (!["meditate", "move", "create"].includes(id)) return false;
       const title = String(payload.title ?? "").trim().slice(0, 40);
-      if (!title) return false;
+      const slotRaw = String(payload.slot ?? "").trim();
+      if (!title && !slotRaw) return false;
+
+      // 先处理时间
+      if (slotRaw) {
+        const m2 = slotRaw.match(/^(\d{1,2})[:：](\d{2})$/);
+        if (!m2) return false;
+        const hh = Math.max(0, Math.min(23, Number(m2[1])));
+        const mm = Math.max(0, Math.min(59, Number(m2[2])));
+        const norm = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+        db.profile.customSlots = db.profile.customSlots || {};
+        db.profile.customSlots[id] = norm;
+        const d0 = getDay(todayKey());
+        const it0 = (d0.plan || []).find((x) => x.id === id);
+        if (it0) {
+          it0.slot = norm;
+          if (Array.isArray(d0.plan)) d0.plan.sort((a, b) => String(a.slot).localeCompare(String(b.slot)));
+        }
+        if (!title) return true;   // 只改时间，到此为止
+      }
+
       db.profile.customPlan[id] = title;
       const m = title.match(/(\d{1,3})\s*(?:分钟|min)/i);
       const mins = m ? Math.max(1, Math.min(180, Number(m[1]) || 0)) : 0;
