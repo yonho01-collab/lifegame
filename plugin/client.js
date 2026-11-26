@@ -1959,76 +1959,6 @@ window.__ModuleLoader__.load({
           h("div", { className: "lg-traces" }, ...cells),
           h("div", { className: "lg-axis" }, h("span", null, start || "今天"), h("span", null, "今天")),
 
-          /* ---------- 统计 + 活跃度 ---------- */
-          h(
-            "div",
-            { className: "lg-card", style: { marginTop: 26 } },
-            h(
-              "div",
-              { className: "lg-card-head" },
-              h("span", null, "统计"),
-              h(
-                "span",
-                { style: { marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 12 } },
-                h("span", { className: "lg-count-n" }, `${st.activeDays || 0} / ${st.days || 0} 天有记录 · 连续 ${st.streak || 0} 天`),
-                h(
-                  "button",
-                  { className: "lg-fold", onClick: () => setStatsOpen(!statsOpen), "aria-expanded": statsOpen },
-                  statsOpen ? "收起" : "展开",
-                ),
-              ),
-            ),
-            h("p", { className: "lg-why", style: { margin: statsOpen ? "0 0 18px" : "0" } }, activityLine),
-
-            statsOpen
-              ? h(
-                  "div",
-                  null,
-                  h(
-                    "div",
-                    { className: "lg-charts" },
-                    h(
-                      "div",
-                      { className: "lg-chart-box" },
-                      h("span", { className: "lg-chart-k" }, "近 30 天 · 每天完成"),
-                      barsChart,
-                    ),
-                    h(
-                      "div",
-                      { className: "lg-chart-box" },
-                      h("span", { className: "lg-chart-k" }, "近 14 天 · 专注分钟"),
-                      focusChart,
-                    ),
-                    h(
-                      "div",
-                      { className: "lg-rings" },
-                      ring(Math.round(((st.planDone || 0) / (st.planTotal || 1)) * 100), "规定事项", `${st.planDone || 0}/${st.planTotal || 0}`),
-                      ring(Math.round(((st.todoDone || 0) / (st.todoTotal || 1)) * 100), "待办", `${st.todoDone || 0}/${st.todoTotal || 0}`),
-                    ),
-                  ),
-                  h(
-                    "div",
-                    { className: "lg-stats" },
-              statCell("连续", st.streak ? `${st.streak} 天` : "—", `最长 ${st.longestStreak || 0} 天`),
-              statCell("规定事项", `${st.planDone || 0} / ${st.planTotal || 0}`, ratio(st.planDone, st.planTotal)),
-              statCell("待办", `${st.todoDone || 0} / ${st.todoTotal || 0}`, ratio(st.todoDone, st.todoTotal)),
-              statCell("专注", focusTotal, `${st.sessions || 0} 段`),
-              statCell("最长一段", focusLongest, st.daysWithFocus ? `${st.daysWithFocus} 天有专注` : "还没专注过"),
-              statCell("读过", `${st.readDone || 0} / ${st.readTotal || 0}`, st.readTotal ? ratio(st.readDone, st.readTotal) : "还没有存的"),
-              statCell("收藏", `${statCollect} 条`, "书 / 影 / 文 / 图 / 穿 / 乐 / 技"),
-              statCell("目标推进", `${goalStepDone} 步`, `共 ${goalStepTotal} 步`),
-            ),
-            h(
-              "div",
-              { className: "lg-stats-bars" },
-              miniBar("活跃", st.activeDays || 0, st.days || 0),
-              miniBar("规定事项", st.planDone || 0, st.planTotal || 0),
-              miniBar("待办", st.todoDone || 0, st.todoTotal || 0),
-            ),
-                )
-              : null,
-          ),
-
           h(
             "div",
             { className: "lg-card", style: { marginTop: 26 } },
@@ -2159,6 +2089,76 @@ window.__ModuleLoader__.load({
         h(
           "div",
           null,
+          /* ---------- 统计 + 活跃度 ---------- */
+          h(
+            "div",
+            { className: "lg-card", style: { marginBottom: 26 } },
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "统计"),
+              h(
+                "span",
+                { style: { marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 12 } },
+                h("span", { className: "lg-count-n" }, `${st.activeDays || 0} / ${st.days || 0} 天有记录 · 连续 ${st.streak || 0} 天`),
+                h(
+                  "button",
+                  { className: "lg-fold", onClick: () => setStatsOpen(!statsOpen), "aria-expanded": statsOpen },
+                  statsOpen ? "收起" : "展开",
+                ),
+              ),
+            ),
+            h("p", { className: "lg-why", style: { margin: statsOpen ? "0 0 18px" : "0" } }, activityLine),
+
+            statsOpen
+              ? h(
+                  "div",
+                  null,
+                  h(
+                    "div",
+                    { className: "lg-charts" },
+                    h(
+                      "div",
+                      { className: "lg-chart-box" },
+                      h("span", { className: "lg-chart-k" }, "近 30 天 · 每天完成"),
+                      barsChart,
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-chart-box" },
+                      h("span", { className: "lg-chart-k" }, "近 14 天 · 专注分钟"),
+                      focusChart,
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-rings" },
+                      ring(Math.round(((st.planDone || 0) / (st.planTotal || 1)) * 100), "规定事项", `${st.planDone || 0}/${st.planTotal || 0}`),
+                      ring(Math.round(((st.todoDone || 0) / (st.todoTotal || 1)) * 100), "待办", `${st.todoDone || 0}/${st.todoTotal || 0}`),
+                    ),
+                  ),
+                  h(
+                    "div",
+                    { className: "lg-stats" },
+              statCell("连续", st.streak ? `${st.streak} 天` : "—", `最长 ${st.longestStreak || 0} 天`),
+              statCell("规定事项", `${st.planDone || 0} / ${st.planTotal || 0}`, ratio(st.planDone, st.planTotal)),
+              statCell("待办", `${st.todoDone || 0} / ${st.todoTotal || 0}`, ratio(st.todoDone, st.todoTotal)),
+              statCell("专注", focusTotal, `${st.sessions || 0} 段`),
+              statCell("最长一段", focusLongest, st.daysWithFocus ? `${st.daysWithFocus} 天有专注` : "还没专注过"),
+              statCell("读过", `${st.readDone || 0} / ${st.readTotal || 0}`, st.readTotal ? ratio(st.readDone, st.readTotal) : "还没有存的"),
+              statCell("收藏", `${statCollect} 条`, "书 / 影 / 文 / 图 / 穿 / 乐 / 技"),
+              statCell("目标推进", `${goalStepDone} 步`, `共 ${goalStepTotal} 步`),
+            ),
+            h(
+              "div",
+              { className: "lg-stats-bars" },
+              miniBar("活跃", st.activeDays || 0, st.days || 0),
+              miniBar("规定事项", st.planDone || 0, st.planTotal || 0),
+              miniBar("待办", st.todoDone || 0, st.todoTotal || 0),
+            ),
+                )
+              : null,
+          ),
+
           h("p", { className: "lg-eyebrow-sm" }, "你定义的远方"),
           h(
             "p",
