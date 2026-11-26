@@ -219,6 +219,9 @@ window.__ModuleLoader__.load({
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.lg-drag{flex:0 0 auto;width:20px;height:24px;display:grid;place-items:center;color:var(--lg-muted);font-size:13px;cursor:grab;user-select:none;border-radius:4px;opacity:.75}
+.lg-drag:hover{opacity:1;background:var(--lg-surface-2);color:var(--lg-text)}
+.lg-drag.note{position:absolute;top:4px;right:30px;width:22px;height:24px}
 .lg-slot{min-height:20px;padding:0 8px;margin-left:6px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:11px;font-family:var(--lg-sans);cursor:pointer}
 .lg-slot:hover{color:var(--lg-accent);border-color:var(--lg-focus)}
 .lg-slot.on{color:var(--lg-accent);border-color:var(--lg-focus)}
@@ -1129,6 +1132,21 @@ window.__ModuleLoader__.load({
       const [noteEdit, setNoteEdit] = useState({});
       const [recOpen, setRecOpen] = useState(null);
       const [dropDay, setDropDay] = useState(null);
+      const dragSet = (e, payload) => {
+        e.dataTransfer.setData("text/plain", payload);
+        e.dataTransfer.effectAllowed = "copyMove";
+        e.stopPropagation();
+      };
+      const handleDrop = (e, date) => {
+        e.preventDefault();
+        setDropDay(null);
+        const raw = e.dataTransfer.getData("text/plain") || "";
+        const parts = raw.split(":");
+        if (parts[0] === "read" && parts[1]) run("readlaterToToday", { id: parts[1], date });
+        else if (parts[0] === "inbox" && parts[1]) run("inboxDate", { id: parts[1], date });
+        else if (parts[0] === "note" && parts[1]) run("noteToDay", { id: parts[1], date });
+        else if (parts[0] === "todo" && parts[1] && parts[2]) run("todoMove", { id: parts[2], from: parts[1], to: date });
+      };
       const reading = (state.readlater || []).filter((r) => r.status !== "done");
 
       const open = inbox.filter((g) => !g.done);
@@ -1237,6 +1255,16 @@ window.__ModuleLoader__.load({
                             ),
                           ),
                         ),
+                        h(
+                          "span",
+                          {
+                            className: "lg-drag",
+                            draggable: true,
+                            onDragStart: (e) => dragSet(e, `inbox:${g.id}`),
+                            title: "拖到下面某一天",
+                          },
+                          "⠿",
+                        ),
                         h("button", { className: "lg-del", onClick: () => run("inboxRemove", { id: g.id }), "aria-label": "删除" }, "×"),
                         dateOpen === g.id
                           ? h(
@@ -1286,6 +1314,16 @@ window.__ModuleLoader__.load({
                       h(
                         "div",
                         { key: n.id, className: "lg-note-mini n-" + (n.color || "paper") },
+                        h(
+                          "span",
+                          {
+                            className: "lg-drag note",
+                            draggable: true,
+                            onDragStart: (e) => dragSet(e, `note:${n.id}`),
+                            title: "拖到下面某一天",
+                          },
+                          "⠿",
+                        ),
                         h(
                           "button",
                           { className: "lg-note-mini-x", onClick: () => run("noteRemove", { id: n.id }), title: "撕掉" },
@@ -1337,10 +1375,7 @@ window.__ModuleLoader__.load({
                       className: "lg-readchip",
                       draggable: true,
                       title: r.title || r.url,
-                      onDragStart: (e) => {
-                        e.dataTransfer.setData("text/plain", r.id);
-                        e.dataTransfer.effectAllowed = "copy";
-                      },
+                      onDragStart: (e) => dragSet(e, `read:${r.id}`),
                     },
                     r.title || r.url,
                   ),
@@ -1362,12 +1397,7 @@ window.__ModuleLoader__.load({
                     if (dropDay !== d.date) setDropDay(d.date);
                   },
                   onDragLeave: () => setDropDay((cur) => (cur === d.date ? null : cur)),
-                  onDrop: (e) => {
-                    e.preventDefault();
-                    setDropDay(null);
-                    const id = e.dataTransfer.getData("text/plain");
-                    if (id) run("readlaterToToday", { id, date: d.date });
-                  },
+                  onDrop: (e) => handleDrop(e, d.date),
                 },
                 h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${Number(d.date.slice(8, 10))}`)),
                 h(
@@ -1376,8 +1406,15 @@ window.__ModuleLoader__.load({
                   ...d.todos.map((t) =>
                     h(
                       "li",
-                      { key: t.id, className: t.done ? "on" : "" },
-                      h("button", { className: "lg-dot" + (t.done ? " on" : ""), onClick: () => run("todoToggle", { id: t.id, done: !t.done, date: d.date }) }, t.done ? h(Check) : null),
+                      {
+                        key: t.id,
+                        className: t.done ? "on" : "",
+                        draggable: true,
+                        onDragStart: (e) => dragSet(e, `todo:${d.date}:${t.id}`),
+                        title: "拖到别的一天",
+                        style: { cursor: "grab" },
+                      },
+                      h("button", { className: "lg-dot" + (t.done ? " on" : ""), onClick: () => run("todoToggle", { id: t.id, done: !t.done, date: d.date }), draggable: false }, t.done ? h(Check) : null),
                       h("span", { className: "tx" }, t.text),
                       h("button", { className: "lg-del", onClick: () => run("todoRemove", { id: t.id, date: d.date }), "aria-label": "删除" }, "×"),
                     ),

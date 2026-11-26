@@ -424,6 +424,48 @@ function applyOp(op, payload, date) {
       day.todos.push({ id: `t${Date.now()}_${day.todos.length}`, text, done: false, at: new Date().toISOString() });
       return true;
     }
+    /** 把某天的一条待办挪到另一天 */
+    case "todoMove": {
+      const from = String(payload.from || "");
+      const to = String(payload.to || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from === to) return false;
+      const src = db.days[from];
+      if (!src || !Array.isArray(src.todos)) return false;
+      const idx = src.todos.findIndex((t) => t.id === payload.id);
+      if (idx < 0) return false;
+      const [item] = src.todos.splice(idx, 1);
+      const dst = getDay(to);
+      if (!Array.isArray(dst.todos)) dst.todos = [];
+      dst.todos.push({ ...item, movedAt: new Date().toISOString() });
+      // 若它来自 Inbox，那 Inbox 条目的日期也跟着走
+      if (item.fromInbox) {
+        const g = (getWeek().inbox || []).find((x) => x.id === item.fromInbox);
+        if (g) g.date = to;
+      }
+      return true;
+    }
+    /** 把一张便签放到某天（那天的待办里出现它，便签本身留着） */
+    case "noteToDay": {
+      const n = getWeek().notes.find((x) => x.id === payload.id);
+      if (!n) return false;
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
+      if (!date) return false;
+      const text = String(n.text || "").trim();
+      if (!text) return false;
+      const day = getDay(date);
+      if (!Array.isArray(day.todos)) day.todos = [];
+      if (!day.todos.some((t) => t.fromNote === n.id)) {
+        day.todos.push({
+          id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          text,
+          done: false,
+          at: new Date().toISOString(),
+          fromNote: n.id,
+        });
+      }
+      n.placed = date;
+      return true;
+    }
     case "todoEdit": {
       const day = dayOf(payload.date);
       if (!Array.isArray(day.todos)) return false;
