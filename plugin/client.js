@@ -156,6 +156,7 @@ window.__ModuleLoader__.load({
 .lg-card-title{font-size:11.5px;letter-spacing:.2em;color:var(--lg-muted);margin:0 0 14px}
 
 .lg-plan{list-style:none;margin:0;padding:0}
+.lg-plan li .lg-drag{margin-left:2px}
 .lg-plan li{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--lg-line)}
 .lg-plan li:last-child{border-bottom:0}
 .lg-dot{width:22px;height:22px;flex:0 0 auto;border-radius:50%;border:1px solid var(--lg-line);display:grid;place-items:center;color:transparent;background:none;cursor:pointer;padding:0;transition:border-color .15s,background .15s}
@@ -219,7 +220,7 @@ window.__ModuleLoader__.load({
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
-.lg-todo.sort-on, .lg-cal-tasks.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:6px;background:var(--lg-accent-soft)}
+.lg-todo.sort-on, .lg-cal-tasks.sort-on, .lg-plan.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:6px;background:var(--lg-accent-soft)}
 .lg-notes-col.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:8px;background:var(--lg-accent-soft)}
 .lg-todo > li[draggable="true"]{cursor:grab}
 .lg-drag{flex:0 0 auto;width:20px;height:24px;display:grid;place-items:center;color:var(--lg-muted);font-size:13px;cursor:grab;user-select:none;border-radius:4px;opacity:.75}
@@ -583,6 +584,17 @@ window.__ModuleLoader__.load({
       },
       ...(extra || {}),
     });
+    /** 把手：只让这个 ⠿ 可拖，整行留着点/勾/改 */
+    const dragHandle = (listKey, id, extra) => ({
+      className: "lg-drag" + (extra && extra.className ? " " + extra.className : ""),
+      draggable: true,
+      onDragStart: (e) => {
+        e.dataTransfer.setData("text/plain", `${LG_TAG}|${listKey}|${id}`);
+        e.dataTransfer.effectAllowed = "move";
+        e.stopPropagation();
+      },
+      title: (extra && extra.title) || "拖动排序",
+    });
     const sortZone = (listKey, run) => ({
       "data-sortkey": listKey,
       onDragOver: (e) => {
@@ -878,7 +890,7 @@ window.__ModuleLoader__.load({
                     ...[...openTodos, ...doneTodos].map((t) =>
                       h(
                         "li",
-                        { key: t.id, className: t.done ? "on" : "", ...dragItem(todayTodosKey, t.id) },
+                        { key: t.id, className: t.done ? "on" : "", "data-sid": t.id },
                         h(
                           "button",
                           {
@@ -917,6 +929,7 @@ window.__ModuleLoader__.load({
                               },
                               "开始",
                             ),
+                        h("span", dragHandle(todayTodosKey, t.id), "⠿"),
                         h("button", { className: "lg-del", onClick: () => run("todoRemove", { id: t.id }), "aria-label": "删除" }, "×"),
                       ),
                     ),
@@ -939,11 +952,11 @@ window.__ModuleLoader__.load({
               ),
               h(
                 "ul",
-                { className: "lg-plan" },
+                { className: "lg-plan", ...sortZone(`plan:${tday}`, run) },
                 ...day.plan.map((p) =>
                   h(
                     "li",
-                    { key: p.id, className: p.done ? "on" : "" },
+                    { key: p.id, className: p.done ? "on" : "", "data-sid": p.id },
                     h(
                       "button",
                       {
@@ -978,6 +991,7 @@ window.__ModuleLoader__.load({
                           "开始",
                         ),
                     h("span", { className: "s" }, p.slot),
+                    h("span", dragHandle(`plan:${tday}`, p.id), "⠿"),
                   ),
                 ),
               ),
@@ -1080,7 +1094,7 @@ window.__ModuleLoader__.load({
                     {
                       key: r.id,
                       className: r.status === "done" ? "on" : "",
-                      ...(r.status !== "done" ? dragItem("readlater", r.id) : {}),
+                      "data-sid": r.id,
                       title: r.status !== "done" ? "可拖到上方「今天要做」，也可上下调整顺序" : "",
                     },
                     h(
@@ -1142,6 +1156,7 @@ window.__ModuleLoader__.load({
                             "加进今天",
                           )
                         : null,
+                    r.status !== "done" ? h("span", dragHandle("readlater", r.id, { title: "拖到上方「今天要做」，或上下调顺序" }), "⠿") : null,
                     h("button", { className: "lg-del", onClick: () => run("readlaterRemove", { id: r.id }), "aria-label": "删除" }, "×"),
                   ),
                 ),
