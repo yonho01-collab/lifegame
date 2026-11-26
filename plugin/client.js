@@ -224,6 +224,8 @@ window.__ModuleLoader__.load({
 .lg-read-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:5px;font-size:12px;color:var(--lg-muted);line-height:1.6}
 .lg-read-sum{max-width:44em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg-badge{font-size:11px;letter-spacing:.06em;color:var(--lg-accent);border:1px solid rgba(201,168,106,.4);border-radius:999px;padding:1px 7px}
+.lg-badge.busy{color:var(--lg-muted);border-color:var(--lg-line)}
+.lg-badge.bad{color:var(--danger);border-color:rgba(200,122,112,.5)}
 .lg-read-open{color:var(--lg-muted);text-decoration:underline;text-decoration-color:var(--lg-line)}
 .lg-outline{margin:10px 0 4px;padding-left:18px;font-size:13px;line-height:1.9;color:var(--lg-muted);list-style:decimal}
 .lg-outline li{padding:2px 0;border:0}
@@ -682,7 +684,13 @@ window.__ModuleLoader__.load({
             h(
               "span",
               { className: "lg-count-n" },
-              rlPending.length ? `${rlPending.length} 篇待解析` : rlReady.length ? `${rlReady.length} 篇待读` : "空",
+              rl.filter((r) => r.status === "parsing").length
+                ? `正在解析 ${rl.filter((r) => r.status === "parsing").length} 篇`
+                : rlPending.length
+                  ? `${rlPending.length} 篇排队中`
+                  : rlReady.length
+                    ? `${rlReady.length} 篇待读`
+                    : "空",
             ),
           ),
           h(
@@ -724,7 +732,13 @@ window.__ModuleLoader__.load({
                       h(
                         "div",
                         { className: "lg-read-meta" },
-                        r.status === "pending" ? h("span", { className: "lg-badge" }, "待解析") : null,
+                        r.status === "pending"
+                          ? h("span", { className: "lg-badge" }, "排队中")
+                          : r.status === "parsing"
+                            ? h("span", { className: "lg-badge busy" }, "解析中…")
+                            : r.status === "failed"
+                              ? h("span", { className: "lg-badge bad" }, "解析失败")
+                              : null,
                         r.minutes ? h("span", null, `${r.minutes} 分钟`) : null,
                         r.summary ? h("span", { className: "lg-read-sum" }, r.summary) : null,
                         h("a", { className: "lg-read-open", href: r.url, target: "_blank", rel: "noreferrer" }, "打开"),
@@ -745,12 +759,15 @@ window.__ModuleLoader__.load({
                           "开始",
                         )
                       : null,
+                    r.status === "failed"
+                      ? h("button", { className: "lg-pomo", onClick: () => run("readlaterRetry", { id: r.id }) }, "重试")
+                      : null,
                     h("button", { className: "lg-del", onClick: () => run("readlaterRemove", { id: r.id }), "aria-label": "删除" }, "×"),
                   ),
                 ),
               ),
-          rlPending.length
-            ? h("p", { className: "footnote-line", style: { margin: "10px 0 0" } }, "新存的链接还没解析。在对话里说一句「解析阅读清单」，它会把纲要和阅读时间补上。")
+          rlPending.length || rl.some((r) => r.status === "parsing")
+            ? h("p", { className: "footnote-line", style: { margin: "10px 0 0" } }, "它在后台读这些链接，读完自己把纲要和阅读时间填上——不用管它。")
             : null,
         ),
       );

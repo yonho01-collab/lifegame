@@ -311,8 +311,9 @@ function applyOp(op, payload, date) {
       const url = String(payload.url ?? "").trim().slice(0, 2000);
       if (!/^https?:\/\//i.test(url)) return false;
       if (db.readlater.some((x) => x.url === url)) return false;
+      const newId = `r${Date.now()}`;
       db.readlater.unshift({
-        id: `r${Date.now()}`,
+        id: newId,
         url,
         title: String(payload.title ?? "").slice(0, 200) || "",
         status: "pending",
@@ -321,6 +322,7 @@ function applyOp(op, payload, date) {
         minutes: 0,
         addedAt: new Date().toISOString(),
       });
+      queueMicrotask(() => kickParse(newId));
       return true;
     }
     case "readlaterRemove": {
@@ -333,6 +335,14 @@ function applyOp(op, payload, date) {
       if (!r) return false;
       r.status = payload.done ? "done" : r.summary ? "ready" : "pending";
       r.doneAt = payload.done ? new Date().toISOString() : null;
+      return true;
+    }
+    case "readlaterRetry": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      r.status = "pending";
+      r.tries = 0;
+      queueMicrotask(() => kickParse(r.id));
       return true;
     }
     case "readlaterEnrich": {
@@ -461,6 +471,170 @@ function readBody(req) {
   });
 }
 
+
+/* ---------------- 后台解析：插件自己抓页 + 调模型 ---------------- */
+
+let llmRef = null;
+let modelCache = null;
+const parsing = new Set();
+
+function stripHtml(html) {
+  return String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function metaOf(html, name) {
+  const re = new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*content=["']([^"']+)["']`, "i");
+  return (html.match(re) || [])[1] || "";
+}
+
+function headingsOf(html) {
+  const out = [];
+  const re = /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi;
+  let m;
+  while ((m = re.exec(html)) && out.length < 8) {
+    const t = stripHtml(m[1]);
+    if (t && t.length <= 80 && !out.includes(t)) out.push(t);
+  }
+  return out;
+}
+
+async function pickModel() {
+  if (modelCache) return modelCache;
+  const llm = llmRef;
+  if (!llm || typeof llm.listProviders !== "function" || typeof llm.listModels !== "function") return null;
+  for (const info of llm.listProviders() || []) {
+    const pid = info && info.id;
+    if (!pid) continue;
+    try {
+      const models = await llm.listModels(pid);
+      for (const m of models || []) {
+        const mods = m && m.inputModalities;
+        if (Array.isArray(mods) && mods.length && !mods.includes("text")) continue;
+        if (m && m.id) {
+          modelCache = { provider: pid, model: m.id };
+          return modelCache;
+        }
+      }
+    } catch {
+      /* 这个 provider 不可用就跳 */
+    }
+  }
+  return null;
+}
+
+async function askModel(text, fallbackTitle) {
+  const pick = await pickModel();
+  if (!pick) return null;
+  const prompt =
+    "你在帮一个人做「稍后深度阅读」的预处理。下面是网页正文（可能含导航噪声）。" +
+    "请只输出一个 JSON 对象，不要任何解释、不要代码块围栏，字段：\n" +
+    '{"title":"文章标题（≤40字）","summary":"主要内容一两句，说清它到底在讲什么观点（≤120字）","outline":["纲要1","纲要2","纲要3"],"minutes":18}\n' +
+    "outline 给 3-6 条，按文章逻辑顺序，每条一句话。" +
+    "minutes 是「安静读完并想一想」需要的分钟数，通常 8-30。\n\n" +
+    `标题参考：${fallbackTitle || "（无）"}\n正文：\n${text.slice(0, 7000)}`;
+
+  let buf = "";
+  for await (const c of llmRef.stream({
+    provider: pick.provider,
+    model: pick.model,
+    messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+  })) {
+    if (!c) continue;
+    if (typeof c.text === "string") buf += c.text;
+    else if (c.type === "text-delta" && typeof c.delta === "string") buf += c.delta;
+    else if (c.delta && typeof c.delta.text === "string") buf += c.delta.text;
+    if (buf.length > 4000) break;
+  }
+
+  const start = buf.indexOf("{");
+  const end = buf.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    const obj = JSON.parse(buf.slice(start, end + 1));
+    const outline = Array.isArray(obj.outline) ? obj.outline.map((x) => String(x)).filter(Boolean).slice(0, 6) : [];
+    return {
+      title: String(obj.title || "").slice(0, 200),
+      summary: String(obj.summary || "").slice(0, 600),
+      outline,
+      minutes: Math.max(5, Math.min(60, Number(obj.minutes) || 0)) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 后台解析一条；永不抛错，失败就退回 pending 等下次 */
+async function parseOne(id) {
+  if (!id || parsing.has(id)) return;
+  const r = (db.readlater || []).find((x) => x.id === id);
+  if (!r || r.status === "done") return;
+
+  parsing.add(id);
+  const before = r.status;
+  r.status = "parsing";
+  persist();
+
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    const res = await fetch(r.url, {
+      redirect: "follow",
+      signal: ctrl.signal,
+      headers: { "user-agent": "Mozilla/5.0 (compatible; lifegame/0.1)", accept: "text/html,*/*" },
+    });
+    clearTimeout(timer);
+    const html = await res.text();
+
+    const pageTitle = stripHtml(metaOf(html, "og:title") || (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || "");
+    const desc = stripHtml(metaOf(html, "og:description") || metaOf(html, "description"));
+    const body = stripHtml(html);
+    const heads = headingsOf(html);
+    const autoMinutes = Math.max(5, Math.min(60, Math.round(body.length / 500) + 3));
+
+    let out = null;
+    try {
+      out = await askModel(body, pageTitle);
+    } catch {
+      out = null;
+    }
+
+    r.title = (out && out.title) || r.title || pageTitle || r.url;
+    r.summary = (out && out.summary) || r.summary || desc || "";
+    r.outline = (out && out.outline && out.outline.length ? out.outline : heads).slice(0, 6);
+    r.minutes = (out && out.minutes) || r.minutes || autoMinutes;
+    r.status = "ready";
+    r.enrichedAt = new Date().toISOString();
+    r.source = out ? "llm" : "auto";
+    r.tries = 0;
+    delete r.lastError;
+  } catch (e) {
+    r.tries = (r.tries || 0) + 1;
+    r.lastError = String((e && e.message) || e).slice(0, 200);
+    r.status = r.tries >= 3 ? "failed" : "pending";
+  } finally {
+    parsing.delete(id);
+    db.rev += 1;
+    persist();
+  }
+}
+
+function kickParse(id) {
+  Promise.resolve().then(() => parseOne(id)).catch(() => {});
+}
+
+export { stripHtml, metaOf, headingsOf, parseOne, pickModel };
+
 /* ---------------- 插件入口 ---------------- */
 
 export const inject = ["webServer", "tools"];
@@ -477,6 +651,23 @@ export function apply(ctx) {
   const home = process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
   dataFile = path.join(home, NS, "db.json");
   const ready = load().then(() => log(`state → ${dataFile}`));
+
+  // 模型调用：只有装了 llm 的主机才进来；Remote 下 App 侧不参与
+  ctx.inject(["llm"], (c) => {
+    llmRef = c.llm;
+    log("llm 已接上，后台解析可用");
+  });
+
+  // 兜底扫描：重启后把遗留的 pending / parsing 捡起来，一次一条
+  ctx.effect(() => {
+    const tick = () => {
+      const next = (db.readlater || []).find((x) => x.status === "pending" || x.status === "parsing");
+      if (next) kickParse(next.id);
+    };
+    const t = setInterval(tick, 60_000);
+    setTimeout(tick, 8_000);
+    return () => clearInterval(t);
+  }, "lifegame: readlater sweeper");
 
   ctx.effect(
     () =>
@@ -816,7 +1007,9 @@ export function apply(ctx) {
             const url = String(args.url || "").trim();
             if (!/^https?:\/\//i.test(url)) return { text: "链接要以 http(s) 开头。" };
             if (!db.readlater.some((x) => x.url === url)) {
-              db.readlater.unshift({ id: `r${Date.now()}`, url, title: "", status: "pending", summary: "", outline: [], minutes: 0, addedAt: new Date().toISOString() });
+              const rid = `r${Date.now()}`;
+              db.readlater.unshift({ id: rid, url, title: "", status: "pending", summary: "", outline: [], minutes: 0, addedAt: new Date().toISOString() });
+              queueMicrotask(() => kickParse(rid));
             }
           } else if (a === "enrich") {
             const r = db.readlater.find((x) => x.id === args.id);
