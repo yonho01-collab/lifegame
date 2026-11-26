@@ -219,6 +219,18 @@ window.__ModuleLoader__.load({
 .lg-cal-add button:hover{color:var(--lg-accent);border-color:var(--lg-line)}
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.lg-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px 18px;margin-bottom:16px}
+.lg-stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lg-stat .k{font-size:11px;letter-spacing:.08em;color:var(--lg-muted)}
+.lg-stat b{font-size:17px;font-weight:500;color:var(--lg-text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.lg-stat .s{font-size:11.5px;color:var(--lg-muted)}
+.lg-stats-bars{display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px solid var(--lg-line);margin-top:2px;padding-top:14px}
+.lg-minibar-row{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--lg-muted)}
+.lg-minibar-row .k{flex:0 0 56px}
+.lg-minibar-row .lg-pbar{flex:1 1 auto}
+.lg-minibar-row .v{flex:0 0 auto;font-variant-numeric:tabular-nums;color:var(--lg-text)}
+.lg-kind i{font-style:normal;font-size:11px;color:var(--lg-muted);margin-left:5px}
+.lg-kind.on i{color:var(--lg-on-ink);opacity:.75}
 .lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding:2px 0 0;border:0;background:none;text-align:left;font-family:var(--lg-sans);cursor:pointer;min-height:24px;display:inline-flex;align-items:center}
 .lg-plan-no:hover{color:var(--lg-accent)}
 .lg-inline-in.slot{flex:0 0 56px;min-width:56px;max-width:64px}
@@ -1598,26 +1610,90 @@ window.__ModuleLoader__.load({
 
     /* ================= 我 ================= */
 
+    const COLLECT_KINDS = [
+      ["book", "书"], ["movie", "电影"], ["article", "文章"],
+      ["image", "图片"], ["outfit", "穿搭"], ["music", "音乐"], ["skill", "技能"],
+    ];
+    const COLLECT_HINT = {
+      book: { title: "书名", note: "作者 / 为什么想读", empty: "还没有想读的书。" },
+      movie: { title: "片名", note: "年份 / 谁推荐", empty: "还没有想看的电影。" },
+      article: { title: "文章标题或链接", note: "一句话印象", empty: "还没有收藏的文章。" },
+      image: { title: "图片描述或链接", note: "哪里打动了你", empty: "还没有收藏的图片。" },
+      outfit: { title: "一套穿搭（描述）", note: "场合 / 参考来源", empty: "还没有记下的穿搭。" },
+      music: { title: "歌名 / 专辑", note: "什么时候想听", empty: "还没有收藏的音乐。" },
+      skill: { title: "想学的技能", note: "为什么想学", empty: "还没有想学的技能。" },
+    };
+
     function MeView({ state, run }) {
       const stats = state.stats || { days: 0, records: 0, active: [] };
       const goals = (state.profile && state.profile.goals) || { short: [], long: [] };
       const [draftS, setDraftS] = useState("");
       const [draftL, setDraftL] = useState("");
       const [openGoal, setOpenGoal] = useState(null);
-      const [corpusText, setCorpusText] = useState("");
-      const [corpusSrc, setCorpusSrc] = useState("");
-      const corpus = (state && state.corpus) || [];
-      const want = (state.profile && state.profile.want) || { books: [], movies: [], quotes: [] };
-      const [wantKind, setWantKind] = useState("books");
+      const collect = (state.profile && state.profile.collect) || {};
+      const [collectKind, setCollectKind] = useState("book");
+      const [collectTitle, setCollectTitle] = useState("");
+      const [collectNote, setCollectNote] = useState("");
+      const collectTotal = COLLECT_KINDS.reduce((n, [k]) => n + ((collect[k] || []).length), 0);
+      const addCollect = () => {
+        const v = collectTitle.trim();
+        if (!v) return;
+        setCollectTitle("");
+        run("collectAdd", { kind: collectKind, title: v, note: collectNote.trim() });
+        setCollectNote("");
+      };
       const [planTplEdit, setPlanTplEdit] = useState(null);
       const [planTplText, setPlanTplText] = useState("");
       const [slotEdit, setSlotEdit] = useState(null);
       const [slotText, setSlotText] = useState("");
-      const [wantTitle, setWantTitle] = useState("");
-      const [wantExtra, setWantExtra] = useState("");
+
 
       const byDate = {};
       (stats.active || []).forEach((a) => (byDate[a.date] = a));
+
+      const st = stats || {};
+      const fmtMin = (sec) => {
+        const m = Math.round((sec || 0) / 60);
+        if (!m) return "0 分钟";
+        return m >= 60 ? `${Math.floor(m / 60)} 小时 ${m % 60 ? `${m % 60} 分` : ""}`.trim() : `${m} 分钟`;
+      };
+      const focusTotal = fmtMin(st.focusSeconds);
+      const focusLongest = st.longestSession ? fmtMin(st.longestSession) : "—";
+      const ratio = (a, b) => (b ? `${Math.round(((a || 0) / b) * 100)}%` : "—");
+      const statCollect = Object.values(st.collect || {}).reduce((n, x) => n + (x.total || 0), 0);
+      let goalStepTotal = 0;
+      let goalStepDone = 0;
+      for (const g of [...goals.short, ...goals.long]) {
+        const steps = Array.isArray(g.steps) ? g.steps : [];
+        goalStepTotal += steps.length;
+        goalStepDone += steps.filter((x) => x.done).length;
+      }
+      const activityLine = (() => {
+        const d = st.days || 0;
+        const a = st.activeDays || 0;
+        if (!d) return "还没有记录。今天做一件事，这里就开始有数。";
+        if (!a) return `${d} 天里还没有一天留下完成记录。`;
+        if ((st.streak || 0) >= 3) return `已经连续 ${st.streak} 天有记录，最长连续 ${st.longestStreak} 天。`;
+        const pct = Math.round((a / d) * 100);
+        if (pct <= 30) return `${d} 天里有 ${a} 天留下记录——断断续续也算数，接上就行。`;
+        return `${d} 天里有 ${a} 天留下记录，占 ${pct}%，最长连续 ${st.longestStreak || 0} 天。`;
+      })();
+      const statCell = (label, value, sub) =>
+        h(
+          "div",
+          { className: "lg-stat", key: label },
+          h("span", { className: "k" }, label),
+          h("b", null, value),
+          sub ? h("span", { className: "s" }, sub) : null,
+        );
+      const miniBar = (label, a, b) =>
+        h(
+          "div",
+          { className: "lg-minibar-row", key: label },
+          h("span", { className: "k" }, label),
+          h("span", { className: "lg-pbar" }, h("i", { style: { width: `${b ? Math.min(100, Math.round((a / b) * 100)) : 0}%` } })),
+          h("span", { className: "v" }, `${a || 0} / ${b || 0}`),
+        );
 
       const cells = [];
       const base = new Date();
@@ -1758,11 +1834,43 @@ window.__ModuleLoader__.load({
           null,
           h("p", { className: "lg-eyebrow-sm" }, "你走过的"),
           h("p", { className: "lg-big" }, `第 ${Math.max(stats.days, 1)} 天`),
-          h("p", { className: "lg-why", style: { marginBottom: 30 } }, `在这里留下 ${stats.records} 条。`),
+          h("p", { className: "lg-why", style: { marginBottom: 30 } }, `在这里留下 ${(st.planDone || 0) + (st.todoDone || 0)} 条完成记录。`),
 
           h("p", { className: "lg-sec", style: { marginTop: 0 } }, "九十天"),
           h("div", { className: "lg-traces" }, ...cells),
           h("div", { className: "lg-axis" }, h("span", null, start || "今天"), h("span", null, "今天")),
+
+          /* ---------- 统计 + 活跃度 ---------- */
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 26 } },
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "统计"),
+              h("span", { className: "lg-count-n" }, `${st.activeDays || 0} / ${st.days || 0} 天有记录`),
+            ),
+            h("p", { className: "lg-why", style: { margin: "0 0 16px" } }, activityLine),
+            h(
+              "div",
+              { className: "lg-stats" },
+              statCell("连续", st.streak ? `${st.streak} 天` : "—", `最长 ${st.longestStreak || 0} 天`),
+              statCell("规定事项", `${st.planDone || 0} / ${st.planTotal || 0}`, ratio(st.planDone, st.planTotal)),
+              statCell("待办", `${st.todoDone || 0} / ${st.todoTotal || 0}`, ratio(st.todoDone, st.todoTotal)),
+              statCell("专注", focusTotal, `${st.sessions || 0} 段`),
+              statCell("最长一段", focusLongest, st.daysWithFocus ? `${st.daysWithFocus} 天有专注` : "还没专注过"),
+              statCell("读过", `${st.readDone || 0} / ${st.readTotal || 0}`, st.readTotal ? ratio(st.readDone, st.readTotal) : "还没有存的"),
+              statCell("收藏", `${statCollect} 条`, "书 / 影 / 文 / 图 / 穿 / 乐 / 技"),
+              statCell("目标推进", `${goalStepDone} 步`, `共 ${goalStepTotal} 步`),
+            ),
+            h(
+              "div",
+              { className: "lg-stats-bars" },
+              miniBar("活跃", st.activeDays || 0, st.days || 0),
+              miniBar("规定事项", st.planDone || 0, st.planTotal || 0),
+              miniBar("待办", st.todoDone || 0, st.todoTotal || 0),
+            ),
+          ),
 
           h(
             "div",
@@ -1770,152 +1878,83 @@ window.__ModuleLoader__.load({
             h(
               "div",
               { className: "lg-card-head" },
-              h("span", null, "近期要读 / 要看"),
-              h(
-                "span",
-                { className: "lg-count-n" },
-                `书 ${want.books.filter((x) => !x.done).length} · 影 ${want.movies.filter((x) => !x.done).length} · 句 ${want.quotes.filter((x) => !x.done).length}`,
-              ),
+              h("span", null, "收集仓库"),
+              h("span", { className: "lg-count-n" }, `共 ${collectTotal} 条`),
+            ),
+            h(
+              "p",
+              { className: "footnote-line", style: { margin: "0 0 12px" } },
+              "喜欢什么就扔进来。它给你建议、给你推荐时，先看这里。",
             ),
             h(
               "div",
               { className: "lg-kinds" },
-              ...[
-                ["books", "书单"],
-                ["movies", "电影"],
-                ["quotes", "名言"],
-              ].map(([k, label]) =>
-                h("button", { key: k, className: "lg-kind" + (wantKind === k ? " on" : ""), onClick: () => setWantKind(k) }, label),
+              ...COLLECT_KINDS.map(([k, label]) =>
+                h(
+                  "button",
+                  { key: k, className: "lg-kind" + (collectKind === k ? " on" : ""), onClick: () => setCollectKind(k) },
+                  label,
+                  h("i", null, (collect[k] || []).length || ""),
+                ),
               ),
             ),
             h(
               "div",
               { className: "lg-add" },
               h("input", {
-                value: wantTitle,
-                placeholder: wantKind === "books" ? "书名" : wantKind === "movies" ? "片名" : "一句想记下的话",
-                onChange: (e) => setWantTitle(e.target.value),
+                value: collectTitle,
+                placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].title : "标题",
+                onChange: (e) => setCollectTitle(e.target.value),
                 onKeyDown: (e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
-                  const v = wantTitle.trim();
-                  if (!v) return;
-                  setWantTitle("");
-                  run("wantAdd", { kind: wantKind, title: v, extra: wantExtra.trim() });
-                  setWantExtra("");
+                  addCollect();
                 },
               }),
-              h("button", {
-                className: "lg-add-btn",
-                onClick: () => {
-                  const v = wantTitle.trim();
-                  if (!v) return;
-                  setWantTitle("");
-                  run("wantAdd", { kind: wantKind, title: v, extra: wantExtra.trim() });
-                  setWantExtra("");
-                },
-              }, "加"),
+              h("button", { className: "lg-add-btn", onClick: addCollect }, "加"),
             ),
             h(
               "div",
-              { className: "lg-labelrow", style: { marginTop: 0 } },
+              { className: "lg-labelrow" },
               h("input", {
-                value: wantExtra,
-                placeholder: wantKind === "books" ? "作者（可空）" : wantKind === "movies" ? "年份（可空）" : "谁说的（可空）",
-                onChange: (e) => setWantExtra(e.target.value),
+                value: collectNote,
+                placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].note : "备注（可空）",
+                onChange: (e) => setCollectNote(e.target.value),
               }),
             ),
-            (want[wantKind] || []).length === 0
-              ? h("p", { className: "lg-empty" }, wantKind === "books" ? "还没有想读的书。" : wantKind === "movies" ? "还没有想看的电影。" : "还没有记下的句子。")
+            (collect[collectKind] || []).length === 0
+              ? h("p", { className: "lg-empty" }, COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].empty : "还没有。")
               : h(
                   "ul",
-                  { className: "lg-todo", ...sortZone(`want:${wantKind}`, run) },
-                  ...(want[wantKind] || []).map((it) =>
+                  { className: "lg-todo", ...sortZone(`collect:${collectKind}`, run) },
+                  ...(collect[collectKind] || []).map((it) =>
                     h(
                       "li",
-                      { key: it.id, className: it.done ? "on" : "", style: { alignItems: "flex-start" } },
+                      { key: it.id, "data-sid": it.id, style: { alignItems: "flex-start" } },
                       h(
                         "button",
-                        { className: "lg-dot" + (it.done ? " on" : ""), onClick: () => run("wantToggle", { kind: wantKind, id: it.id, done: !it.done }) },
+                        { className: "lg-dot" + (it.done ? " on" : ""), onClick: () => run("collectToggle", { kind: collectKind, id: it.id, done: !it.done }) },
                         it.done ? h(Check) : null,
                       ),
                       h(
                         "div",
                         { style: { flex: "1 1 auto", minWidth: 0 } },
                         h("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" } }, it.title),
-                        it.extra ? h("p", { style: { margin: "3px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, it.extra) : null,
+                        it.note ? h("p", { style: { margin: "3px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, it.note) : null,
+                        it.url
+                          ? h(
+                              "a",
+                              { href: it.url, target: "_blank", rel: "noreferrer", style: { fontSize: 11.5, color: "var(--lg-accent)" } },
+                              "打开",
+                            )
+                          : null,
                       ),
-                      h("button", { className: "lg-del", onClick: () => run("wantRemove", { kind: wantKind, id: it.id }), "aria-label": "删除" }, "×"),
+                      h("button", { className: "lg-del", onClick: () => run("collectRemove", { kind: collectKind, id: it.id }), "aria-label": "删除" }, "×"),
                     ),
                   ),
                 ),
           ),
 
-          h(
-            "div",
-            { className: "lg-card", style: { marginTop: 26 } },
-            h(
-              "div",
-              { className: "lg-card-head" },
-              h("span", null, "语料库"),
-              h("span", { className: "lg-count-n" }, corpus.length ? `${corpus.length} 条` : "空的"),
-            ),
-            h(
-              "p",
-              { className: "footnote-line", style: { margin: "0 0 10px" } },
-              "它给你建议时从这里取。放一句你觉得对的话、一个观点、一本书里的建议。",
-            ),
-            h(
-              "div",
-              { className: "lg-add" },
-              h("textarea", {
-                value: corpusText,
-                rows: Math.min(4, Math.max(1, corpusText.split("\n").length)),
-                placeholder: "一句建议、一个观点，或一段摘抄。回车换行。",
-                onChange: (e) => setCorpusText(e.target.value),
-              }),
-              h("button", {
-                className: "lg-add-btn",
-                onClick: () => {
-                  const v = corpusText.trim();
-                  if (!v) return;
-                  setCorpusText("");
-                  run("corpusAdd", { text: v, source: corpusSrc.trim() });
-                  setCorpusSrc("");
-                },
-              }, "加"),
-            ),
-            h(
-              "div",
-              { className: "lg-labelrow" },
-              h("input", {
-                value: corpusSrc,
-                placeholder: "出处（可空）：书名 / 作者 / 谁说的",
-                onChange: (e) => setCorpusSrc(e.target.value),
-              }),
-            ),
-            corpus.length
-              ? h(
-                  "ul",
-                  { className: "lg-todo", ...sortZone("corpus", run) },
-                  ...corpus.slice(0, 5).map((c) =>
-                    h(
-                      "li",
-                      { key: c.id, style: { alignItems: "flex-start" } },
-                      h(
-                        "div",
-                        { style: { flex: "1 1 auto", minWidth: 0 } },
-                        h("p", { style: { margin: 0, fontSize: 13, lineHeight: 1.75, color: "var(--lg-text)", whiteSpace: "pre-wrap" } }, c.text),
-                        c.source || c.tag
-                          ? h("p", { style: { margin: "4px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, [c.tag, c.source].filter(Boolean).join(" · "))
-                          : null,
-                      ),
-                      h("button", { className: "lg-del", onClick: () => run("corpusRemove", { id: c.id }), "aria-label": "删除" }, "×"),
-                    ),
-                  ),
-                )
-              : null,
-          ),
         ),
 
         /* ---------- 右：短期 / 长期目标 ---------- */

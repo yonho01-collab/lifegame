@@ -115,6 +115,20 @@
 [data-slot="main"] .lg-row i{font-style:normal;width:44px;flex:0 0 auto;font-variant-numeric:tabular-nums}
 [data-slot="main"] .lg-todo > li, [data-slot="main"] .lg-plan > li, [data-slot="main"] .lg-cal-tasks > li, [data-slot="main"] .lg-note-mini, [data-slot="main"] .lg-drag{-webkit-user-select:none;user-select:none}
 [data-slot="main"] .lg-todo textarea, [data-slot="main"] .lg-todo input, [data-slot="main"] .lg-note-mini textarea{-webkit-user-select:text;user-select:text}
+[data-slot="main"] .lg-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px 18px;margin-bottom:16px}
+[data-slot="main"] .lg-stat{display:flex;flex-direction:column;gap:2px}
+[data-slot="main"] .lg-stat .k{font-size:12px;letter-spacing:.08em;color:var(--lg-muted)}
+[data-slot="main"] .lg-stat b{font-size:12px;font-weight:500;color:var(--lg-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-stat .s{font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-stats-bars{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--lg-line);padding-top:14px;margin-top:2px}
+[data-slot="main"] .lg-minibar-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-minibar-row .k{flex:0 0 56px}
+[data-slot="main"] .lg-minibar-row .lg-pbar{flex:1 1 auto;height:4px;border-radius:999px;background:var(--lg-surface-2);overflow:hidden}
+[data-slot="main"] .lg-minibar-row .lg-pbar i{display:block;height:100%;background:var(--lg-accent);border-radius:999px}
+[data-slot="main"] .lg-minibar-row .v{color:var(--lg-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-kind i{font-style:normal;font-size:12px;color:var(--lg-muted);margin-left:5px}
+[data-slot="main"] .lg-kind.on i{color:var(--lg-on-ink);opacity:.75}
+[data-slot="main"] .lg-labelrow input{min-height:28px}
 </style>
 </head>
 <body>
@@ -243,29 +257,45 @@
             <i class="full"></i>
             </div>
             <div class="lg-axis"><span>10/13</span><span>今天</span></div>
-
             <div class="lg-card" style="margin-top:26px">
-              <div class="lg-head"><span>近期要读 / 要看</span><span class="lg-num">书 1 · 影 1 · 句 1</span></div>
-              <div class="lg-kinds"><button class="lg-kind on">书单</button><button class="lg-kind">电影</button><button class="lg-kind">名言</button></div>
+              <div class="lg-head"><span>统计</span><span class="lg-num">12 / 47 天有记录</span></div>
+              <p class="lg-hint" style="margin:0 0 16px">47 天里有 12 天留下记录——断断续续也算数，接上就行。</p>
+              <div class="lg-stats">
+                <div class="lg-stat"><span class="k">连续</span><b>—</b><span class="s">最长 5 天</span></div>
+                <div class="lg-stat"><span class="k">规定事项</span><b>96 / 141</b><span class="s">68%</span></div>
+                <div class="lg-stat"><span class="k">待办</span><b>38 / 67</b><span class="s">57%</span></div>
+                <div class="lg-stat"><span class="k">专注</span><b>6 小时 20 分</b><span class="s">22 段</span></div>
+                <div class="lg-stat"><span class="k">最长一段</span><b>1 小时 30 分</b><span class="s">9 天有专注</span></div>
+                <div class="lg-stat"><span class="k">读过</span><b>2 / 5</b><span class="s">40%</span></div>
+                <div class="lg-stat"><span class="k">收藏</span><b>5 条</b><span class="s">书 / 影 / 文 / 图 / 穿 / 乐 / 技</span></div>
+                <div class="lg-stat"><span class="k">目标推进</span><b>1 步</b><span class="s">共 3 步</span></div>
+              </div>
+              <div class="lg-stats-bars">
+                <div class="lg-minibar-row"><span class="k">活跃</span><span class="lg-pbar"><i style="width:26%"></i></span><span class="v">12 / 47</span></div>
+                <div class="lg-minibar-row"><span class="k">规定事项</span><span class="lg-pbar"><i style="width:68%"></i></span><span class="v">96 / 141</span></div>
+                <div class="lg-minibar-row"><span class="k">待办</span><span class="lg-pbar"><i style="width:57%"></i></span><span class="v">38 / 67</span></div>
+              </div>
+            </div>
+
+
+            
+            <div class="lg-card" style="margin-top:26px">
+              <div class="lg-head"><span>收集仓库</span><span class="lg-num">共 5 条</span></div>
+              <p class="lg-hint" style="margin:0 0 12px">喜欢什么就扔进来。它给你建议、给你推荐时，先看这里。</p>
+              <div class="lg-kinds">
+                <button class="lg-kind on">书<i>1</i></button><button class="lg-kind">电影<i>1</i></button>
+                <button class="lg-kind">文章<i>1</i></button><button class="lg-kind">图片</button>
+                <button class="lg-kind">穿搭<i>1</i></button><button class="lg-kind">音乐</button><button class="lg-kind">技能<i>1</i></button>
+              </div>
               <div class="lg-inp"><input placeholder="书名"><button>加</button></div>
-              <div class="lg-inp"><input placeholder="作者（可空）"></div>
+              <div class="lg-labelrow"><input placeholder="作者 / 为什么想读"></div>
               <ul class="lg-list">
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">《禅与摩托车维修艺术》</span><span class="lg-x">×</span></li>
-                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">《旅行的艺术》</span><span class="lg-x">×</span></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">程序员修炼之道</span><span class="lg-drag2">⠿</span><span class="lg-x">×</span></li>
               </ul>
             </div>
 
-            <div class="lg-card" style="margin-top:26px">
-              <div class="lg-head"><span>语料库</span><span class="lg-num">3 条</span></div>
-              <p class="lg-hint" style="margin:0 0 10px">它给你建议时从这里取。放一句你觉得对的话、一个观点、一本书里的建议。</p>
-              <div class="lg-inp"><input placeholder="一句建议、一个观点，或一段摘抄。"><button>加</button></div>
-              <div class="lg-inp"><input placeholder="出处（可空）：书名 / 作者 / 谁说的"></div>
-              <ul class="lg-list">
-                <li class="lg-li" style="align-items:flex-start"><span class="lg-corpus"><span class="tx">把注意力当作最贵的资源来分配，而不是当作免费的默认值。</span><span class="src">人生 · 《深度工作》</span></span><span class="lg-x">×</span></li>
-                <li class="lg-li" style="align-items:flex-start"><span class="lg-corpus"><span class="tx">长期主义不是等得久，是每次都选那条更慢但更结实的小路。</span><span class="src">人生 · 随手记</span></span><span class="lg-x">×</span></li>
-                <li class="lg-li" style="align-items:flex-start"><span class="lg-corpus"><span class="tx">旅行最好的部分不是看见什么，是在陌生地方重新变得好奇。</span><span class="src">旅行 · 《旅行的艺术》</span></span><span class="lg-x">×</span></li>
-              </ul>
-            </div>
+
+            
           </div>
 
           <!-- 右：你定义的远方 -->

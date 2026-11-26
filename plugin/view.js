@@ -76,6 +76,18 @@ export function weekView(v) {
     ],
   });
 
+  if (v.recommend && Array.isArray(v.recommend.items) && v.recommend.items.length) {
+    children.push({ type: "text", text: "本周推荐：", tone: "muted" });
+    children.push({
+      type: "list",
+      items: v.recommend.items.map((it) => ({
+        title: `${it.title}${it.minutes ? ` · ${it.minutes} 分钟` : ""}`,
+        subtitle: it.why || "",
+        icon: "sparkle",
+      })),
+    });
+  }
+
   if (v.comment) children.push({ type: "text", text: v.comment });
 
   return { type: "stack", title: v.title || "本周", children };

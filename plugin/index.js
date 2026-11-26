@@ -57,6 +57,7 @@ const seed = () => ({
     goals: { short: [], long: [] },
     customPlan: {},
     customSlots: {},
+    collect: { book: [], movie: [], article: [], image: [], outfit: [], music: [], skill: [] },
     want: { books: [], movies: [], quotes: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
@@ -82,10 +83,34 @@ async function load() {
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
   if (!db.profile.customPlan) db.profile.customPlan = {};
   if (!db.profile.customSlots) db.profile.customSlots = {};
-  if (!db.profile.want) db.profile.want = { books: [], movies: [], quotes: [] };
-  for (const k of ["books", "movies", "quotes"]) {
-    if (!Array.isArray(db.profile.want[k])) db.profile.want[k] = [];
+
+  // 收集仓库 + 迁移（want.books/movies → collect；quotes 与 corpus 已废弃）
+  const KINDS = ["book", "movie", "article", "image", "outfit", "music", "skill"];
+  if (!db.profile.collect || typeof db.profile.collect !== "object") db.profile.collect = {};
+  const col = db.profile.collect;
+  for (const k of KINDS) if (!Array.isArray(col[k])) col[k] = [];
+  if (db.profile.want) {
+    const w = db.profile.want;
+    const push = (kind, list) => {
+      for (const it of list || []) {
+        if (!it || !it.title) continue;
+        if (col[kind].some((x) => x.title === it.title)) continue;
+        col[kind].push({
+          id: `c${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          title: String(it.title).slice(0, 120),
+          note: String(it.extra || "").slice(0, 200),
+          url: "",
+          done: !!it.done,
+          at: it.at || new Date().toISOString(),
+        });
+      }
+    };
+    push("book", w.books);
+    push("movie", w.movies);
+    delete db.profile.want;   // 名言等一并清掉
   }
+  if (Array.isArray(db.corpus) && db.corpus.length) db.corpus = [];
+  if (!Array.isArray(db.corpus)) db.corpus = [];
   if (!Array.isArray(db.profile.goals.short)) db.profile.goals.short = [];
   if (!Array.isArray(db.profile.goals.long)) db.profile.goals.long = [];
   await persist();
@@ -159,6 +184,63 @@ function findGoalStep(goalId, stepId) {
     if (step) return { goal, scope, step };
   }
   return {};
+}
+
+/** 全量统计：给「我」页的活跃度与推进量 */
+function computeStats() {
+  const keys = Object.keys(db.days || {}).sort();
+  const out = {
+    days: keys.length,
+    activeDays: 0,
+    streak: 0,
+    longestStreak: 0,
+    planDone: 0, planTotal: 0,
+    todoDone: 0, todoTotal: 0,
+    focusSeconds: 0, sessions: 0, daysWithFocus: 0, longestSession: 0,
+    readDone: 0, readTotal: 0,
+    notes: 0,
+    collect: {},
+  };
+  const isActive = (d) => {
+    if (!d) return false;
+    const p = (d.plan || []).some((x) => x.done);
+    const t = (d.todos || []).some((x) => x.done);
+    const s = (d.sessions || []).length > 0;
+    return p || t || s;
+  };
+  let run = 0;
+  for (const k of keys) {
+    const d = db.days[k];
+    if (!d) continue;
+    const plan = Array.isArray(d.plan) ? d.plan : [];
+    const todos = Array.isArray(d.todos) ? d.todos : [];
+    const sess = Array.isArray(d.sessions) ? d.sessions : [];
+    out.planDone += plan.filter((p) => p.done).length;
+    out.planTotal += plan.length;
+    out.todoDone += todos.filter((t) => t.done).length;
+    out.todoTotal += todos.length;
+    out.focusSeconds += sess.reduce((n, x) => n + (x.seconds || 0), 0);
+    out.sessions += sess.length;
+    if (sess.length) out.daysWithFocus += 1;
+    for (const x of sess) out.longestSession = Math.max(out.longestSession, x.seconds || 0);
+    if (isActive(d)) {
+      out.activeDays += 1;
+      run += 1;
+      out.longestStreak = Math.max(out.longestStreak, run);
+    } else {
+      run = 0;
+    }
+  }
+  out.streak = run;   // 从最后一天往前推的连续天数（keys 已排序）
+  const rl = db.readlater || [];
+  out.readTotal = rl.length;
+  out.readDone = rl.filter((r) => r.status === "done").length;
+  const col = db.profile.collect || {};
+  for (const k of ["book", "movie", "article", "image", "outfit", "music", "skill"]) {
+    const list = Array.isArray(col[k]) ? col[k] : [];
+    out.collect[k] = { total: list.length, done: list.filter((x) => x.done).length };
+  }
+  return out;
 }
 
 /** 本周统计：给「这周你做了多少」用，四类都有分母 */
@@ -401,7 +483,8 @@ const publicState = (date) => ({
   corpus: db.corpus.slice(0, 30),
   weather: db.weather,
   location: db.profile.location,
-  stats: statsFor(date),
+  stats: computeStats(),
+  span: statsFor(date),
 });
 
 /* ---------------- 操作 ---------------- */
@@ -512,33 +595,12 @@ function applyOp(op, payload, date) {
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
     }
-    case "wantAdd": {
-      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
-      const title = String(payload.title ?? "").trim().slice(0, 160);
-      if (!title) return false;
-      db.profile.want[kind].unshift({
-        id: `w${Date.now()}`,
-        title,
-        extra: String(payload.extra ?? "").trim().slice(0, 80),
-        done: false,
-        at: new Date().toISOString(),
-      });
-      return true;
-    }
-    case "wantToggle": {
-      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
-      const it = db.profile.want[kind].find((x) => x.id === payload.id);
-      if (!it) return false;
-      it.done = !!payload.done;
-      it.doneAt = it.done ? new Date().toISOString() : null;
-      return true;
-    }
-    case "wantRemove": {
-      const kind = ["books", "movies", "quotes"].includes(payload.kind) ? payload.kind : "books";
-      const n = db.profile.want[kind].length;
-      db.profile.want[kind] = db.profile.want[kind].filter((x) => x.id !== payload.id);
-      return db.profile.want[kind].length !== n;
-    }
+    case "wantAdd":
+      return applyOp("collectAdd", { kind: payload.kind === "movies" ? "movie" : payload.kind === "books" ? "book" : String(payload.kind || ""), title: payload.title, note: payload.extra }, date);
+    case "wantToggle":
+      return applyOp("collectToggle", { kind: payload.kind === "movies" ? "movie" : payload.kind === "books" ? "book" : String(payload.kind || ""), id: payload.id, done: payload.done }, date);
+    case "wantRemove":
+      return applyOp("collectRemove", { kind: payload.kind === "movies" ? "movie" : payload.kind === "books" ? "book" : String(payload.kind || ""), id: payload.id }, date);
     case "corpusAdd": {
       const text = String(payload.text ?? "").trim().slice(0, 600);
       if (!text) return false;
@@ -946,6 +1008,12 @@ function applyOp(op, payload, date) {
 }
 
 /** 统一列表寻址：前端传一个 key，后端找到对应数组 */
+function collectFind(kind, id) {
+  const k = String(kind || "");
+  if (!db.profile.collect || !Array.isArray(db.profile.collect[k])) return null;
+  return db.profile.collect[k].find((x) => x.id === id) || null;
+}
+
 function listByKey(key) {
   let m;
   if (key === "inbox") return getWeek().inbox;
@@ -994,6 +1062,7 @@ function weekModel() {
   return {
     title: `本周 · ${w.key}`,
     goals: w.inbox.map((g) => ({ title: g.text, done: !!g.done })),
+    recommend: w.recommend,
     comment: w.comment,
     planDone: st.agg.planDone,
     planTotal: st.agg.planTotal,
@@ -1028,18 +1097,25 @@ function summaryText(day) {
     goals.short.length ? `短期目标：${goals.short.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
     goals.long.length ? `长期目标：${goals.long.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
   ].filter(Boolean).join("\n");
-  const want = db.profile.want || { books: [], movies: [], quotes: [] };
-  const wantLine = [
-    want.books.filter((x) => !x.done).length ? `想读（未读）：${want.books.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
-    want.movies.filter((x) => !x.done).length ? `想看（未看）：${want.movies.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
-  ].filter(Boolean).join("\n");
+  const col = db.profile.collect || {};
+  const pickCol = (k) => (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 6);
+  const colLine = [
+    ["book", "收藏的书"], ["movie", "收藏的电影"], ["article", "收藏的文章"],
+    ["outfit", "收藏的穿搭"], ["music", "收藏的音乐"], ["skill", "想学的技能"], ["image", "收藏的参考图"],
+  ]
+    .map(([k, label]) => {
+      const list = (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 5);
+      return list.length ? `${label}：${list.map((x) => x.title).join("；")}` : "";
+    })
+    .filter(Boolean)
+    .join("\n");
   const w = db.weather;
   const weatherLine = w && w.text ? `天气（${w.place || ""}）：${w.text} ${w.temp != null ? w.temp + "°" : ""}${w.tmax != null ? `（${w.tmin}–${w.tmax}°）` : ""}` : "";
   return [
     weatherLine,
     goalList,
     noteLine,
-    wantLine,
+    colLine,
     goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
@@ -1247,15 +1323,22 @@ async function breakdownGoal(goalId) {
 async function recommendWeek() {
   const w = getWeek();
   const pick = await pickModel();
-  const want = db.profile.want || { books: [], movies: [], quotes: [] };
+  const col = db.profile.collect || {};
+  const pickCol = (k) => (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 6);
   const goals = db.profile.goals || { short: [], long: [] };
   const wx = db.weather;
   const corpus = (db.corpus || []).slice(0, 6);
   const rl = (db.readlater || []).filter((r) => r.status === "ready").slice(0, 4);
 
+  const fmt = (label, list) => (list.length ? `${label}：${list.map((x) => (x.note ? `${x.title}（${x.note}）` : x.title)).join("；")}` : "");
   const ctxLines = [
-    want.books.filter((x) => !x.done).length ? `想读：${want.books.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
-    want.movies.filter((x) => !x.done).length ? `想看：${want.movies.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
+    fmt("收藏的书", pickCol("book")),
+    fmt("收藏的电影", pickCol("movie")),
+    fmt("收藏的文章", pickCol("article")),
+    fmt("收藏的图片/参考", pickCol("image")),
+    fmt("收藏的穿搭", pickCol("outfit")),
+    fmt("收藏的音乐", pickCol("music")),
+    fmt("想学的技能", pickCol("skill")),
     goals.short.length ? `短期目标：${goals.short.map((g) => g.text).join("；")}` : "",
     goals.long.length ? `长期目标：${goals.long.map((g) => g.text).join("；")}` : "",
     wx && wx.text ? `今天天气：${wx.text} ${wx.temp}°，${wx.tmin}–${wx.tmax}°` : "",
@@ -1309,8 +1392,8 @@ async function recommendWeek() {
 
   // 兜底：从清单里直接取
   const items = [];
-  const b0 = want.books.filter((x) => !x.done)[0];
-  const m0 = want.movies.filter((x) => !x.done)[0];
+  const b0 = pickCol("book")[0];
+  const m0 = pickCol("movie")[0];
   if (b0) items.push({ id: `rc${Date.now()}_0`, kind: "book", title: b0.title, why: "在你自己的书单里，排第一个", minutes: 30 });
   if (m0) items.push({ id: `rc${Date.now()}_1`, kind: "movie", title: m0.title, why: "想看的片，挑一个晚上看完", minutes: 0 });
   if (wx && wx.tmax != null) items.push({ id: `rc${Date.now()}_2`, kind: "wear", title: `${wx.tmin}–${wx.tmax}°，穿一件外搭`, why: "按今天的气温给的", minutes: 0 });
@@ -2075,20 +2158,27 @@ export function apply(ctx) {
     "lifegame: tool corpus",
   );
 
+  const COLLECT_KINDS = ["book", "movie", "article", "image", "outfit", "music", "skill"];
+  const COLLECT_LABEL = {
+    book: "书", movie: "电影", article: "文章", image: "图片",
+    outfit: "穿搭", music: "音乐", skill: "技能",
+  };
+
   ctx.effect(
     () =>
       ctx.tools.register({
-        name: "lifegame_want",
+        name: "lifegame_collect",
         description:
-          "「我」页的近期清单：想读的书、想看的电影、想记下的名人名言。给阅读/观影建议前先看它。action=list 只读；action=add 需要 kind(books|movies|quotes) 与 title（可带 extra：作者/年份/谁说的）；action=done 需要 kind 与 id；action=remove 需要 kind 与 id。",
+          "「我」页的收集仓库：用户收藏的书、电影、文章、图片、穿搭、音乐、想学的技能。给阅读/观影/穿搭/学习建议、或做推荐前，先 list 一遍——这是用户的偏好证据。action=list 只读（可只列一类）；action=add 需要 kind 与 title（可带 note 备注、url 链接）；action=done/remove 需要 kind 与 id。kind 取值：book/movie/article/image/outfit/music/skill。",
         parameters: {
           type: "object",
           additionalProperties: false,
           properties: {
             action: { type: "string", enum: ["list", "add", "done", "remove"] },
-            kind: { type: "string", enum: ["books", "movies", "quotes"] },
+            kind: { type: "string", enum: COLLECT_KINDS },
             title: { type: "string" },
-            extra: { type: "string", description: "作者 / 年份 / 谁说的" },
+            note: { type: "string", description: "备注：作者 / 为什么收藏 / 一句话印象" },
+            url: { type: "string", description: "链接（文章、图片可用）" },
             id: { type: "string" },
           },
           required: ["action"],
@@ -2099,35 +2189,49 @@ export function apply(ctx) {
         },
         async execute(args) {
           await ready;
-          const want = db.profile.want;
-          const kind = ["books", "movies", "quotes"].includes(args && args.kind) ? args.kind : "";
           const a = args && args.action;
+          const kind = args && COLLECT_KINDS.includes(args.kind) ? args.kind : "";
+          if (!db.profile.collect) db.profile.collect = {};
+          for (const k of COLLECT_KINDS) if (!Array.isArray(db.profile.collect[k])) db.profile.collect[k] = [];
+          const col = db.profile.collect;
+
           if (a === "add") {
-            if (!kind) return { text: "要加哪一类？books / movies / quotes。" };
+            if (!kind) return { text: `要加哪一类？${COLLECT_KINDS.join(" / ")}` };
             const title = String(args.title || "").trim().slice(0, 160);
-            if (!title) return { text: "要加什么？" };
-            want[kind].unshift({ id: `w${Date.now()}`, title, extra: String(args.extra || "").trim().slice(0, 80), done: false, at: new Date().toISOString() });
+            if (!title) return { text: "要加什么？给个标题。" };
+            col[kind].unshift({
+              id: `c${Date.now()}`,
+              title,
+              note: String(args.note || "").trim().slice(0, 200),
+              url: String(args.url || "").trim().slice(0, 800),
+              done: false,
+              at: new Date().toISOString(),
+            });
             db.rev += 1;
             await persist();
           } else if (a === "done" || a === "remove") {
-            if (!kind) return { text: "要改哪一类？books / movies / quotes。" };
+            if (!kind) return { text: `要改哪一类？${COLLECT_KINDS.join(" / ")}` };
             if (a === "done") {
-              const it = want[kind].find((x) => x.id === args.id);
-              if (it) {
-                it.done = true;
-                it.doneAt = new Date().toISOString();
-              }
+              const it = col[kind].find((x) => x.id === args.id);
+              if (it) { it.done = true; it.doneAt = new Date().toISOString(); }
             } else {
-              want[kind] = want[kind].filter((x) => x.id !== args.id);
+              col[kind] = col[kind].filter((x) => x.id !== args.id);
             }
             db.rev += 1;
             await persist();
           }
-          const fmt = (arr) => (arr.length ? arr.map((x) => `${x.title}${x.extra ? `（${x.extra}）` : ""}${x.done ? " ✓" : ""}`).join("；") : "空");
-          return { text: `想读：${fmt(want.books)}\n想看：${fmt(want.movies)}\n名言：${fmt(want.quotes)}` };
+
+          const show = kind ? [kind] : COLLECT_KINDS;
+          const fmt = (arr) =>
+            arr.length
+              ? arr.slice(0, 12).map((x) => `· ${x.title}${x.note ? `（${x.note}）` : ""}${x.done ? " ✓" : ""}`).join("\n")
+              : "（空）";
+          const parts = show.map((k) => `${COLLECT_LABEL[k]}（${col[k].length}）：\n${fmt(col[k])}`);
+          const total = COLLECT_KINDS.reduce((n, k) => n + col[k].length, 0);
+          return { text: `收集仓库共 ${total} 条。\n\n${parts.join("\n\n")}` };
         },
       }),
-    "lifegame: tool want",
+    "lifegame: tool collect",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */
