@@ -1582,7 +1582,17 @@ window.__ModuleLoader__.load({
             "div",
             { className: "lg-card-head" },
             h("span", null, "本周推荐"),
-            h("button", { className: "lg-pomo", style: { opacity: 1 }, onClick: () => run("recommendWeek", {}) }, rec ? "换一批" : "让它推荐"),
+            h(
+              "button",
+              {
+                className: "lg-pomo",
+                style: { opacity: state.llmReady === false ? 0.45 : 1 },
+                disabled: state.llmReady === false,
+                title: state.llmReady === false ? "需要一个可用的模型才能生成推荐（在 DSH 设置里配置）" : "",
+                onClick: () => run("recommendWeek", {}),
+              },
+              rec ? "换一批" : "让它推荐",
+            ),
           ),
           h("p", { className: "footnote-line", style: { margin: "0 0 14px" } }, "根据你在「我」页写的目标、书单、电影和今天的天气给的。"),
           !rec || !rec.items.length
@@ -1964,12 +1974,16 @@ window.__ModuleLoader__.load({
                       "button",
                       {
                         className: "lg-pomo",
-                        style: { opacity: 1 },
+                        style: { opacity: state.llmReady === false ? 0.45 : 1 },
+                        disabled: state.llmReady === false,
                         onClick: () => {
                           setOpenGoal(g.id);
                           run("goalBreakdown", { id: g.id });
                         },
-                        title: "让模型把这个目标拆成几步",
+                        title:
+                          state.llmReady === false
+                            ? "需要一个可用的模型才能拆解（在 DSH 设置里配置）"
+                            : "让模型把这个目标拆成几步",
                       },
                       steps.length ? "重拆" : "拆解",
                     ),
@@ -2305,6 +2319,51 @@ window.__ModuleLoader__.load({
       { id: "me", label: "我" },
     ];
 
+    /* 任何一屏崩了，至少给个能看懂的东西，而不是白屏 */
+    class PanelBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { error };
+      }
+      componentDidCatch(error) {
+        try {
+          console.error("[lifegame] panel crashed:", error);
+        } catch {}
+      }
+      render() {
+        if (this.state.error) {
+          return h(
+            "div",
+            { style: { padding: "40px 32px", fontFamily: "system-ui, sans-serif", color: "#18181b", background: "#fafaf9", height: "100%" } },
+            h("p", { style: { fontSize: 16, margin: "0 0 10px" } }, "这一屏出了点问题。"),
+            h("p", { style: { fontSize: 13, color: "#6b6b73", margin: "0 0 20px", lineHeight: 1.7 } },
+              "你的数据都还在（存在本机），只是这次渲染失败了。可以重试，或者重启 DSH。"),
+            h(
+              "button",
+              {
+                onClick: () => this.setState({ error: null }),
+                style: {
+                  height: 34, padding: "0 16px", borderRadius: 10, border: "1px solid #e4e4e7",
+                  background: "#18181b", color: "#fafaf9", fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                },
+              },
+              "重试",
+            ),
+            h("pre", {
+              style: {
+                marginTop: 22, padding: 12, borderRadius: 8, background: "#fff", border: "1px solid #e4e4e7",
+                fontSize: 11, color: "#6b6b73", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 160, overflow: "auto",
+              },
+            }, String((this.state.error && this.state.error.message) || this.state.error)),
+          );
+        }
+        return this.props.children;
+      }
+    }
+
     function LifegamePanel() {
       const [state, setState] = useState(null);
       const [err, setErr] = useState("");
@@ -2508,7 +2567,9 @@ window.__ModuleLoader__.load({
         ctx.slots.inject("sidebar.panellist", () =>
           ctx.slots.register({ name: "sidebar.panellist", id: PANEL, order: 6, label: () => "人生游戏" }, PanelIcon),
         );
-        ctx.slots.inject("main", () => ctx.slots.register({ name: "main", key: PANEL }, LifegamePanel));
+        ctx.slots.inject("main", () =>
+          ctx.slots.register({ name: "main", key: PANEL }, () => h(PanelBoundary, null, h(LifegamePanel, null))),
+        );
       },
     };
   },

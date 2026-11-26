@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Lifegame",
+    "description": "One screen a day for four things that pay off slowly: patience, lightness, focus, health. The sidebar panel has three tabs — 今天 (today's three fixed blocks + free to-dos + focus timer), 本周 (weekly inbox, sticky notes, seven-day calendar, suggestions) and 我 (90-day activity grid, statistics, goals, your daily rules, a collection shelf of books / films / articles / images / skills). Ten tools let the agent read and update the same data, so it can plan, recommend and break goals into steps beside you. All data stays on this machine in $DSH_HOME/lifegame/ — nothing is uploaded. Weather uses your approximate location (default 杭州·余杭, editable). Suggestions, goal breakdowns and the daily line call your configured model only when you trigger them.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -70,17 +70,30 @@ const seed = () => ({
 
 /* ---------------- 存取 ---------------- */
 
+const SCHEMA_VERSION = 2;
+
 async function load() {
   try {
     db = JSON.parse(await readFile(dataFile, "utf8"));
+    // 备份上一版（只留最近一份，够救命）
+    try {
+      await writeFile(dataFile + ".bak", JSON.stringify(db));
+    } catch {}
   } catch {
     db = seed();
   }
+  // 数据版本：现在的结构就是 v2；未来改结构时按版本补丁
+  const fromVersion = Number(db.schemaVersion) || 1;
+  db.schemaVersion = SCHEMA_VERSION;
+  if (fromVersion < SCHEMA_VERSION) {
+    // v1 → v2：语料库废弃，内容并入收集仓库（这里只做结构兼容，内容已由用户手动迁移）
+    // 占位：未来新增迁移写在这里
+  }
   if (!Array.isArray(db.appliedOps)) db.appliedOps = [];
+  if (db.appliedOps.length > 500) db.appliedOps = db.appliedOps.slice(-500);
   if (!db.days) db.days = {};
   if (!db.weeks) db.weeks = {};
   if (!Array.isArray(db.readlater)) db.readlater = [];
-  if (!Array.isArray(db.corpus)) db.corpus = [];
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
   if (!db.profile.customPlan) db.profile.customPlan = {};
@@ -113,8 +126,7 @@ async function load() {
     push("movie", w.movies);
     delete db.profile.want;   // 名言等一并清掉
   }
-  if (Array.isArray(db.corpus) && db.corpus.length) db.corpus = [];
-  if (!Array.isArray(db.corpus)) db.corpus = [];
+  delete db.corpus;   // 语料库已废弃（内容迁移到收集仓库）
   if (!Array.isArray(db.profile.goals.short)) db.profile.goals.short = [];
   if (!Array.isArray(db.profile.goals.long)) db.profile.goals.long = [];
   await persist();
@@ -503,10 +515,10 @@ const publicState = (date) => ({
   weekBoard: weekBoard(),
   weekStats: weekStats(),
   readlater: db.readlater.slice(0, 40),
-  corpus: db.corpus.slice(0, 30),
   weather: db.weather,
   location: db.profile.location,
   stats: computeStats(),
+  llmReady: llmProbe,
   span: statsFor(date),
 });
 
@@ -704,23 +716,6 @@ function applyOp(op, payload, date) {
         } catch {}
       }
       return db.profile.collect[kind].length !== n;
-    }
-    case "corpusAdd": {
-      const text = String(payload.text ?? "").trim().slice(0, 600);
-      if (!text) return false;
-      db.corpus.unshift({
-        id: `c${Date.now()}`,
-        text,
-        source: String(payload.source ?? "").slice(0, 120),
-        tag: String(payload.tag ?? "").slice(0, 30),
-        at: new Date().toISOString(),
-      });
-      return true;
-    }
-    case "corpusRemove": {
-      const n = db.corpus.length;
-      db.corpus = db.corpus.filter((x) => x.id !== payload.id);
-      return db.corpus.length !== n;
     }
     case "goalBreakdown": {
       queueMicrotask(() => breakdownGoal(String(payload.id || "")));
@@ -1107,7 +1102,7 @@ function applyOp(op, payload, date) {
       return true;
     }
     default:
-      return false;
+      return "UNKNOWN_OP";
   }
 }
 
@@ -1122,7 +1117,6 @@ function listByKey(key) {
   let m;
   if (key === "inbox") return getWeek().inbox;
   if (key === "notes") return getWeek().notes;
-  if (key === "corpus") return db.corpus;
   if (key === "readlater") return db.readlater;
   if ((m = key.match(/^todos:(\d{4}-\d{2}-\d{2})$/))) {
     const d = getDay(m[1]);
@@ -1368,7 +1362,11 @@ async function breakdownGoal(goalId) {
   if (!goal) return;
 
   const pick = await pickModel();
-  const corpusSample = (db.corpus || []).slice(0, 6).map((c) => `· ${c.text}${c.source ? `（${c.source}）` : ""}`).join("\n");
+  const colAll = db.profile.collect || {};
+  const corpusSample = ["book", "movie", "article", "skill"]
+    .flatMap((k) => (Array.isArray(colAll[k]) ? colAll[k] : []).filter((x) => !x.done).slice(0, 2))
+    .map((c) => `· ${c.title}${c.note ? `（${c.note}）` : ""}`)
+    .join("\n");
   const others = [...g.short, ...g.long].filter((x) => x.id !== goalId).map((x) => x.text).join("；");
 
   if (llmRef && pick) {
@@ -1382,7 +1380,7 @@ async function breakdownGoal(goalId) {
       "只输出 JSON：{\"steps\":[\"步骤1\",\"步骤2\"]}，不要解释。\n\n" +
       `目标（${scope === "long" ? "长期" : "短期"}）：${goal.text}\n` +
       (others ? `他的其他目标：${others}\n` : "") +
-      (corpusSample ? `他收集的一些人生建议：\n${corpusSample}\n` : "");
+      (corpusSample ? `他收藏和想学的东西：\n${corpusSample}\n` : "");
     try {
       let buf = "";
       for await (const c of llmRef.stream({ provider: pick.provider, model: pick.model, messages: [{ role: "user", content: [{ type: "text", text: prompt }] }] })) {
@@ -1431,7 +1429,9 @@ async function recommendWeek() {
   const pickCol = (k) => (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 6);
   const goals = db.profile.goals || { short: [], long: [] };
   const wx = db.weather;
-  const corpus = (db.corpus || []).slice(0, 6);
+  const corpus = ["book", "movie", "article", "skill"]
+    .flatMap((k) => (Array.isArray((db.profile.collect || {})[k]) ? db.profile.collect[k] : []).filter((x) => !x.done));
+  corpus.splice(6);
   const rl = (db.readlater || []).filter((r) => r.status === "ready").slice(0, 4);
 
   const fmt = (label, list) => (list.length ? `${label}：${list.map((x) => (x.note ? `${x.title}（${x.note}）` : x.title)).join("；")}` : "");
@@ -1446,7 +1446,7 @@ async function recommendWeek() {
     goals.short.length ? `短期目标：${goals.short.map((g) => g.text).join("；")}` : "",
     goals.long.length ? `长期目标：${goals.long.map((g) => g.text).join("；")}` : "",
     wx && wx.text ? `今天天气：${wx.text} ${wx.temp}°，${wx.tmin}–${wx.tmax}°` : "",
-    corpus.length ? `他收集的说法：${corpus.map((c) => c.text).slice(0, 3).join(" / ")}` : "",
+    corpus.length ? `他收藏的：${corpus.map((c) => c.title).slice(0, 3).join(" / ")}` : "",
     rl.length ? `待读文章：${rl.map((r) => `${r.title}（${r.minutes}分钟）`).join("；")}` : "",
   ].filter(Boolean).join("\n");
 
@@ -1543,7 +1543,7 @@ async function rotateInspiration() {
       `天气：${w && w.text ? `${w.text} ${w.temp}°（${w.tmin}–${w.tmax}°）` : "未知"}\n` +
       (goals.short.length ? `他的短期目标：${goals.short.map((g) => g.text).join("；")}\n` : "") +
       (goals.long.length ? `他的长期目标：${goals.long.map((g) => g.text).join("；")}\n` : "") +
-      ((db.corpus || []).length ? `他收集的一些人生建议（可借用其中一句的意思，但要说成自己的话）：\n${db.corpus.slice(0, 4).map((c) => `· ${c.text}`).join("\n")}\n` : "") +
+      "" +
       (prev ? `上一句是（不要重复它）：${prev}\n` : "");
     try {
       let buf = "";
@@ -1580,6 +1580,7 @@ async function rotateInspiration() {
 /* ---------------- 后台解析：插件自己抓页 + 调模型 ---------------- */
 
 let llmRef = null;
+let llmProbe = null;   // null=还没探测；true/false=有没有可用文本模型
 let modelCache = null;
 const parsing = new Set();
 
@@ -1758,6 +1759,16 @@ export function apply(ctx) {
   mediaDir = path.join(home, NS, "media");
   const ready = load().then(() => log(`state → ${dataFile}`));
 
+  // 模型可用性：启动后探测一次（有没有可用的文本模型）
+  ctx.effect(() => {
+    const t = setTimeout(() => {
+      pickModel()
+        .then((m) => { llmProbe = !!m; })
+        .catch(() => { llmProbe = false; });
+    }, 3000);
+    return () => clearTimeout(t);
+  }, "lifegame: llm probe");
+
   // 天气：启动后拉一次，之后每小时一次
   ctx.effect(() => {
     const pull = () => {
@@ -1853,8 +1864,11 @@ export function apply(ctx) {
             if (db.appliedOps.some((x) => x.opId === opId)) {
               return json(res, 200, { ok: true, deduped: true, state: publicState(date) });
             }
-            if (!applyOp(op, payload || {}, date)) return json(res, 400, { error: `unknown op: ${op}` });
+            const applied = applyOp(op, payload || {}, date);
+            if (applied === "UNKNOWN_OP") return json(res, 404, { error: `unknown op: ${op}` });
+            if (!applied) return json(res, 400, { error: `op 没生效：${op}（参数可能不合法，或目标不存在）` });
             db.appliedOps.push({ opId, op, at: new Date().toISOString() });
+  if (db.appliedOps.length > 500) db.appliedOps = db.appliedOps.slice(-500);
             if (db.appliedOps.length > 300) db.appliedOps = db.appliedOps.slice(-300);
             db.rev += 1;
             await persist();
@@ -2254,48 +2268,6 @@ export function apply(ctx) {
     "lifegame: tool goals",
   );
 
-  ctx.effect(
-    () =>
-      ctx.tools.register({
-        name: "lifegame_corpus",
-        description:
-          "「许愿系统」的语料库：关于如何过好一生的建议、人生类书籍里的观点、阅读/旅行/健身等方向的内容。用户想往里加东西、或需要引用这些建议来给建议时用。action=list 只读；action=add 需要 text（可带 source/tag）；action=remove 需要 id。",
-        parameters: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            action: { type: "string", enum: ["list", "add", "remove"] },
-            text: { type: "string" },
-            source: { type: "string", description: "出处，如书名、作者、链接" },
-            tag: { type: "string", description: "方向，如 阅读 / 旅行 / 健身 / 人生" },
-            id: { type: "string" },
-          },
-          required: ["action"],
-        },
-        output: {
-          schema: { type: "object", additionalProperties: true },
-          render: (_args, value) => [{ type: "text", text: value.text }],
-        },
-        async execute(args) {
-          await ready;
-          const a = args && args.action;
-          if (a === "add") {
-            const text = String(args.text || "").trim().slice(0, 600);
-            if (!text) return { text: "要加什么？" };
-            db.corpus.unshift({ id: `c${Date.now()}`, text, source: String(args.source || "").slice(0, 120), tag: String(args.tag || "").slice(0, 30), at: new Date().toISOString() });
-            db.rev += 1;
-            await persist();
-          } else if (a === "remove") {
-            db.corpus = db.corpus.filter((x) => x.id !== args.id);
-            db.rev += 1;
-            await persist();
-          }
-          const lines = db.corpus.slice(0, 12).map((c) => `· [${c.tag || "未分类"}] ${c.text}${c.source ? ` —— ${c.source}` : ""}`);
-          return { text: `语料库共 ${db.corpus.length} 条。\n${lines.join("\n") || "（还是空的）"}` };
-        },
-      }),
-    "lifegame: tool corpus",
-  );
 
   const COLLECT_KINDS = ["book", "movie", "article", "image", "skill"];
   const COLLECT_LABEL = { book: "书", movie: "电影", article: "文章", image: "图片", skill: "技能" };

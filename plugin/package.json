@@ -1,14 +1,23 @@
 {
-  "name": "@local/lifegame",
-  "version": "0.1.0",
-  "private": true,
+  "name": "dsh-lifegame",
+  "version": "1.0.0",
+  "description": "人生游戏：把「耐心 / 轻盈 / 专注 / 健康」变成每天一屏的节奏。侧栏一个页面，Agent 在旁边随时推荐。",
   "type": "module",
-  "description": "人生游戏：把「耐心 / 轻盈 / 专注 / 健康」变成每天一屏的节奏导演。侧栏一个页面，Agent 在旁边随时推荐。",
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-bundle",
+    "lifegame",
+    "planner",
+    "habit",
+    "focus"
+  ],
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
     "./icon": "./icon.svg",
-    "./cordis.patch.yml": "./cordis.patch.yml"
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "index.js",
@@ -16,7 +25,10 @@
     "view.js",
     "tool-card.js",
     "cordis.patch.yml",
-    "icon.svg"
+    "icon.svg",
+    "locale/*.json",
+    "docs",
+    "README.md"
   ],
   "dsh": {
     "bundle": {
@@ -58,5 +70,9 @@
         }
       ]
     }
+  },
+  "scripts": {
+    "check": "node check-ops.mjs",
+    "pack": "npm pack"
   }
 }
