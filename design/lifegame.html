@@ -10,7 +10,7 @@
 <style>
 [data-slot="main"]{--lg-muted:#575c64;--lg-accent-text:#2a55b5}
 [data-theme="dark"] [data-slot="main"]{--lg-muted:#9aa0aa;--lg-accent-text:#9dc0ff}
-[data-slot="main"] .lg{padding:26px 32px 40px}
+[data-slot="main"] .lg{padding:26px 32px 40px;height:100%;overflow-y:auto}
 [data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
 [data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
@@ -108,7 +108,7 @@
 
             <div class="lg-card">
               <div class="lg-head"><span>今天要做</span><span class="lg-num">还剩 2 件</span></div>
-              <div class="lg-inp"><input placeholder="写一件要做的事，回车添加"><button>加</button></div>
+              <div class="lg-inp"><input placeholder="写一件要做的事。回车换行，写好了再点「加」。"><button>加</button></div>
               <ul class="lg-list">
                 <li class="lg-li"><span class="lg-dot"></span><span class="t">把上周的周报补完</span><button class="lg-pomo">开始</button></li>
                 <li class="lg-li"><span class="lg-dot"></span><span class="t">给物业打电话问停水</span><button class="lg-pomo">开始</button></li>
@@ -123,8 +123,8 @@
               <div class="lg-head"><span>规定事项</span><span class="lg-num">2 / 3</span></div>
               <ul class="lg-list">
                 <li class="lg-li done"><span class="lg-dot on"></span><span class="t">冥想 5 分钟</span><span class="s">09:30</span></li>
-                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">动一动 10 分钟</span><span class="s">09:50</span></li>
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">写一段话</span><span class="s">19:35</span></li>
+                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">运动 5 分钟</span><span class="s">09:50</span></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">写一段话</span><button class="lg-pomo">开始</button><span class="s">19:35</span></li>
               </ul>
             </div>
 

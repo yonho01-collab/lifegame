@@ -51,13 +51,16 @@ window.__ModuleLoader__.load({
   --lg-text:#f2efe9; --lg-muted:#a19c93; --lg-line:#2c2c30; --lg-accent:#c9a86a; --lg-on-accent:#17140e;
   --lg-serif:"Songti SC","Noto Serif SC","Source Han Serif SC",serif;
   --lg-sans:"PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei",system-ui,sans-serif;
-  background:var(--lg-bg); color:var(--lg-text); min-height:100%;
+  background:var(--lg-bg); color:var(--lg-text);
+  height:100%; display:flex; flex-direction:column; overflow:hidden;
   font-family:var(--lg-sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 .lg-scope *{box-sizing:border-box}
 .lg-page{
-  max-width:1120px; margin:0 auto;
+  width:100%; max-width:1120px; margin:0 auto;
+  flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   padding:calc(var(--dsh-frame-top-clearance,0px) + 34px) 40px 96px;
+  -webkit-overflow-scrolling:touch;
 }
 @media (max-width:820px){ .lg-page{padding:calc(var(--dsh-frame-top-clearance,0px) + 20px) 20px 72px} }
 
@@ -206,9 +209,10 @@ window.__ModuleLoader__.load({
 
 /* 快速输入 */
 .lg-add{display:flex;gap:8px;margin-bottom:8px}
-.lg-add input{flex:1 1 auto;min-width:0;min-height:48px;padding:0 16px;background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;color:var(--lg-text);font-size:15px;font-family:var(--lg-sans);outline:none}
-.lg-add input::placeholder{color:#6b665f}
-.lg-add input:focus{border-color:var(--lg-accent)}
+.lg-add input,.lg-add textarea{flex:1 1 auto;min-width:0;min-height:48px;padding:13px 16px;background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;color:var(--lg-text);font-size:15px;line-height:1.6;font-family:var(--lg-sans);outline:none;resize:none;overflow:hidden}
+.lg-add input::placeholder,.lg-add textarea::placeholder{color:#6b665f}
+.lg-add input:focus,.lg-add textarea:focus{border-color:var(--lg-accent)}
+.lg-add .hint{flex:1 1 100%;margin:2px 0 0;font-size:11.5px;color:var(--lg-muted)}
 .lg-add-btn{flex:0 0 auto;min-width:56px;min-height:48px;border-radius:10px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:15px;cursor:pointer}
 .lg-add-btn:hover{color:var(--lg-text);border-color:var(--lg-muted)}
 
@@ -216,7 +220,7 @@ window.__ModuleLoader__.load({
 .lg-todo{list-style:none;margin:6px 0 0;padding:0}
 .lg-todo > li{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--lg-line)}
 .lg-todo > li:last-child{border-bottom:0}
-.lg-todo > li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55}
+.lg-todo > li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .lg-todo > li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
 .lg-read-body{flex:1 1 auto;min-width:0}
 .lg-read-t{display:block;max-width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:var(--lg-text);font-size:15px;line-height:1.5;font-family:var(--lg-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -235,6 +239,7 @@ window.__ModuleLoader__.load({
 .lg-del{flex:0 0 auto;width:32px;height:32px;display:grid;place-items:center;border:0;background:none;color:var(--lg-muted);cursor:pointer;font-size:16px;border-radius:8px;opacity:.55}
 .lg-del:hover{color:var(--danger);background:var(--lg-surface-2)}
 .lg-empty{margin:10px 0 2px;font-size:13.5px;line-height:1.8;color:var(--lg-muted)}
+.lg-plan-in{flex:1 1 auto;min-width:0;min-height:34px;padding:4px 10px;background:var(--lg-surface-2);border:1px solid var(--lg-accent);border-radius:7px;color:var(--lg-text);font-size:14.5px;font-family:var(--lg-sans);outline:none}
 .lg-plan-t{flex:1 1 auto;min-width:0;text-align:left;background:none;border:0;cursor:pointer;color:var(--lg-text);font-size:14.5px;line-height:1.5;padding:0;font-family:var(--lg-sans)}
 .lg-plan-t:hover{color:var(--lg-accent)}
 .lg-row-s{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--lg-line)}
@@ -390,6 +395,8 @@ window.__ModuleLoader__.load({
       const [label, setLabel] = useState("");
       const [url, setUrl] = useState("");
       const [expanded, setExpanded] = useState(null);
+      const [editingId, setEditingId] = useState(null);
+      const [editText, setEditText] = useState("");
 
       useEffect(() => {
         if (!day.timer) return;
@@ -428,6 +435,18 @@ window.__ModuleLoader__.load({
       };
 
       const startPomo = (text) => run("timerStart", { label: text, minutes: 25 });
+
+      const beginEdit = (p) => {
+        setEditingId(p.id);
+        setEditText(p.title);
+      };
+
+      const savePlanEdit = () => {
+        const id = editingId;
+        const v = editText.trim();
+        setEditingId(null);
+        if (id && v) run("planEdit", { id, title: v });
+      };
 
       const addUrl = () => {
         const v = url.trim();
@@ -554,12 +573,13 @@ window.__ModuleLoader__.load({
               h(
                 "div",
                 { className: "lg-add" },
-                h("input", {
+                h("textarea", {
                   value: draft,
-                  placeholder: "写一件要做的事，回车添加",
+                  rows: Math.min(8, Math.max(1, draft.split("\n").length)),
+                  placeholder: "写一件要做的事。回车换行，写好了再点「加」。",
                   onChange: (e) => setDraft(e.target.value),
                   onKeyDown: (e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                       e.preventDefault();
                       addTodo();
                     }
@@ -634,7 +654,30 @@ window.__ModuleLoader__.load({
                       },
                       p.done ? h(Check) : null,
                     ),
-                    h("button", { className: "lg-plan-t", onClick: () => go(p), title: "进入这一件" }, p.title),
+                    editingId === p.id
+                      ? h("input", {
+                          className: "lg-plan-in",
+                          value: editText,
+                          autoFocus: true,
+                          onChange: (e) => setEditText(e.target.value),
+                          onBlur: savePlanEdit,
+                          onKeyDown: (e) => {
+                            if (e.key === "Enter") { e.preventDefault(); savePlanEdit(); }
+                            if (e.key === "Escape") { e.preventDefault(); setEditingId(null); }
+                          },
+                        })
+                      : h("button", { className: "lg-plan-t", onClick: () => beginEdit(p), title: "点一下改；标题里写「N 分钟」会自动改时长" }, p.title),
+                    p.done
+                      ? null
+                      : h(
+                          "button",
+                          {
+                            className: "lg-pomo" + (day.timer ? " off" : ""),
+                            disabled: !!day.timer,
+                            onClick: () => go(p),
+                          },
+                          "开始",
+                        ),
                     h("span", { className: "s" }, p.slot),
                   ),
                 ),

@@ -30,7 +30,7 @@ let chain = Promise.resolve();
 
 const defaultPlan = (p) => [
   { id: "meditate", title: `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: "09:30", done: false },
-  { id: "move", title: `动一动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
+  { id: "move", title: `运动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
   { id: "create", title: "写一段话", kind: "output", minutes: 25, slot: "19:35", done: false },
 ];
 
@@ -46,7 +46,7 @@ const seed = () => ({
   profile: {
     sleepTarget: "00:30",
     meditationMinutes: 5,
-    moveMinutes: 10,
+    moveMinutes: 5,
     budget: "500-1500",
     fitnessLevel: "1-2/week",
   },
@@ -130,7 +130,7 @@ function normalizeDays() {
         item.title = `冥想 ${db.profile.meditationMinutes} 分钟`;
         item.minutes = db.profile.meditationMinutes;
       } else if (item.id === "move") {
-        item.title = `动一动 ${db.profile.moveMinutes} 分钟`;
+        item.title = `运动 ${db.profile.moveMinutes} 分钟`;
         item.minutes = db.profile.moveMinutes;
       } else if (item.id === "create") {
         item.title = "写一段话";
@@ -244,6 +244,22 @@ function applyOp(op, payload, date) {
       const n = day.todos.length;
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
+    }
+    case "planEdit": {
+      const item = day.plan.find((p) => p.id === payload.id);
+      if (!item) return false;
+      const title = String(payload.title ?? "").trim().slice(0, 40);
+      if (!title) return false;
+      item.title = title;
+      // 标题里写了「N 分钟」就同步时长，这样改时长不用另找地方
+      const m = title.match(/(\d{1,3})\s*(?:分钟|min)/i);
+      if (m) {
+        const n = Math.max(1, Math.min(180, Number(m[1]) || 0));
+        if (n) item.minutes = n;
+        if (item.id === "meditate") db.profile.meditationMinutes = n;
+        if (item.id === "move") db.profile.moveMinutes = n;
+      }
+      return true;
     }
     case "timerStart": {
       if (day.timer) return false;
@@ -723,7 +739,7 @@ export function apply(ctx) {
       ctx.tools.register({
         name: "lifegame_today",
         description:
-          "读取「人生游戏」里今天的安排：三件地基（冥想 / 动一动 / 写点东西）、此刻该做的那一件、之后的时间节点、以及「或者」的轻量替代。用户问「今天要做什么」「我现在该干嘛」「今天怎么样」时调它。返回后手机上会显示一张原生卡片。",
+          "读取「人生游戏」里今天的安排：三件地基（冥想 / 运动 / 写点东西）、此刻该做的那一件、之后的时间节点、以及「或者」的轻量替代。用户问「今天要做什么」「我现在该干嘛」「今天怎么样」时调它。返回后手机上会显示一张原生卡片。",
         parameters: { type: "object", additionalProperties: false, properties: {}, required: [] },
         output: {
           schema: { type: "object", additionalProperties: true },
