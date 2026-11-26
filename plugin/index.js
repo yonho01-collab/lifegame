@@ -108,7 +108,7 @@ function makeDay(date) {
     inspiration: null,
     alt: "现在下去走 10 分钟，今天的光很好",
     teaser: "去城南那家面包店，坐 20 分钟。",
-    watching: ["你 3 天没动", "今晚 19:00 后空窗", "周三降温，户外改周四"],
+    watching: [],
   };
 }
 
@@ -170,6 +170,13 @@ function getWeek() {
 function normalizeDays() {
   let changed = 0;
   for (const key of Object.keys(db.days)) {
+    const d = db.days[key];
+    if (d && d.inspiration && !isGoodInspiration(d.inspiration.text)) {
+      d.inspiration = null;
+      changed += 1;
+    }
+  }
+  for (const key of Object.keys(db.days)) {
     const day = db.days[key];
     if (!day || !Array.isArray(day.plan)) continue;
     for (const item of day.plan) {
@@ -188,6 +195,50 @@ function normalizeDays() {
   }
   if (changed) persist();
   return changed;
+}
+
+/** 「它在看着」：只放能算出来的事实，每条都必须来自真实数据 */
+function computeWatching(date) {
+  const key = date || todayKey();
+  const out = [];
+
+  // 1) 连续多少天没有任何完成记录
+  let streak = 0;
+  const base = new Date(`${key}T00:00:00`);
+  for (let i = 1; i <= 30; i++) {
+    const t = new Date(base);
+    t.setDate(t.getDate() - i);
+    const k = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const day = db.days[k];
+    if (!day) {
+      // 没有这一天，不代表没动——但如果有更早的记录就停
+      if (Object.keys(db.days).some((kk) => kk < k)) streak++;
+      else break;
+      continue;
+    }
+    const planDone = (day.plan || []).filter((p) => p.done).length;
+    const todoDone = (day.todos || []).filter((t) => t.done).length;
+    const sess = (day.sessions || []).length;
+    if (planDone === 0 && todoDone === 0 && sess === 0) streak++;
+    else break;
+  }
+  if (streak >= 2) out.push(`${streak} 天没动过`);
+
+  // 2) 今天还剩几件
+  const day = getDay(key);
+  const left = day.plan.filter((p) => !p.done).length;
+  if (left > 0) out.push(`今天还剩 ${left} 件`);
+  else if (day.plan.length) out.push("今天的规定事项做完了");
+
+  // 3) 天气里最可能改变计划的那一条
+  const w = db.weather;
+  if (w && w.text) {
+    if (w.rain != null && w.rain >= 50) out.push(`降雨概率 ${Math.round(w.rain)}%`);
+    else if (w.tmax != null && w.tmin != null && w.tmax - w.tmin >= 12) out.push(`昼夜差 ${w.tmax - w.tmin} 度`);
+    else if (w.sunset) out.push(`${w.sunset} 日落`);
+  }
+
+  return out.slice(0, 3);
 }
 
 function getDay(date) {
@@ -248,7 +299,7 @@ const publicState = (date) => ({
   rev: db.rev,
   profile: db.profile,
   season: db.season,
-  day: getDay(date),
+  day: { ...getDay(date), watching: computeWatching(date) },
   week: getWeek(),
   weekBoard: weekBoard(),
   readlater: db.readlater.slice(0, 40),
@@ -609,7 +660,7 @@ function todayKey() {
 function viewModel(day) {
   return {
     title: `今天 · ${todayKey()}`,
-    watching: day.watching || [],
+    watching: computeWatching(),
     plan: day.plan.map((p) => ({ title: p.title, slot: p.slot, done: !!p.done })),
     after: day.after || [],
     todos: (day.todos || []).slice(0, 8).map((t) => ({ title: t.text, done: !!t.done })),
@@ -881,6 +932,16 @@ const INSPIRATION_FALLBACK = [
   "把手机放到另一个房间，十分钟就好。",
 ];
 
+const BAD_INSPIRATION = /需要|不超过|只输出|要求|任务是|上一句|我们|你是|JSON|prompt|输出|字数|举例|回答/i;
+
+function isGoodInspiration(t) {
+  const s = String(t || "").trim();
+  if (!s) return false;
+  if (s.length < 4 || s.length > 60) return false;
+  if (BAD_INSPIRATION.test(s)) return false;
+  return true;
+}
+
 async function rotateInspiration() {
   const day = getDay(todayKey());
   const goals = db.profile.goals || { short: [], long: [] };
@@ -908,8 +969,14 @@ async function rotateInspiration() {
         else if (c.type === "text-delta" && typeof c.delta === "string") buf += c.delta;
         if (buf.length > 300) break;
       }
-      const text = buf.replace(/^["「『\s]+|["」』\s]+$/g, "").trim().slice(0, 120);
-      if (text) {
+      const text = buf
+        .split("\n")
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .filter((x) => isGoodInspiration(x))
+        .map((x) => x.replace(/^["「『]+|["」』]+$/g, "").trim())
+        .sort((a, b) => a.length - b.length)[0] || "";
+      if (text && isGoodInspiration(text)) {
         day.inspiration = { text, from: "它刚想到的", at: new Date().toISOString() };
         db.rev += 1;
         await persist();
@@ -1087,7 +1154,7 @@ function kickParse(id) {
   Promise.resolve().then(() => parseOne(id)).catch(() => {});
 }
 
-export { stripHtml, metaOf, headingsOf, parseOne, pickModel };
+export { stripHtml, metaOf, headingsOf, parseOne, pickModel, computeWatching, isGoodInspiration };
 
 /* ---------------- 插件入口 ---------------- */
 
