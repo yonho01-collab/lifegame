@@ -178,8 +178,8 @@ window.__ModuleLoader__.load({
 .lg-bars-label{display:flex;gap:6px;margin-top:8px}
 .lg-bars-label span{flex:1 1 0;text-align:center;font-size:10.5px;color:var(--lg-muted);letter-spacing:.06em}
 
-.lg-traces{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:4px;max-width:520px}
-.lg-traces i{aspect-ratio:1;border-radius:2px;background:var(--lg-surface-2);display:block}
+.lg-traces{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:8px;max-width:640px}
+.lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--lg-surface-2);display:block}
 .lg-traces i.on{background:var(--lg-focus)}
 .lg-traces i.full{background:var(--lg-accent)}
 .lg-traces i.today{box-shadow:0 0 0 1px var(--lg-accent);background:var(--lg-accent-soft)}
@@ -219,6 +219,30 @@ window.__ModuleLoader__.load({
 .lg-cal-add button:hover{color:var(--lg-accent);border-color:var(--lg-line)}
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.lg-fold{min-height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:11.5px;font-family:var(--lg-sans);cursor:pointer}
+.lg-fold:hover{color:var(--lg-accent);border-color:var(--lg-focus)}
+.lg-charts{display:grid;grid-template-columns:1fr 1fr 152px;gap:22px;align-items:end;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--lg-line)}
+.lg-chart-box{min-width:0}
+.lg-chart-k{display:block;font-size:11px;letter-spacing:.06em;color:var(--lg-muted);margin-bottom:8px}
+.lg-chart{width:100%;height:76px;display:block}
+.lg-chart .bar{fill:var(--lg-surface-3)}
+.lg-chart .bar.on{fill:var(--lg-accent)}
+.lg-rings{display:flex;gap:18px;align-self:center;justify-content:flex-end}
+.lg-ring{display:flex;flex-direction:column;align-items:center;gap:3px}
+.lg-ring .ring-wrap{position:relative;width:64px;height:64px}
+.lg-ring .ring-wrap svg{width:64px;height:64px;display:block}
+.lg-ring .ring-bg{fill:none;stroke:var(--lg-surface-3);stroke-width:5}
+.lg-ring .ring-fg{fill:none;stroke:var(--lg-accent);stroke-width:5;stroke-linecap:round;transition:stroke-dasharray .4s}
+.lg-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;margin:0}
+.lg-ring span{font-size:11px;color:var(--lg-muted)}
+.lg-ring em{font-style:normal;font-size:10.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums}
+.lg-drop-img{display:flex;align-items:center;gap:12px;padding:16px;border:1px dashed var(--lg-line);border-radius:var(--lg-radius);background:var(--lg-surface-2);transition:border-color .15s,background .15s}
+.lg-drop-img.over{border-color:var(--lg-accent);background:var(--lg-accent-soft)}
+.lg-drop-img.busy{opacity:.6}
+.lg-drop-img-btn{min-height:30px;padding:0 14px;border-radius:var(--lg-radius);border:1px solid var(--lg-line);background:var(--lg-surface);color:var(--lg-text);font-size:12.5px;display:inline-flex;align-items:center;cursor:pointer;box-shadow:var(--lg-shadow)}
+.lg-drop-img-btn:hover{border-color:var(--lg-accent);color:var(--lg-accent)}
+.lg-drop-img-hint{font-size:11.5px;color:var(--lg-muted)}
+.lg-thumb{display:block;max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--lg-line);object-fit:cover}
 .lg-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px 18px;margin-bottom:16px}
 .lg-stat{display:flex;flex-direction:column;gap:2px;min-width:0}
 .lg-stat .k{font-size:11px;letter-spacing:.08em;color:var(--lg-muted)}
@@ -1611,16 +1635,13 @@ window.__ModuleLoader__.load({
     /* ================= 我 ================= */
 
     const COLLECT_KINDS = [
-      ["book", "书"], ["movie", "电影"], ["article", "文章"],
-      ["image", "图片"], ["outfit", "穿搭"], ["music", "音乐"], ["skill", "技能"],
+      ["book", "书"], ["movie", "电影"], ["article", "文章"], ["image", "图片"], ["skill", "技能"],
     ];
     const COLLECT_HINT = {
       book: { title: "书名", note: "作者 / 为什么想读", empty: "还没有想读的书。" },
       movie: { title: "片名", note: "年份 / 谁推荐", empty: "还没有想看的电影。" },
       article: { title: "文章标题或链接", note: "一句话印象", empty: "还没有收藏的文章。" },
-      image: { title: "图片描述或链接", note: "哪里打动了你", empty: "还没有收藏的图片。" },
-      outfit: { title: "一套穿搭（描述）", note: "场合 / 参考来源", empty: "还没有记下的穿搭。" },
-      music: { title: "歌名 / 专辑", note: "什么时候想听", empty: "还没有收藏的音乐。" },
+      image: { title: "图片描述", note: "哪里打动了你", empty: "还没有收藏的图片——选一张、拖进来，或者直接粘贴。" },
       skill: { title: "想学的技能", note: "为什么想学", empty: "还没有想学的技能。" },
     };
 
@@ -1635,6 +1656,35 @@ window.__ModuleLoader__.load({
       const [collectTitle, setCollectTitle] = useState("");
       const [collectNote, setCollectNote] = useState("");
       const collectTotal = COLLECT_KINDS.reduce((n, [k]) => n + ((collect[k] || []).length), 0);
+      const [imgBusy, setImgBusy] = useState(false);
+      const [statsOpen, setStatsOpen] = useState(true);
+      useEffect(() => {
+        if (collectKind !== "image") return;
+        const onPaste = (e) => {
+          const items = (e.clipboardData && e.clipboardData.items) || [];
+          for (const it of items) {
+            if (String(it.type || "").startsWith("image/")) {
+              const f = it.getAsFile();
+              if (f) { uploadImage(f); e.preventDefault(); break; }
+            }
+          }
+        };
+        document.addEventListener("paste", onPaste);
+        return () => document.removeEventListener("paste", onPaste);
+      }, [collectKind]);
+
+      const uploadImage = (file) => {
+        if (!file || !/^image\//.test(file.type)) return;
+        if (file.size > 8 * 1024 * 1024) return;
+        setImgBusy(true);
+        const fr = new FileReader();
+        fr.onload = () => {
+          run("collectAddImage", { dataUrl: String(fr.result || ""), title: file.name.replace(/\.[^.]+$/, "") });
+          setImgBusy(false);
+        };
+        fr.onerror = () => setImgBusy(false);
+        fr.readAsDataURL(file);
+      };
       const addCollect = () => {
         const v = collectTitle.trim();
         if (!v) return;
@@ -1686,6 +1736,75 @@ window.__ModuleLoader__.load({
           h("b", null, value),
           sub ? h("span", { className: "s" }, sub) : null,
         );
+      const series = Array.isArray(st.series) ? st.series : [];
+      const bars30 = series.slice(-30);
+      const maxDone = Math.max(1, ...bars30.map((x) => x.done));
+      const barsChart = h(
+        "svg",
+        { className: "lg-chart", viewBox: "0 0 300 62", preserveAspectRatio: "none", role: "img", "aria-label": "近 30 天完成量" },
+        ...bars30.map((x, i) => {
+          const w = 300 / Math.max(bars30.length, 1);
+          const hh = x.done ? Math.max(3, (x.done / maxDone) * 54) : 1.5;
+          return h("rect", {
+            key: x.date,
+            x: i * w + w * 0.18,
+            y: 58 - hh,
+            width: w * 0.64,
+            height: hh,
+            rx: 1.5,
+            className: x.done ? "bar on" : "bar",
+          });
+        }),
+      );
+      const focus14 = series.slice(-14);
+      const maxFocus = Math.max(1, ...focus14.map((x) => x.focus));
+      const focusChart = h(
+        "svg",
+        { className: "lg-chart", viewBox: "0 0 300 62", preserveAspectRatio: "none", role: "img", "aria-label": "近 14 天专注时长" },
+        ...focus14.map((x, i) => {
+          const w = 300 / Math.max(focus14.length, 1);
+          const hh = x.focus ? Math.max(3, (x.focus / maxFocus) * 54) : 1.5;
+          return h("rect", {
+            key: x.date,
+            x: i * w + w * 0.2,
+            y: 58 - hh,
+            width: w * 0.6,
+            height: hh,
+            rx: 1.5,
+            className: x.focus ? "bar on" : "bar",
+          });
+        }),
+      );
+      const ring = (pct, label, value) => {
+        const r = 26;
+        const c = 2 * Math.PI * r;
+        const p = Math.max(0, Math.min(100, pct || 0));
+        return h(
+          "div",
+          { className: "lg-ring", key: label },
+          h(
+            "div",
+            { className: "ring-wrap" },
+            h(
+              "svg",
+              { viewBox: "0 0 64 64", role: "img", "aria-label": `${label} ${p}%` },
+              h("circle", { cx: 32, cy: 32, r, className: "ring-bg" }),
+              h("circle", {
+                cx: 32,
+                cy: 32,
+                r,
+                className: "ring-fg",
+                strokeDasharray: `${(c * p) / 100} ${c}`,
+                transform: "rotate(-90 32 32)",
+              }),
+            ),
+            h("b", null, `${p}%`),
+          ),
+          h("span", null, label),
+          h("em", null, value),
+        );
+      };
+
       const miniBar = (label, a, b) =>
         h(
           "div",
@@ -1848,12 +1967,48 @@ window.__ModuleLoader__.load({
               "div",
               { className: "lg-card-head" },
               h("span", null, "统计"),
-              h("span", { className: "lg-count-n" }, `${st.activeDays || 0} / ${st.days || 0} 天有记录`),
+              h(
+                "span",
+                { style: { marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 12 } },
+                h("span", { className: "lg-count-n" }, `${st.activeDays || 0} / ${st.days || 0} 天有记录 · 连续 ${st.streak || 0} 天`),
+                h(
+                  "button",
+                  { className: "lg-fold", onClick: () => setStatsOpen(!statsOpen), "aria-expanded": statsOpen },
+                  statsOpen ? "收起" : "展开",
+                ),
+              ),
             ),
-            h("p", { className: "lg-why", style: { margin: "0 0 16px" } }, activityLine),
-            h(
-              "div",
-              { className: "lg-stats" },
+            h("p", { className: "lg-why", style: { margin: statsOpen ? "0 0 18px" : "0" } }, activityLine),
+
+            statsOpen
+              ? h(
+                  "div",
+                  null,
+                  h(
+                    "div",
+                    { className: "lg-charts" },
+                    h(
+                      "div",
+                      { className: "lg-chart-box" },
+                      h("span", { className: "lg-chart-k" }, "近 30 天 · 每天完成"),
+                      barsChart,
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-chart-box" },
+                      h("span", { className: "lg-chart-k" }, "近 14 天 · 专注分钟"),
+                      focusChart,
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-rings" },
+                      ring(Math.round(((st.planDone || 0) / (st.planTotal || 1)) * 100), "规定事项", `${st.planDone || 0}/${st.planTotal || 0}`),
+                      ring(Math.round(((st.todoDone || 0) / (st.todoTotal || 1)) * 100), "待办", `${st.todoDone || 0}/${st.todoTotal || 0}`),
+                    ),
+                  ),
+                  h(
+                    "div",
+                    { className: "lg-stats" },
               statCell("连续", st.streak ? `${st.streak} 天` : "—", `最长 ${st.longestStreak || 0} 天`),
               statCell("规定事项", `${st.planDone || 0} / ${st.planTotal || 0}`, ratio(st.planDone, st.planTotal)),
               statCell("待办", `${st.todoDone || 0} / ${st.todoTotal || 0}`, ratio(st.todoDone, st.todoTotal)),
@@ -1870,6 +2025,8 @@ window.__ModuleLoader__.load({
               miniBar("规定事项", st.planDone || 0, st.planTotal || 0),
               miniBar("待办", st.todoDone || 0, st.todoTotal || 0),
             ),
+                )
+              : null,
           ),
 
           h(
@@ -1898,30 +2055,64 @@ window.__ModuleLoader__.load({
                 ),
               ),
             ),
-            h(
-              "div",
-              { className: "lg-add" },
-              h("input", {
-                value: collectTitle,
-                placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].title : "标题",
-                onChange: (e) => setCollectTitle(e.target.value),
-                onKeyDown: (e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  addCollect();
-                },
-              }),
-              h("button", { className: "lg-add-btn", onClick: addCollect }, "加"),
-            ),
-            h(
-              "div",
-              { className: "lg-labelrow" },
-              h("input", {
-                value: collectNote,
-                placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].note : "备注（可空）",
-                onChange: (e) => setCollectNote(e.target.value),
-              }),
-            ),
+            collectKind === "image"
+              ? h(
+                  "div",
+                  {
+                    className: "lg-drop-img" + (imgBusy ? " busy" : ""),
+                    onDragOver: (e) => { e.preventDefault(); e.currentTarget.classList.add("over"); },
+                    onDragLeave: (e) => e.currentTarget.classList.remove("over"),
+                    onDrop: (e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove("over");
+                      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+                      if (f) uploadImage(f);
+                    },
+                  },
+                  h("input", {
+                    type: "file",
+                    accept: "image/*",
+                    id: "lg-img-file",
+                    style: { display: "none" },
+                    onChange: (e) => {
+                      const f = e.target.files && e.target.files[0];
+                      if (f) uploadImage(f);
+                      e.target.value = "";
+                    },
+                  }),
+                  h(
+                    "label",
+                    { htmlFor: "lg-img-file", className: "lg-drop-img-btn" },
+                    imgBusy ? "正在存…" : "选一张图",
+                  ),
+                  h("span", { className: "lg-drop-img-hint" }, "也可以拖进来，或者直接粘贴"),
+                )
+              : h(
+                  "div",
+                  { className: "lg-add" },
+                  h("input", {
+                    value: collectTitle,
+                    placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].title : "标题",
+                    onChange: (e) => setCollectTitle(e.target.value),
+                    onKeyDown: (e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      addCollect();
+                    },
+                  }),
+                  h("button", { className: "lg-add-btn", onClick: addCollect }, "加"),
+                ),
+            collectKind === "image"
+              ? null
+              : h(
+                  "div",
+                  { className: "lg-labelrow" },
+                  h("input", {
+                    value: collectNote,
+                    placeholder: COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].note : "备注（可空）",
+                    onChange: (e) => setCollectNote(e.target.value),
+                  }),
+                ),
             (collect[collectKind] || []).length === 0
               ? h("p", { className: "lg-empty" }, COLLECT_HINT[collectKind] ? COLLECT_HINT[collectKind].empty : "还没有。")
               : h(
@@ -1936,19 +2127,26 @@ window.__ModuleLoader__.load({
                         { className: "lg-dot" + (it.done ? " on" : ""), onClick: () => run("collectToggle", { kind: collectKind, id: it.id, done: !it.done }) },
                         it.done ? h(Check) : null,
                       ),
-                      h(
-                        "div",
-                        { style: { flex: "1 1 auto", minWidth: 0 } },
-                        h("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" } }, it.title),
-                        it.note ? h("p", { style: { margin: "3px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, it.note) : null,
-                        it.url
-                          ? h(
-                              "a",
-                              { href: it.url, target: "_blank", rel: "noreferrer", style: { fontSize: 11.5, color: "var(--lg-accent)" } },
-                              "打开",
-                            )
-                          : null,
-                      ),
+                      collectKind === "image" && it.url
+                        ? h(
+                            "div",
+                            { style: { flex: "1 1 auto", minWidth: 0 } },
+                            h("img", { className: "lg-thumb", src: it.url, alt: it.title, loading: "lazy" }),
+                            h("p", { style: { margin: "6px 0 0", fontSize: 12, color: "var(--lg-muted)" } }, it.title),
+                          )
+                        : h(
+                            "div",
+                            { style: { flex: "1 1 auto", minWidth: 0 } },
+                            h("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" } }, it.title),
+                            it.note ? h("p", { style: { margin: "3px 0 0", fontSize: 11.5, color: "var(--lg-muted)" } }, it.note) : null,
+                            it.url
+                              ? h(
+                                  "a",
+                                  { href: it.url, target: "_blank", rel: "noreferrer", style: { fontSize: 11.5, color: "var(--lg-accent)" } },
+                                  "打开",
+                                )
+                              : null,
+                          ),
                       h("button", { className: "lg-del", onClick: () => run("collectRemove", { kind: collectKind, id: it.id }), "aria-label": "删除" }, "×"),
                     ),
                   ),

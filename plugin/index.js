@@ -12,6 +12,7 @@
  *   - 日期由客户端给（用户本地时区），服务端不猜时区。
  */
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync } from "node:fs";
 import { toolCard } from "./tool-card.js";
 import { todayView, weekView } from "./view.js";
 import path from "node:path";
@@ -19,6 +20,7 @@ import os from "node:os";
 
 const API = "/lifegame/api/";
 const NS = "lifegame";
+let mediaDir = null;
 
 export const name = "lifegame";
 
@@ -57,7 +59,7 @@ const seed = () => ({
     goals: { short: [], long: [] },
     customPlan: {},
     customSlots: {},
-    collect: { book: [], movie: [], article: [], image: [], outfit: [], music: [], skill: [] },
+    collect: { book: [], movie: [], article: [], image: [], skill: [] },
     want: { books: [], movies: [], quotes: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
@@ -85,10 +87,12 @@ async function load() {
   if (!db.profile.customSlots) db.profile.customSlots = {};
 
   // 收集仓库 + 迁移（want.books/movies → collect；quotes 与 corpus 已废弃）
-  const KINDS = ["book", "movie", "article", "image", "outfit", "music", "skill"];
+  const KINDS = ["book", "movie", "article", "image", "skill"];
   if (!db.profile.collect || typeof db.profile.collect !== "object") db.profile.collect = {};
   const col = db.profile.collect;
   for (const k of KINDS) if (!Array.isArray(col[k])) col[k] = [];
+  delete col.outfit;
+  delete col.music;
   if (db.profile.want) {
     const w = db.profile.want;
     const push = (kind, list) => {
@@ -236,9 +240,28 @@ function computeStats() {
   out.readTotal = rl.length;
   out.readDone = rl.filter((r) => r.status === "done").length;
   const col = db.profile.collect || {};
-  for (const k of ["book", "movie", "article", "image", "outfit", "music", "skill"]) {
+  for (const k of ["book", "movie", "article", "image", "skill"]) {
     const list = Array.isArray(col[k]) ? col[k] : [];
     out.collect[k] = { total: list.length, done: list.filter((x) => x.done).length };
+  }
+
+  // 近 90 天序列（图表用）：每天完成条数 + 专注分钟
+  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  out.series = [];
+  const now = new Date();
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const k = fmt(d);
+    const day = db.days[k];
+    const plan = day && Array.isArray(day.plan) ? day.plan : [];
+    const todos = day && Array.isArray(day.todos) ? day.todos : [];
+    const sess = day && Array.isArray(day.sessions) ? day.sessions : [];
+    out.series.push({
+      date: k,
+      done: plan.filter((p) => p.done).length + todos.filter((t) => t.done).length,
+      focus: Math.round(sess.reduce((n, x) => n + (x.seconds || 0), 0) / 60),
+    });
   }
   return out;
 }
@@ -601,6 +624,87 @@ function applyOp(op, payload, date) {
       return applyOp("collectToggle", { kind: payload.kind === "movies" ? "movie" : payload.kind === "books" ? "book" : String(payload.kind || ""), id: payload.id, done: payload.done }, date);
     case "wantRemove":
       return applyOp("collectRemove", { kind: payload.kind === "movies" ? "movie" : payload.kind === "books" ? "book" : String(payload.kind || ""), id: payload.id }, date);
+    /* ---------- 收集仓库 ---------- */
+    case "collectAdd": {
+      const kind = String(payload.kind || "");
+      if (!["book", "movie", "article", "image", "skill"].includes(kind)) return false;
+      const title = String(payload.title ?? "").trim().slice(0, 120);
+      if (!title) return false;
+      if (!db.profile.collect || !Array.isArray(db.profile.collect[kind])) {
+        db.profile.collect = db.profile.collect || {};
+        db.profile.collect[kind] = [];
+      }
+      db.profile.collect[kind].unshift({
+        id: `c${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        title,
+        note: String(payload.note ?? "").slice(0, 200),
+        url: String(payload.url ?? "").slice(0, 800),
+        done: false,
+        at: new Date().toISOString(),
+      });
+      return true;
+    }
+    /** 图片：前端把图片转成 dataURL，落盘到 media/，db 只存路径 */
+    case "collectAddImage": {
+      const raw = String(payload.dataUrl || "");
+      const m = raw.match(/^data:image\/(png|jpe?g|webp|gif);base64,([A-Za-z0-9+/=\s]+)$/i);
+      if (!m) return false;
+      const ext = m[1].toLowerCase() === "jpeg" ? "jpg" : m[1].toLowerCase();
+      const buf = Buffer.from(m[2].replace(/\s/g, ""), "base64");
+      if (!buf.length || buf.length > 8 * 1024 * 1024) return false;
+      const id = `i${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const name = `${id}.${ext}`;
+      try {
+        if (!existsSync(mediaDir)) mkdirSync(mediaDir, { recursive: true });
+        writeFileSync(path.join(mediaDir, name), buf);
+      } catch {
+        return false;
+      }
+      if (!db.profile.collect) db.profile.collect = {};
+      if (!Array.isArray(db.profile.collect.image)) db.profile.collect.image = [];
+      db.profile.collect.image.unshift({
+        id,
+        title: String(payload.title || "").trim().slice(0, 120) || "一张图",
+        note: String(payload.note || "").slice(0, 200),
+        url: `/lifegame/media?name=${name}`,
+        done: false,
+        at: new Date().toISOString(),
+      });
+      return true;
+    }
+    case "collectEdit": {
+      const it = collectFind(payload.kind, payload.id);
+      if (!it) return false;
+      if (payload.title !== undefined) {
+        const t = String(payload.title).trim().slice(0, 120);
+        if (!t) return false;
+        it.title = t;
+      }
+      if (payload.note !== undefined) it.note = String(payload.note).slice(0, 200);
+      if (payload.url !== undefined) it.url = String(payload.url).slice(0, 800);
+      return true;
+    }
+    case "collectToggle": {
+      const it = collectFind(payload.kind, payload.id);
+      if (!it) return false;
+      it.done = !!payload.done;
+      it.doneAt = it.done ? new Date().toISOString() : null;
+      return true;
+    }
+    case "collectRemove": {
+      const kind = String(payload.kind || "");
+      if (!db.profile.collect || !Array.isArray(db.profile.collect[kind])) return false;
+      const n = db.profile.collect[kind].length;
+      const target = db.profile.collect[kind].find((x) => x.id === payload.id);
+      db.profile.collect[kind] = db.profile.collect[kind].filter((x) => x.id !== payload.id);
+      if (kind === "image" && target && /lifegame\/media/.test(target.url || "")) {
+        try {
+          const nm = new URL(target.url, "http://x").searchParams.get("name") || "";
+          if (nm) unlinkSync(path.join(mediaDir, path.basename(nm)));
+        } catch {}
+      }
+      return db.profile.collect[kind].length !== n;
+    }
     case "corpusAdd": {
       const text = String(payload.text ?? "").trim().slice(0, 600);
       if (!text) return false;
@@ -1101,7 +1205,7 @@ function summaryText(day) {
   const pickCol = (k) => (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 6);
   const colLine = [
     ["book", "收藏的书"], ["movie", "收藏的电影"], ["article", "收藏的文章"],
-    ["outfit", "收藏的穿搭"], ["music", "收藏的音乐"], ["skill", "想学的技能"], ["image", "收藏的参考图"],
+    ["image", "收藏的图片"], ["skill", "想学的技能"],
   ]
     .map(([k, label]) => {
       const list = (Array.isArray(col[k]) ? col[k] : []).filter((x) => !x.done).slice(0, 5);
@@ -1651,6 +1755,7 @@ export function apply(ctx) {
 
   const home = process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
   dataFile = path.join(home, NS, "db.json");
+  mediaDir = path.join(home, NS, "media");
   const ready = load().then(() => log(`state → ${dataFile}`));
 
   // 天气：启动后拉一次，之后每小时一次
@@ -1682,6 +1787,40 @@ export function apply(ctx) {
     setTimeout(tick, 8_000);
     return () => clearInterval(t);
   }, "lifegame: readlater sweeper");
+
+  ctx.effect(
+    () =>
+      ctx.webServer.register({
+        kind: "exact",
+        path: "/lifegame/media",
+        handler: async (req, res) => {
+          try {
+            const url = new URL(req.url, "http://localhost");
+            const name = path.basename(url.searchParams.get("name") || "");
+            if (!/^[a-z0-9_.-]+\.(png|jpg|jpeg|webp|gif)$/i.test(name)) {
+              res.writeHead(400);
+              res.end("bad name");
+              return;
+            }
+            const file = path.join(mediaDir, name);
+            if (!existsSync(file)) {
+              res.writeHead(404);
+              res.end("not found");
+              return;
+            }
+            const ext = name.split(".").pop().toLowerCase();
+            const type = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+            const buf = readFileSync(file);
+            res.writeHead(200, { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable" });
+            res.end(buf);
+          } catch (e) {
+            res.writeHead(500);
+            res.end(String(e?.message || e));
+          }
+        },
+      }),
+    "lifegame: media",
+  );
 
   ctx.effect(
     () =>
@@ -2158,11 +2297,8 @@ export function apply(ctx) {
     "lifegame: tool corpus",
   );
 
-  const COLLECT_KINDS = ["book", "movie", "article", "image", "outfit", "music", "skill"];
-  const COLLECT_LABEL = {
-    book: "书", movie: "电影", article: "文章", image: "图片",
-    outfit: "穿搭", music: "音乐", skill: "技能",
-  };
+  const COLLECT_KINDS = ["book", "movie", "article", "image", "skill"];
+  const COLLECT_LABEL = { book: "书", movie: "电影", article: "文章", image: "图片", skill: "技能" };
 
   ctx.effect(
     () =>
