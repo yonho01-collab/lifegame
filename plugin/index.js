@@ -162,10 +162,11 @@ function weekStats() {
     if (plan.some((p) => p.done) || todos.some((t) => t.done) || sess.length) out.activeDays++;
   }
   const w = getWeek();
-  out.fromGoal = w.inbox.filter((g) => g.fromStep).length;
-  out.fromGoalDone = w.inbox.filter((g) => g.fromStep && g.done).length;
-  out.manual = w.inbox.filter((g) => !g.fromStep).length;
-  out.manualDone = w.inbox.filter((g) => !g.fromStep && g.done).length;
+  out.fromGoal = w.notes.filter((g) => g.fromStep).length;
+  out.fromGoalDone = w.notes.filter((g) => g.fromStep && g.done).length;
+  out.manual = w.notes.filter((g) => !g.fromStep).length;
+  out.manualDone = w.notes.filter((g) => !g.fromStep && g.done).length;
+  out.assigned = w.notes.filter((g) => g.date).length;
   const rl = db.readlater || [];
   out.readTotal = rl.length;
   out.readDone = rl.filter((r) => r.status === "done").length;
@@ -199,16 +200,27 @@ function weekBoard() {
 function getWeek() {
   const k = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
   if (!db.weeks[k]) {
-    db.weeks[k] = { key: k, inbox: [], comment: null, recommend: null };
+    db.weeks[k] = { key: k, notes: [], comment: null, recommend: null };
     persist();
   }
   const w = db.weeks[k];
-  // 旧数据迁移：goals → inbox
-  if (!Array.isArray(w.inbox)) {
-    w.inbox = Array.isArray(w.goals) ? w.goals.map((g) => ({ ...g })) : [];
+  // 旧数据迁移：goals → inbox → notes
+  if (!Array.isArray(w.notes)) {
+    const old = Array.isArray(w.inbox) ? w.inbox : Array.isArray(w.goals) ? w.goals : [];
+    w.notes = old.map((g) => ({
+      id: g.id || `n${Math.random().toString(36).slice(2)}`,
+      text: g.text || "",
+      color: "paper",
+      date: null,
+      done: !!g.done,
+      fromStep: g.fromStep,
+      fromGoal: g.fromGoal,
+      at: g.at || new Date().toISOString(),
+    }));
+    delete w.inbox;
     delete w.goals;
   }
-  if (!Array.isArray(w.inbox)) w.inbox = [];
+  if (!Array.isArray(w.notes)) w.notes = [];
   if (w.recommend === undefined) w.recommend = null;
   return w;
 }
@@ -480,8 +492,17 @@ function applyOp(op, payload, date) {
       const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
       if (!step) return false;
       const w = getWeek();
-      if (!w.inbox.some((g) => g.fromStep === step.id)) {
-        w.inbox.push({ id: `g${Date.now()}`, text: step.text, done: false, fromStep: step.id, fromGoal: goal.id, at: new Date().toISOString() });
+      if (!w.notes.some((g) => g.fromStep === step.id)) {
+        w.notes.push({
+          id: `n${Date.now()}`,
+          text: step.text,
+          color: "accent",
+          date: null,
+          done: false,
+          fromStep: step.id,
+          fromGoal: goal.id,
+          at: new Date().toISOString(),
+        });
       }
       step.placed = true;
       step.placedTo = "week";
@@ -604,34 +625,96 @@ function applyOp(op, payload, date) {
       day.inspiration = { text, from: String(payload.from ?? "").slice(0, 60), at: new Date().toISOString() };
       return true;
     }
-    case "inboxAdd": {
+    case "noteAdd": {
       const w = getWeek();
-      const text = String(payload.text ?? "").trim().slice(0, 200);
-      if (!text) return false;
-      w.inbox.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString(), source: "manual" });
+      const text = String(payload.text ?? "").slice(0, 400);
+      if (!text.trim()) return false;
+      w.notes.unshift({
+        id: `n${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        text,
+        color: String(payload.color ?? "paper").slice(0, 12),
+        date: null,
+        done: false,
+        at: new Date().toISOString(),
+      });
       return true;
     }
-    case "inboxEdit": {
-      const g = getWeek().inbox.find((x) => x.id === payload.id);
-      if (!g) return false;
-      const text = String(payload.text ?? "").trim().slice(0, 200);
-      if (!text) return false;
-      g.text = text;
-      return true;
-    }
-    case "inboxToggle": {
-      const g = getWeek().inbox.find((x) => x.id === payload.id);
-      if (!g) return false;
-      g.done = !!payload.done;
-      g.doneAt = g.done ? new Date().toISOString() : null;
-      return true;
-    }
-    case "inboxRemove": {
+    case "noteEdit": {
       const w = getWeek();
-      const n = w.inbox.length;
-      w.inbox = w.inbox.filter((x) => x.id !== payload.id);
-      return w.inbox.length !== n;
+      const note = w.notes.find((x) => x.id === payload.id);
+      if (!note) return false;
+      note.text = String(payload.text ?? "").slice(0, 400);
+      // 同步到已分配的那一天
+      if (note.date) {
+        for (const key of Object.keys(db.days)) {
+          const t = (db.days[key].todos || []).find((x) => x.fromNote === note.id);
+          if (t) t.text = note.text.trim() || "（空）";
+        }
+      }
+      return true;
     }
+    case "noteColor": {
+      const note = getWeek().notes.find((x) => x.id === payload.id);
+      if (!note) return false;
+      note.color = String(payload.color ?? "paper").slice(0, 12);
+      return true;
+    }
+    case "noteToggle": {
+      const note = getWeek().notes.find((x) => x.id === payload.id);
+      if (!note) return false;
+      note.done = !!payload.done;
+      note.doneAt = note.done ? new Date().toISOString() : null;
+      if (note.date) {
+        for (const key of Object.keys(db.days)) {
+          const t = (db.days[key].todos || []).find((x) => x.fromNote === note.id);
+          if (t) t.done = note.done;
+        }
+      }
+      return true;
+    }
+    case "noteDate": {
+      const w = getWeek();
+      const note = w.notes.find((x) => x.id === payload.id);
+      if (!note) return false;
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
+      // 先从旧的日期上摘下来
+      for (const key of Object.keys(db.days)) {
+        const arr = db.days[key].todos;
+        if (Array.isArray(arr)) db.days[key].todos = arr.filter((t) => t.fromNote !== note.id);
+      }
+      note.date = date;
+      // 再挂到新的那天
+      if (date) {
+        const day = getDay(date);
+        if (!Array.isArray(day.todos)) day.todos = [];
+        day.todos.push({
+          id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          text: note.text.trim() || "（空）",
+          done: !!note.done,
+          at: new Date().toISOString(),
+          fromNote: note.id,
+        });
+      }
+      return true;
+    }
+    case "noteRemove": {
+      const w = getWeek();
+      const n = w.notes.length;
+      for (const key of Object.keys(db.days)) {
+        const arr = db.days[key].todos;
+        if (Array.isArray(arr)) db.days[key].todos = arr.filter((t) => t.fromNote !== payload.id);
+      }
+      w.notes = w.notes.filter((x) => x.id !== payload.id);
+      return w.notes.length !== n;
+    }
+    case "inboxAdd":
+      return applyOp("noteAdd", { text: payload.text }, date);
+    case "inboxEdit":
+      return applyOp("noteEdit", payload, date);
+    case "inboxToggle":
+      return applyOp("noteToggle", payload, date);
+    case "inboxRemove":
+      return applyOp("noteRemove", payload, date);
     case "recommendWeek": {
       queueMicrotask(() => recommendWeek());
       return true;
@@ -691,11 +774,11 @@ function applyOp(op, payload, date) {
       return true;
     }
     case "goalAdd":
-      return applyOp("inboxAdd", payload, date);
+      return applyOp("noteAdd", payload, date);
     case "goalToggle":
-      return applyOp("inboxToggle", payload, date);
+      return applyOp("noteToggle", payload, date);
     case "goalRemove":
-      return applyOp("inboxRemove", payload, date);
+      return applyOp("noteRemove", payload, date);
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
@@ -742,7 +825,7 @@ function weekModel() {
   const st = statsFor(todayKey());
   return {
     title: `本周 · ${w.key}`,
-    goals: w.inbox.map((g) => ({ title: g.text, done: !!g.done })),
+    goals: w.notes.map((g) => ({ title: g.text, done: !!g.done })),
     comment: w.comment,
     planDone: st.agg.planDone,
     planTotal: st.agg.planTotal,
@@ -768,8 +851,8 @@ function summaryText(day) {
   const done = day.plan.filter((p) => p.done).length;
   const cur = day.plan.find((p) => !p.done);
   const wk = getWeek();
-  const goalLine = wk.inbox.length
-    ? `本周 Inbox：${wk.inbox.filter((g) => !g.done).map((g) => g.text).join("；") || "都处理完了"}`
+  const goalLine = wk.notes.length
+    ? `本周便签：${wk.notes.filter((g) => !g.done).map((g) => g.text).join("；") || "都处理完了"}`
     : "";
   const goals = db.profile.goals || { short: [], long: [] };
   const goalList = [
@@ -1632,9 +1715,9 @@ export function apply(ctx) {
           if (a === "goal_add") {
             const text = String(args.text || "").trim().slice(0, 160);
             if (!text) return { text: "要定什么目标？" };
-            w.inbox.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString(), source: "manual" });
+            w.notes.unshift({ id: `n${Date.now()}`, text, color: "paper", date: null, done: false, at: new Date().toISOString() });
           } else if (a === "goal_done") {
-            const g = w.inbox.find((x) => x.id === args.id) || w.inbox.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
+            const g = w.notes.find((x) => x.id === args.id) || w.notes.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
             if (!g) return { text: "没找到那条目标。" };
             g.done = true;
           } else if (a === "comment") {

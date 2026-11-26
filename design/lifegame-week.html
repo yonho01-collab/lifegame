@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<meta name="dsh-design" content="dshplugin 1280x800">
+<title>本周 · 人生游戏</title>
+<link rel="stylesheet" href="dsh-shell.css">
+<link rel="stylesheet" href="tokens.css">
+<!-- 外框（DSH 插件 · 左侧栏入口）：只改 data-slot 里面，别动外框的结构、文字和 dsh-shell.css -->
+<style>
+[data-slot="main"]{--lg-muted:var(--lg-muted);--lg-accent-text:var(--lg-accent);--lg-bg:var(--lg-bg)}
+[data-theme="dark"] [data-slot="main"]{--lg-muted:#9aa0aa;--lg-accent-text:#9dc0ff}
+[data-slot="main"] .lg{padding:26px 32px 40px;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.18) transparent}
+[data-slot="main"] .lg::-webkit-scrollbar{width:6px}
+[data-slot="main"] .lg::-webkit-scrollbar-track{background:transparent}
+[data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:999px}
+[data-theme="dark"] [data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
+[data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
+[data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
+.lg-traces{display:grid;grid-template-columns:repeat(30,1fr);gap:3px;max-width:470px}
+[data-slot="main"] .lg-traces i{aspect-ratio:1;border-radius:2px;background:var(--lg-surface-2);display:block}
+[data-slot="main"] .lg-traces i.on{background:var(--lg-line)}
+[data-slot="main"] .lg-traces i.full{background:var(--lg-accent-text)}
+[data-slot="main"] .lg-traces i.today{outline:1px solid var(--lg-accent-text);outline-offset:1px}
+[data-slot="main"] .lg-axis{display:flex;justify-content:space-between;max-width:470px;margin-top:8px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-big{font-family:var(--dsh-font);font-size:26px;font-weight:600;margin:6px 0 10px;letter-spacing:.02em}
+[data-slot="main"] .lg-x{color:var(--lg-muted);font-size:13px}
+.lg-kinds{display:flex;gap:6px;margin:2px 0 12px}
+[data-slot="main"] .lg-kind{min-height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-kind.on{background:var(--lg-ink);border-color:var(--lg-ink);color:var(--lg-on-ink)}
+[data-slot="main"] .lg-goal{flex:1;min-width:0}
+[data-slot="main"] .lg-goal-t{display:block;color:var(--lg-text);font-size:13px}
+[data-slot="main"] .lg-goal-meta{display:block;margin-top:4px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-steps{display:block;margin-top:8px}
+[data-slot="main"] .lg-step{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;padding:5px 0;color:var(--lg-muted);font-size:12px;line-height:1.6}
+[data-slot="main"] .lg-step i{flex:0 0 12px;font-style:normal;color:var(--lg-muted)}
+[data-slot="main"] .lg-step em{flex:1;min-width:0;font-style:normal;line-height:1.5}
+[data-slot="main"] .lg-step.done em{color:var(--lg-muted);text-decoration:line-through}
+[data-slot="main"] .lg-step-acts{flex:1 1 100%;display:inline-flex;gap:6px;margin-left:20px;margin-top:2px}
+[data-slot="main"] .lg-step u{flex:0 0 auto;text-decoration:none;border:1px solid var(--dsh-line);border-radius:6px;padding:1px 6px;font-size:12px;white-space:nowrap;color:var(--lg-muted);cursor:pointer}
+[data-slot="main"] .lg-step b{flex:0 0 auto;font-weight:400;font-size:12px;color:var(--lg-accent-text)}
+[data-slot="main"] .lg-corpus{flex:1;min-width:0}
+[data-slot="main"] .lg-corpus .tx{display:block;color:var(--lg-text);font-size:13px;line-height:1.7}
+[data-slot="main"] .lg-corpus .src{display:block;margin-top:4px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap}
+[data-slot="main"] .lg-watch.inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0;border:0;background:none;margin:0;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-watch.inline b{color:var(--lg-accent-text);font-size:12px;font-weight:600;letter-spacing:.1em}
+[data-slot="main"] .lg-season{color:var(--lg-muted);font-size:12px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wxtop{display:inline-flex;align-items:baseline;gap:12px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-wxline{display:inline-flex;align-items:baseline;gap:7px}
+[data-slot="main"] .lg-wxline b{font-weight:600;font-size:14px;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wxline em{font-style:normal;color:var(--lg-muted)}
+[data-slot="main"] .lg-locbtn{background:none;border:0;border-bottom:1px dashed var(--dsh-line);min-height:24px;padding:2px 0;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-locbtn:hover{color:var(--lg-accent-text)}
+[data-slot="main"] .lg-tabspark{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:10px;max-width:60%;min-width:0;padding-bottom:2px}
+[data-slot="main"] .lg-tabspark .q{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-tabspark .from{flex:0 0 auto;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-tabspark .lg-spark-swap{flex:0 0 auto;height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--dsh-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-tabspark .lg-spark-swap:hover{color:var(--lg-accent-text);border-color:var(--lg-accent-text)}
+[data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
+[data-slot="main"] .lg-tab{padding:9px 0;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
+[data-slot="main"] .lg-tab.on{color:var(--lg-text);border-bottom-color:var(--lg-accent-text)}
+[data-slot="main"] .lg-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:28px;align-items:start}
+[data-slot="main"] .lg-watch{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-md);font-size:12px;color:var(--lg-muted);margin-bottom:12px}
+[data-slot="main"] .lg-watch b{color:var(--lg-accent-text);font-weight:600}
+[data-slot="main"] .lg-sep{width:3px;height:3px;border-radius:50%;background:var(--lg-muted)}
+[data-slot="main"] .lg-now{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--dsh-radius-md);background:var(--dsh-card);border:1px solid var(--dsh-line);font-size:12px;margin-bottom:14px}
+[data-slot="main"] .lg-now .k{color:var(--lg-accent-text);font-weight:600}
+[data-slot="main"] .lg-now .v{flex:1;color:var(--lg-muted)}
+[data-slot="main"] .lg-btn{height:30px;padding:0 14px;border:0;border-radius:var(--dsh-radius-md);background:var(--lg-ink);color:var(--lg-on-ink);font-size:12px;font-weight:600}
+[data-slot="main"] .lg-card{border:1px solid var(--dsh-line);border-radius:var(--lg-radius);background:var(--dsh-card);padding:14px 16px;margin-bottom:14px}
+[data-slot="main"] .lg-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:10px}
+[data-slot="main"] .lg-num{font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-focus{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+[data-slot="main"] .lg-min{font-size:26px;font-weight:600;line-height:1.1}
+[data-slot="main"] .lg-unit{font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-sub{font-size:12px;color:var(--lg-muted);margin:8px 0 0;flex:1 1 100%}
+[data-slot="main"] .lg-inp{display:flex;gap:8px;margin-bottom:10px}
+[data-slot="main"] .lg-inp input{flex:1;height:32px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-sm);background:var(--dsh-bg);color:var(--lg-text);padding:0 10px;font-size:13px;font-family:inherit}
+[data-slot="main"] .lg-inp button{height:32px;padding:0 12px;border:1px solid var(--dsh-line);border-radius:var(--dsh-radius-sm);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit}
+[data-slot="main"] .lg-list{list-style:none;margin:0;padding:0}
+[data-slot="main"] .lg-li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--dsh-line);font-size:13px}
+[data-slot="main"] .lg-li:first-child{border-top:0}
+[data-slot="main"] .lg-li.done .t{color:var(--lg-muted);text-decoration:line-through}
+[data-slot="main"] .lg-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--dsh-line);flex:0 0 auto}
+[data-slot="main"] .lg-dot.on{background:var(--dsh-accent);border-color:var(--dsh-accent)}
+[data-slot="main"] .lg-li .t{flex:1}
+[data-slot="main"] .lg-li .s{color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-read{flex:1;min-width:0}
+[data-slot="main"] .lg-read-t{display:block;font-size:13px}
+[data-slot="main"] .lg-read-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-read-open{text-decoration:underline;text-decoration-color:var(--dsh-line)}
+[data-slot="main"] .lg-badge{color:var(--lg-accent-text);border:1px solid var(--dsh-line);border-radius:999px;padding:1px 7px;font-size:12px}
+[data-slot="main"] .lg-outline{display:block;margin-top:8px;color:var(--lg-muted);font-size:12px;line-height:1.9}
+[data-slot="main"] .lg-outline span{display:block}
+[data-slot="main"] .lg-hint{margin:10px 0 0;color:var(--lg-muted);font-size:12px;line-height:1.7}
+[data-slot="main"] .lg-pomo{flex:0 0 auto;height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--dsh-line);background:none;color:var(--lg-accent-text);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-pomo:hover{border-color:var(--lg-accent-text);color:var(--lg-accent-text)}
+[data-slot="main"] .lg-wx{display:inline-flex;align-items:baseline;gap:8px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-wx i{font-style:normal;color:var(--lg-text)}
+[data-slot="main"] .lg-wx b{font-weight:600;font-size:15px;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wx em{font-style:normal;color:var(--lg-text)}
+[data-slot="main"] .lg-loc{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--dsh-line);color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-loc button{background:none;border:0;min-height:26px;padding:3px 0;border-bottom:1px dashed var(--dsh-line);color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-loc .sun{margin-left:auto;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-q{font-size:14px;line-height:1.8;margin:0 0 8px}
+[data-slot="main"] .lg-from{font-size:12px;color:var(--lg-muted);margin:0}
+[data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
+[data-slot="main"] .lg-row:first-of-type{border-top:0}
+[data-slot="main"] .lg-row i{font-style:normal;width:44px;flex:0 0 auto;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-weekhead{display:flex;align-items:flex-end;gap:20px;margin:0 0 22px;flex-wrap:wrap}
+[data-slot="main"] .lg-minis{display:flex;gap:18px;flex-wrap:wrap;flex:1 1 auto;min-width:0}
+[data-slot="main"] .lg-mini{min-width:76px}
+[data-slot="main"] .lg-mini .k{display:block;color:var(--lg-muted);font-size:12px;letter-spacing:.06em}
+[data-slot="main"] .lg-mini .v{display:block;color:var(--lg-text);font-size:12px;margin:2px 0 5px;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-minibar{height:3px;border-radius:999px;background:var(--lg-surface-2);overflow:hidden}
+[data-slot="main"] .lg-minibar i{display:block;height:100%;background:var(--lg-accent);border-radius:999px}
+[data-slot="main"] .lg-newnote{flex:0 0 auto;min-height:36px;padding:0 16px;border-radius:var(--lg-radius);border:1px solid var(--lg-line);background:var(--lg-surface);color:var(--lg-text);font-size:12px;font-family:inherit;cursor:pointer;box-shadow:var(--lg-shadow)}
+[data-slot="main"] .lg-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px;align-items:start}
+[data-slot="main"] .lg-note{position:relative;background:var(--note-bg,#fff);border:1px solid var(--lg-line);border-radius:var(--lg-radius);padding:20px 14px 10px;box-shadow:var(--lg-shadow);display:flex;flex-direction:column;gap:8px;min-height:132px}
+[data-slot="main"] .lg-note.n-paper{--note-bg:#ffffff}
+[data-slot="main"] .lg-note.n-warm{--note-bg:#fffbf0}
+[data-slot="main"] .lg-note.n-blue{--note-bg:#f2f6ff}
+[data-slot="main"] .lg-note.n-green{--note-bg:#f1f8f2}
+[data-slot="main"] .lg-note.n-rec{--note-bg:#fbfbfc}
+[data-slot="main"] .lg-note.ghost{border-style:dashed;box-shadow:none;align-items:center;justify-content:center}
+[data-slot="main"] .lg-note-top{display:flex;align-items:center;gap:8px;justify-content:space-between;min-height:16px}
+[data-slot="main"] .lg-note-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--lg-muted);font-size:14px;line-height:1;cursor:pointer}
+[data-slot="main"] .lg-note-text{width:100%;flex:1 1 auto;min-height:84px;border:0;background:none;resize:none;outline:none;font-family:inherit;font-size:12px;line-height:1.7;color:var(--lg-text);padding:0}
+[data-slot="main"] .lg-note-text.static{font-size:12px;margin:0;line-height:1.55;min-height:0;color:var(--lg-text)}
+[data-slot="main"] .lg-note-why{margin:0;color:var(--lg-muted);font-size:12px;line-height:1.6}
+[data-slot="main"] .lg-note-foot{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid var(--lg-line)}
+[data-slot="main"] .lg-note-days{display:flex;gap:2px;flex-wrap:nowrap;overflow:hidden}
+[data-slot="main"] .lg-note-day{flex:0 0 auto;min-width:24px;min-height:24px;padding:0 4px;border:1px solid transparent;border-radius:5px;background:none;color:var(--lg-muted);font-size:12px;line-height:1;font-family:inherit;cursor:pointer;white-space:nowrap}
+[data-slot="main"] .lg-note-day.on{background:var(--lg-ink);border-color:var(--lg-ink);color:var(--lg-on-ink)}
+[data-slot="main"] .lg-note-day.today{border-color:var(--lg-accent)}
+[data-slot="main"] .lg-note-colors{display:flex;gap:5px;flex:0 0 auto}
+[data-slot="main"] .lg-note-c{position:relative;width:24px;height:24px;border:0;background:none;cursor:pointer;padding:0}
+[data-slot="main"] .lg-note-c::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--c,#fff);border:1px solid rgba(24,24,27,.16)}
+[data-slot="main"] .lg-note-c.on{box-shadow:0 0 0 2px var(--lg-accent-soft),0 0 0 1px var(--lg-accent)}
+[data-slot="main"] .lg-note-where{color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-note-start{height:26px;padding:0 10px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-accent);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-rec-kind{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--lg-line);color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-recfresh{min-height:40px;min-width:120px;border:0;background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-recfresh:hover{color:var(--lg-accent)}
+</style>
+</head>
+<body>
+<div class="dsh-app" data-frame="dsh/sidebar">
+  <aside class="dsh-side">
+    <div class="dsh-brand"><div class="dsh-logo">deepseek<span class="dsh-logo-tag">HARNESS</span></div><div class="dsh-iconbtn"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></div></div>
+    <div class="dsh-new"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>新会话</div>
+    <nav class="dsh-nav">
+      <div class="dsh-row"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l3 3-3 3-3-3zM18.5 9l3 3-3 3-3-3zM5.5 9l3 3-3 3-3-3zM12 15.5l3 3-3 3-3-3z"/></svg>插件</div>
+      <div class="dsh-row"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>自动化任务</div>
+      <div class="dsh-row on"><span data-slot="entry-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M10 1.6v2.2M10 16.2v2.2M1.6 10h2.2M16.2 10h2.2"/></svg></span><span data-slot="entry-label">人生游戏</span></div>
+      <div class="dsh-row"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="3"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>更多</div>
+    </nav>
+    <div class="dsh-sec">工作区<div class="dsh-sec-acts"><div class="dsh-iconbtn"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div><div class="dsh-iconbtn"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg></div><div class="dsh-iconbtn"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/></svg></div></div></div>
+    <div class="dsh-row"><span class="dsh-folder"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>我的项目</div>
+    <div class="dsh-sess">整理会议记录<span class="dsh-time">2 小时</span></div>
+    <div class="dsh-sess">新会话</div>
+    <div class="dsh-acct"><div class="dsh-avatar">我</div>我的账号</div>
+  </aside>
+  <main class="dsh-main">
+    <div class="dsh-bar"><div class="dsh-iconbtn dsh-corner"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></div></div>
+    <div data-slot="main">
+      <div class="lg">
+        <div class="lg-top"><span>11/27 · 人生游戏</span><span class="lg-wxtop"><button class="lg-locbtn">杭州 · 余杭</button><span class="lg-wxline"><span>晴</span><b>16°</b><em>9–19°</em></span></span></div>
+        <div class="lg-h1row"><h1 class="lg-h1">本周</h1><div class="lg-watch inline"><b>它在看着</b><span>今天还剩 3 件</span><span class="lg-sep"></span><span>16:58 日落</span></div></div>
+        <div class="lg-tabs"><span class="lg-tab">今天</span><span class="lg-tab on">本周</span><span class="lg-tab">我</span><span class="lg-tabspark"><span class="q">「今天的光是斜的，适合走一段。」</span><span class="from">天气</span><button class="lg-spark-swap">换</button></span></div>
+
+        <div class="lg-weekhead">
+          <div class="lg-minis">
+            <div class="lg-mini"><span class="k">从目标</span><span class="v">1/4</span><div class="lg-minibar"><i style="width:25%"></i></div></div>
+            <div class="lg-mini"><span class="k">临时</span><span class="v">2/3</span><div class="lg-minibar"><i style="width:66%"></i></div></div>
+            <div class="lg-mini"><span class="k">规定事项</span><span class="v">13/21</span><div class="lg-minibar"><i style="width:62%"></i></div></div>
+            <div class="lg-mini"><span class="k">今天要做</span><span class="v">5/11</span><div class="lg-minibar"><i style="width:45%"></i></div></div>
+            <div class="lg-mini"><span class="k">专注</span><span class="v">240/300</span><div class="lg-minibar"><i style="width:80%"></i></div></div>
+            <div class="lg-mini"><span class="k">有记录</span><span class="v">5/7</span><div class="lg-minibar"><i style="width:71%"></i></div></div>
+          </div>
+          <button class="lg-newnote">＋ 新便签</button>
+        </div>
+
+        <div class="lg-notes">
+          <div class="lg-note n-blue">
+            <button class="lg-note-x">×</button>
+            <div class="lg-note-top"><span class="lg-tag">来自目标</span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+            <textarea class="lg-note-text" rows="4">把「人生游戏」的今天页跑通</textarea>
+            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day on">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
+          </div><div class="lg-note n-warm">
+            <button class="lg-note-x">×</button>
+            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+            <textarea class="lg-note-text" rows="4">这周至少做 3 次力量训练</textarea>
+            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
+          </div><div class="lg-note n-blue">
+            <button class="lg-note-x">×</button>
+            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+            <textarea class="lg-note-text" rows="4">周五晚上留给《花样年华》——不安排别的</textarea>
+            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day on">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
+          </div><div class="lg-note n-green">
+            <button class="lg-note-x">×</button>
+            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+            <textarea class="lg-note-text" rows="4">把相机电池充满，周末去拍一次日落</textarea>
+            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
+          </div><div class="lg-note n-paper">
+            <button class="lg-note-x">×</button>
+            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+            <textarea class="lg-note-text" rows="4">买一副羽毛球拍，周末打一次</textarea>
+            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
+          </div>
+          <div class="lg-note n-rec">
+            <span class="lg-rec-kind">书</span>
+            <p class="lg-note-text static">《置身事内》</p>
+            <p class="lg-note-why">在你自己的书单里；这周有两次 30 分钟的阅读空窗</p>
+            <div class="lg-note-foot"><span class="lg-note-where">30 分钟</span><button class="lg-note-start">开始</button></div>
+          </div><div class="lg-note n-rec">
+            <span class="lg-rec-kind">影</span>
+            <p class="lg-note-text static">《花样年华》</p>
+            <p class="lg-note-why">想看很久了，周五晚没有安排</p>
+            <div class="lg-note-foot"><span class="lg-note-where"></span></div>
+          </div><div class="lg-note n-rec">
+            <span class="lg-rec-kind">穿</span>
+            <p class="lg-note-text static">16°，带一件薄外套</p>
+            <p class="lg-note-why">早晚温差 7 度，日落 16:58</p>
+            <div class="lg-note-foot"><span class="lg-note-where"></span></div>
+          </div>
+          <div class="lg-note n-rec ghost"><button class="lg-recfresh">换一批推荐</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
