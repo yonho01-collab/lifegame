@@ -53,6 +53,7 @@ const seed = () => ({
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
   days: {},
   weeks: {},
+  readlater: [],
 });
 
 /* ---------------- 存取 ---------------- */
@@ -66,6 +67,7 @@ async function load() {
   if (!Array.isArray(db.appliedOps)) db.appliedOps = [];
   if (!db.days) db.days = {};
   if (!db.weeks) db.weeks = {};
+  if (!Array.isArray(db.readlater)) db.readlater = [];
   await persist();
   normalizeDays();
 }
@@ -200,6 +202,7 @@ const publicState = (date) => ({
   season: db.season,
   day: getDay(date),
   week: getWeek(),
+  readlater: db.readlater.slice(0, 40),
   stats: statsFor(date),
 });
 
@@ -302,6 +305,45 @@ function applyOp(op, payload, date) {
     case "setWeekComment": {
       const w = getWeek();
       w.comment = String(payload.text ?? "").slice(0, 1200) || null;
+      return true;
+    }
+    case "readlaterAdd": {
+      const url = String(payload.url ?? "").trim().slice(0, 2000);
+      if (!/^https?:\/\//i.test(url)) return false;
+      if (db.readlater.some((x) => x.url === url)) return false;
+      db.readlater.unshift({
+        id: `r${Date.now()}`,
+        url,
+        title: String(payload.title ?? "").slice(0, 200) || "",
+        status: "pending",
+        summary: "",
+        outline: [],
+        minutes: 0,
+        addedAt: new Date().toISOString(),
+      });
+      return true;
+    }
+    case "readlaterRemove": {
+      const n = db.readlater.length;
+      db.readlater = db.readlater.filter((x) => x.id !== payload.id);
+      return db.readlater.length !== n;
+    }
+    case "readlaterDone": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      r.status = payload.done ? "done" : r.summary ? "ready" : "pending";
+      r.doneAt = payload.done ? new Date().toISOString() : null;
+      return true;
+    }
+    case "readlaterEnrich": {
+      const r = db.readlater.find((x) => x.id === payload.id);
+      if (!r) return false;
+      if (payload.title) r.title = String(payload.title).slice(0, 200);
+      r.summary = String(payload.summary ?? "").slice(0, 600);
+      r.outline = Array.isArray(payload.outline) ? payload.outline.slice(0, 12).map((x) => String(x).slice(0, 120)) : [];
+      r.minutes = Math.max(1, Math.min(120, Number(payload.minutes) || 0)) || 0;
+      r.status = r.status === "done" ? "done" : "ready";
+      r.enrichedAt = new Date().toISOString();
       return true;
     }
     case "note":
@@ -740,6 +782,78 @@ export function apply(ctx) {
         },
       }),
     "lifegame: tool week",
+  );
+
+  ctx.effect(
+    () =>
+      ctx.tools.register({
+        name: "lifegame_readlater",
+        description:
+          "「稍后深度阅读」清单。用户贴进来一篇想读的文章后，你要：1) list 看哪些还 status=pending；2) 用 web_fetch 打开链接读正文；3) 提炼「主要内容」一句话、拆出 3-6 条纲要、按篇幅和密度分配阅读分钟数；4) 调 enrich 写回去。用户在页面里贴链接后只会存 url，不会自己解析——解析是你的事。",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string", enum: ["list", "add", "enrich", "done", "remove"] },
+            url: { type: "string", description: "action=add" },
+            id: { type: "string" },
+            title: { type: "string" },
+            summary: { type: "string", description: "主要内容，一两句，≤120 字" },
+            outline: { type: "array", items: { type: "string" }, description: "纲要，3-6 条" },
+            minutes: { type: "number", description: "建议阅读分钟数（安静读完并想一想的时间）" },
+          },
+          required: ["action"],
+        },
+        output: {
+          schema: { type: "object", additionalProperties: true },
+          render: (_args, value) => [{ type: "text", text: value.text }],
+        },
+        async execute(args) {
+          await ready;
+          const a = args && args.action;
+
+          if (a === "add") {
+            const url = String(args.url || "").trim();
+            if (!/^https?:\/\//i.test(url)) return { text: "链接要以 http(s) 开头。" };
+            if (!db.readlater.some((x) => x.url === url)) {
+              db.readlater.unshift({ id: `r${Date.now()}`, url, title: "", status: "pending", summary: "", outline: [], minutes: 0, addedAt: new Date().toISOString() });
+            }
+          } else if (a === "enrich") {
+            const r = db.readlater.find((x) => x.id === args.id);
+            if (!r) return { text: "没找到这一条。" };
+            if (args.title) r.title = String(args.title).slice(0, 200);
+            r.summary = String(args.summary || "").slice(0, 600);
+            r.outline = Array.isArray(args.outline) ? args.outline.slice(0, 12).map((x) => String(x).slice(0, 120)) : [];
+            r.minutes = Math.max(1, Math.min(120, Number(args.minutes) || 0)) || 0;
+            r.status = r.status === "done" ? "done" : "ready";
+            r.enrichedAt = new Date().toISOString();
+          } else if (a === "done") {
+            const r = db.readlater.find((x) => x.id === args.id);
+            if (!r) return { text: "没找到这一条。" };
+            r.status = "done";
+            r.doneAt = new Date().toISOString();
+          } else if (a === "remove") {
+            db.readlater = db.readlater.filter((x) => x.id !== args.id);
+          } else if (a !== "list") {
+            return { text: "不认识的 action。" };
+          }
+
+          if (a !== "list") {
+            db.rev += 1;
+            await persist();
+          }
+
+          const pending = db.readlater.filter((x) => x.status === "pending");
+          const ready = db.readlater.filter((x) => x.status === "ready");
+          const lines = [
+            `待解析 ${pending.length} 条，待读 ${ready.length} 条，已读完 ${db.readlater.filter((x) => x.status === "done").length} 条。`,
+            ...pending.slice(0, 6).map((x) => `· [待解析] id=${x.id} ${x.url}`),
+            ...ready.slice(0, 6).map((x) => `· [待读] id=${x.id} ${x.title || x.url}（${x.minutes} 分钟）`),
+          ];
+          return { text: lines.join("\n") };
+        },
+      }),
+    "lifegame: tool readlater",
   );
 
   /* ---- DSH Go 原生插槽（仅手机本机引擎；Remote 连接下 App 不提供桥接）---- */

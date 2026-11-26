@@ -42,6 +42,14 @@
 [data-slot="main"] .lg-dot.on{background:var(--dsh-accent);border-color:var(--dsh-accent)}
 [data-slot="main"] .lg-li .t{flex:1}
 [data-slot="main"] .lg-li .s{color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-read{flex:1;min-width:0}
+[data-slot="main"] .lg-read-t{display:block;font-size:13px}
+[data-slot="main"] .lg-read-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-read-open{text-decoration:underline;text-decoration-color:var(--dsh-line)}
+[data-slot="main"] .lg-badge{color:var(--lg-accent-text);border:1px solid var(--dsh-line);border-radius:999px;padding:1px 7px;font-size:12px}
+[data-slot="main"] .lg-outline{display:block;margin-top:8px;color:var(--lg-muted);font-size:12px;line-height:1.9}
+[data-slot="main"] .lg-outline span{display:block}
+[data-slot="main"] .lg-hint{margin:10px 0 0;color:var(--lg-muted);font-size:12px;line-height:1.7}
 [data-slot="main"] .lg-pomo{flex:0 0 auto;height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--dsh-line);background:none;color:var(--lg-accent-text);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-pomo:hover{border-color:var(--lg-accent-text);color:var(--lg-accent-text)}
 [data-slot="main"] .lg-q{font-size:14px;line-height:1.8;margin:0 0 8px}
@@ -134,6 +142,40 @@
             </div>
 
           </div>
+        </div>
+
+        <!-- 底部：稍后深度阅读 -->
+        <div class="lg-card" style="margin-top:16px">
+          <div class="lg-head"><span>稍后深度阅读</span><span class="lg-num">1 篇待解析</span></div>
+          <div class="lg-inp"><input placeholder="粘贴一篇文章的链接，回车存下"><button>存</button></div>
+          <ul class="lg-list">
+            <li class="lg-li">
+              <span class="lg-dot"></span>
+              <span class="lg-read">
+                <span class="lg-read-t">注意力是被训练的，不是被夺走的</span>
+                <span class="lg-read-meta"><span>18 分钟</span><span>分心不是意志力问题，而是环境把「切换成本」降到了零</span><span class="lg-read-open">打开</span></span>
+                <span class="lg-outline">
+                  <span>1. 先区分「被打断」和「主动切换」：后者才是真正的成本</span>
+                  <span>2. 手机在场本身就会降低认知容量（实验数据）</span>
+                  <span>3. 三种低成本的对冲：物理距离、时间盒、单任务承诺</span>
+                  <span>4. 为什么「不看手机」比「少看手机」更有效</span>
+                </span>
+              </span>
+              <button class="lg-pomo">开始</button>
+            </li>
+            <li class="lg-li">
+              <span class="lg-dot"></span>
+              <span class="lg-read">
+                <span class="lg-read-t">安静的眼睛：一个摄影师的一天</span>
+                <span class="lg-read-meta"><span class="lg-badge">待解析</span><span class="lg-read-open">打开</span></span>
+              </span>
+            </li>
+            <li class="lg-li done">
+              <span class="lg-dot on"></span>
+              <span class="lg-read"><span class="lg-read-t">关于慢的那篇</span><span class="lg-read-meta"><span>12 分钟 · 已读完</span></span></span>
+            </li>
+          </ul>
+          <p class="lg-hint">新存的链接还没解析。在对话里说一句「解析阅读清单」，它会把纲要和阅读时间补上。</p>
         </div>
       </div>
     </div>

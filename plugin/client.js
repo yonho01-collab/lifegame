@@ -214,10 +214,19 @@ window.__ModuleLoader__.load({
 
 /* 待办列表 */
 .lg-todo{list-style:none;margin:6px 0 0;padding:0}
-.lg-todo li{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--lg-line)}
-.lg-todo li:last-child{border-bottom:0}
-.lg-todo li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55}
-.lg-todo li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
+.lg-todo > li{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--lg-line)}
+.lg-todo > li:last-child{border-bottom:0}
+.lg-todo > li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55}
+.lg-todo > li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
+.lg-read-body{flex:1 1 auto;min-width:0}
+.lg-read-t{display:block;max-width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:var(--lg-text);font-size:15px;line-height:1.5;font-family:var(--lg-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-read-t:hover{color:var(--lg-accent)}
+.lg-read-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:5px;font-size:12px;color:var(--lg-muted);line-height:1.6}
+.lg-read-sum{max-width:44em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-badge{font-size:11px;letter-spacing:.06em;color:var(--lg-accent);border:1px solid rgba(201,168,106,.4);border-radius:999px;padding:1px 7px}
+.lg-read-open{color:var(--lg-muted);text-decoration:underline;text-decoration-color:var(--lg-line)}
+.lg-outline{margin:10px 0 4px;padding-left:18px;font-size:13px;line-height:1.9;color:var(--lg-muted);list-style:decimal}
+.lg-outline li{padding:2px 0;border:0}
 .lg-pomo{flex:0 0 auto;min-height:30px;padding:0 12px;border-radius:7px;border:1px solid rgba(201,168,106,.45);background:none;color:var(--lg-accent);font-size:12px;cursor:pointer;letter-spacing:.04em;transition:background .12s,border-color .12s}
 .lg-pomo:hover{background:rgba(201,168,106,.12)}
 .lg-pomo.off{display:none}
@@ -377,6 +386,8 @@ window.__ModuleLoader__.load({
       const [tick, setTick] = useState(0);
       const [pending, setPending] = useState(null);
       const [label, setLabel] = useState("");
+      const [url, setUrl] = useState("");
+      const [expanded, setExpanded] = useState(null);
 
       useEffect(() => {
         if (!day.timer) return;
@@ -386,6 +397,9 @@ window.__ModuleLoader__.load({
 
       const sessions = Array.isArray(day.sessions) ? day.sessions : [];
       const elapsed = day.timer ? Math.max(0, Math.floor((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000)) : 0;
+      const rl = Array.isArray(state.readlater) ? state.readlater : [];
+      const rlPending = rl.filter((r) => r.status === "pending");
+      const rlReady = rl.filter((r) => r.status === "ready");
       const isPomo = !!(day.timer && day.timer.minutes > 0);
       const remain = isPomo ? Math.max(0, day.timer.minutes * 60 - elapsed) : 0;
       const focusMin = Math.round(sessions.reduce((n, x) => n + (x.seconds || 0), 0) / 60);
@@ -412,6 +426,13 @@ window.__ModuleLoader__.load({
       };
 
       const startPomo = (text) => run("timerStart", { label: text, minutes: 25 });
+
+      const addUrl = () => {
+        const v = url.trim();
+        if (!v) return;
+        setUrl("");
+        run("readlaterAdd", { url: v });
+      };
 
       const saveLabel = async () => {
         if (!pending) return;
@@ -648,6 +669,89 @@ window.__ModuleLoader__.load({
             ),
 
           ),
+        ),
+
+        /* ---------- 底部：稍后深度阅读 ---------- */
+        h(
+          "div",
+          { className: "lg-card", style: { marginTop: 16 } },
+          h(
+            "div",
+            { className: "lg-card-head" },
+            h("span", null, "稍后深度阅读"),
+            h(
+              "span",
+              { className: "lg-count-n" },
+              rlPending.length ? `${rlPending.length} 篇待解析` : rlReady.length ? `${rlReady.length} 篇待读` : "空",
+            ),
+          ),
+          h(
+            "div",
+            { className: "lg-add" },
+            h("input", {
+              value: url,
+              placeholder: "粘贴一篇文章的链接，回车存下",
+              onChange: (e) => setUrl(e.target.value),
+              onKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } },
+            }),
+            h("button", { className: "lg-add-btn", onClick: addUrl }, "存"),
+          ),
+          rl.length === 0
+            ? h("p", { className: "lg-empty" }, "看到值得细读的，先把链接丢进来。存下之后我来读一遍，把纲要和要花多少时间写上去。")
+            : h(
+                "ul",
+                { className: "lg-todo" },
+                ...rl.map((r) =>
+                  h(
+                    "li",
+                    { key: r.id, className: r.status === "done" ? "on" : "" },
+                    h(
+                      "button",
+                      {
+                        className: "lg-dot" + (r.status === "done" ? " on" : ""),
+                        onClick: () => run("readlaterDone", { id: r.id, done: r.status !== "done" }),
+                      },
+                      r.status === "done" ? h(Check) : null,
+                    ),
+                    h(
+                      "div",
+                      { className: "lg-read-body" },
+                      h(
+                        "button",
+                        { className: "lg-read-t", onClick: () => setExpanded(expanded === r.id ? null : r.id) },
+                        r.title || r.url,
+                      ),
+                      h(
+                        "div",
+                        { className: "lg-read-meta" },
+                        r.status === "pending" ? h("span", { className: "lg-badge" }, "待解析") : null,
+                        r.minutes ? h("span", null, `${r.minutes} 分钟`) : null,
+                        r.summary ? h("span", { className: "lg-read-sum" }, r.summary) : null,
+                        h("a", { className: "lg-read-open", href: r.url, target: "_blank", rel: "noreferrer" }, "打开"),
+                      ),
+                      expanded === r.id && r.outline && r.outline.length
+                        ? h("ol", { className: "lg-outline" }, ...r.outline.map((o, i) => h("li", { key: i }, o)))
+                        : null,
+                    ),
+                    r.status !== "done" && r.minutes
+                      ? h(
+                          "button",
+                          {
+                            className: "lg-pomo" + (day.timer ? " off" : ""),
+                            disabled: !!day.timer,
+                            onClick: () => run("timerStart", { label: r.title || "读一篇", minutes: r.minutes }),
+                            title: `${r.minutes} 分钟番茄，读这一篇`,
+                          },
+                          "开始",
+                        )
+                      : null,
+                    h("button", { className: "lg-del", onClick: () => run("readlaterRemove", { id: r.id }), "aria-label": "删除" }, "×"),
+                  ),
+                ),
+              ),
+          rlPending.length
+            ? h("p", { className: "footnote-line", style: { margin: "10px 0 0" } }, "新存的链接还没解析。在对话里说一句「解析阅读清单」，它会把纲要和阅读时间补上。")
+            : null,
         ),
       );
     }
