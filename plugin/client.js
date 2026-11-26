@@ -220,6 +220,8 @@ window.__ModuleLoader__.load({
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.lg-todo > li, .lg-plan > li, .lg-cal-tasks > li, .lg-recs > li, .lg-notes-col > .lg-note-mini, .lg-drag{-webkit-user-select:none;user-select:none}
+.lg-todo textarea, .lg-todo input, .lg-note-mini textarea, .lg-plan input{-webkit-user-select:text;user-select:text}
 .lg-todo.sort-on, .lg-cal-tasks.sort-on, .lg-plan.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:6px;background:var(--lg-accent-soft)}
 .lg-notes-col.sort-on{box-shadow:inset 0 0 0 1px var(--lg-focus);border-radius:8px;background:var(--lg-accent-soft)}
 .lg-todo > li[draggable="true"]{cursor:grab}
@@ -578,6 +580,8 @@ window.__ModuleLoader__.load({
       draggable: true,
       "data-sid": id,
       onDragStart: (e) => {
+        const sel = window.getSelection && window.getSelection();
+        if (sel) sel.removeAllRanges();
         e.dataTransfer.setData("text/plain", `${LG_TAG}|${listKey}|${id}`);
         e.dataTransfer.effectAllowed = "copyMove";
         e.stopPropagation();
@@ -589,6 +593,8 @@ window.__ModuleLoader__.load({
       className: "lg-drag" + (extra && extra.className ? " " + extra.className : ""),
       draggable: true,
       onDragStart: (e) => {
+        const sel = window.getSelection && window.getSelection();
+        if (sel) sel.removeAllRanges();
         e.dataTransfer.setData("text/plain", `${LG_TAG}|${listKey}|${id}`);
         e.dataTransfer.effectAllowed = "move";
         e.stopPropagation();
