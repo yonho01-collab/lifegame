@@ -169,6 +169,7 @@ window.__ModuleLoader__.load({
 @media (max-width:820px){ .lg-big{font-size:40px} }
 
 .lg-muted{color:var(--lg-muted)}
+.lg-eyebrow-sm{margin:0 0 8px;font-size:11.5px;letter-spacing:.2em;color:var(--lg-muted)}
 .footnote-line{margin:2px 0 10px;font-size:12px;line-height:1.7;color:var(--lg-muted)}
 .lg-stat{list-style:none;margin:0;padding:0}
 .lg-stat li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--lg-line);font-size:14px}
@@ -1060,6 +1061,7 @@ window.__ModuleLoader__.load({
         h(
           "div",
           null,
+          h("p", { className: "lg-eyebrow-sm" }, "你走过的"),
           h("p", { className: "lg-big" }, `第 ${Math.max(stats.days, 1)} 天`),
           h("p", { className: "lg-why", style: { marginBottom: 30 } }, `在这里留下 ${stats.records} 条。`),
 
@@ -1067,39 +1069,16 @@ window.__ModuleLoader__.load({
           h("div", { className: "lg-traces" }, ...cells),
           h("div", { className: "lg-axis" }, h("span", null, start || "今天"), h("span", null, "今天")),
 
-          h("p", { className: "lg-sec" }, "从开始到现在"),
-          h(
-            "div",
-            null,
-            ...["耐心", "轻盈", "专注", "健康"].map((k) =>
-              h(
-                "div",
-                { className: "lg-row", key: k },
-                h("span", { style: { flex: "0 0 76px", fontFamily: "var(--lg-serif)", fontSize: 17, letterSpacing: ".12em" } }, k),
-                h("span", { className: "lg-muted", style: { fontSize: 13.5 } }, stats.days < 7 ? "还看不出来" : "还在长"),
-              ),
-            ),
-          ),
-
-          h(
-            "div",
-            { className: "lg-card", style: { marginTop: 24 } },
-            h("div", { className: "lg-card-head" }, h("span", null, "设置"), h("span", { className: "lg-count-n" }, "")),
-            h(
-              "p",
-              { style: { margin: 0, fontSize: 13.5, lineHeight: 1.95, color: "var(--lg-muted)" } },
-              `睡觉目标 ${state.profile.sleepTarget}　冥想 ${state.profile.meditationMinutes} 分钟　运动 ${state.profile.moveMinutes} 分钟`,
-            ),
-          ),
         ),
 
         /* ---------- 右：短期 / 长期目标 ---------- */
         h(
           "div",
           null,
+          h("p", { className: "lg-eyebrow-sm" }, "你定义的远方"),
           h(
             "p",
-            { className: "footnote-line", style: { marginTop: 0 } },
+            { className: "footnote-line", style: { marginTop: 8 } },
             "写在这里的目标，会成为「今天」安排和建议的依据——它推什么，先看你想到哪儿去。",
           ),
           goalBlock("short", "短期目标", "这一阵想做成什么？比如「这两周把早睡调回来」。", draftS, setDraftS),
