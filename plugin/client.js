@@ -212,6 +212,24 @@ window.__ModuleLoader__.load({
 .lg-cal-add button:hover{color:var(--lg-accent);border-color:var(--lg-line)}
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.lg-progress{display:flex;flex-direction:column;gap:14px}
+.lg-prow-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--lg-muted);margin-bottom:6px}
+.lg-prow-top .n{color:var(--lg-text);font-variant-numeric:tabular-nums}
+.lg-pbar{height:4px;border-radius:999px;background:var(--lg-surface-2);overflow:hidden}
+.lg-pbar i{display:block;height:100%;background:var(--lg-accent);border-radius:999px;transition:width .3s}
+.lg-inbox-body{flex:1 1 auto;min-width:0}
+.lg-inbox-t{display:block;width:100%;text-align:left;background:none;border:0;padding:0;color:var(--lg-text);font-size:15px;line-height:1.55;font-family:var(--lg-sans);cursor:text;white-space:pre-wrap}
+.lg-inbox-t:hover{color:var(--lg-accent)}
+.lg-inbox-meta{margin-top:4px}
+.lg-tag{display:inline-block;font-size:11px;letter-spacing:.06em;color:var(--lg-accent);border:1px solid var(--lg-focus);border-radius:999px;padding:1px 7px}
+.lg-recs{list-style:none;margin:0;padding:0}
+.lg-recs li{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--lg-line)}
+.lg-recs li:last-child{border-bottom:0;padding-bottom:0}
+.lg-rec-kind{flex:0 0 auto;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--lg-line);color:var(--lg-muted);font-size:12px}
+.lg-rec-body{flex:1 1 auto;min-width:0}
+.lg-rec-body .t{margin:0;font-size:14.5px;line-height:1.5}
+.lg-rec-body .w{margin:4px 0 0;font-size:12px;line-height:1.6;color:var(--lg-muted)}
+.lg-rec-min{flex:0 0 auto;font-size:12px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
 .lg-kinds{display:flex;gap:6px;margin:2px 0 12px}
 .lg-kind{min-height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:12.5px;font-family:var(--lg-sans);cursor:pointer}
 .lg-kind:hover{color:var(--lg-text)}
@@ -974,22 +992,33 @@ window.__ModuleLoader__.load({
     /* ================= 本周 ================= */
 
     const WD = ["日", "一", "二", "三", "四", "五", "六"];
+    const KIND_LABEL = { book: "书", movie: "影", wear: "穿", read: "读", out: "去", rest: "歇" };
 
     function WeekView({ state, run }) {
-      const [goalDraft, setGoalDraft] = useState("");
+      const [draft, setDraft] = useState("");
+      const [editId, setEditId] = useState(null);
+      const [editText, setEditText] = useState("");
       const [drafts, setDrafts] = useState({});
-      const week = state.week || { goals: [] };
+      const week = state.week || { inbox: [] };
       const board = state.weekBoard || [];
-      const agg = (state.stats && state.stats.agg) || {};
-      const goals = Array.isArray(week.goals) ? week.goals : [];
-      const openGoals = goals.filter((g) => !g.done);
-      const doneGoals = goals.filter((g) => g.done);
+      const ws = state.weekStats || {};
+      const inbox = Array.isArray(week.inbox) ? week.inbox : [];
+      const open = inbox.filter((g) => !g.done);
+      const done = inbox.filter((g) => g.done);
+      const rec = week.recommend && Array.isArray(week.recommend.items) ? week.recommend : null;
 
-      const addGoal = () => {
-        const t = goalDraft.trim();
+      const addInbox = () => {
+        const t = draft.trim();
         if (!t) return;
-        setGoalDraft("");
-        run("goalAdd", { text: t });
+        setDraft("");
+        run("inboxAdd", { text: t });
+      };
+
+      const saveEdit = () => {
+        const id = editId;
+        const v = editText.trim();
+        setEditId(null);
+        if (id && v) run("inboxEdit", { id, text: v });
       };
 
       const addTo = (date) => {
@@ -999,91 +1028,135 @@ window.__ModuleLoader__.load({
         run("todoAdd", { text: v, date });
       };
 
-      const focusMin = Math.round((agg.focusSeconds || 0) / 60);
-      const planRate = agg.planTotal ? Math.round((agg.planDone / agg.planTotal) * 100) : 0;
-      const dayNum = (d) => Number(d.slice(8, 10));
+      const bar = (label, a, b, hint) => {
+        const pct = b ? Math.min(100, Math.round((a / b) * 100)) : 0;
+        return h(
+          "div",
+          { className: "lg-prow", key: label },
+          h("div", { className: "lg-prow-top" }, h("span", null, label), h("span", { className: "n" }, hint || `${a} / ${b}`)),
+          h("div", { className: "lg-pbar" }, h("i", { style: { width: `${pct}%` } })),
+        );
+      };
+
+      const focusMin = Math.round((ws.focusSeconds || 0) / 60);
 
       return h(
         "div",
         null,
-        h(
-        "div",
-        { className: "lg-grid" },
 
-        /* ---------- 左：本周目标 ---------- */
+        /* ---------- 上：Inbox + 这周 ---------- */
         h(
           "div",
-          null,
+          { className: "lg-grid" },
+
+          /* 左：Inbox */
           h(
             "div",
-            { className: "lg-card" },
+            null,
             h(
               "div",
-              { className: "lg-card-head" },
-              h("span", null, "本周目标"),
-              h("span", { className: "lg-count-n" }, openGoals.length ? `还剩 ${openGoals.length} 条` : goals.length ? "都达成了" : "还没定"),
-            ),
-            h(
-              "div",
-              { className: "lg-add" },
-              h("input", {
-                value: goalDraft,
-                placeholder: "这周想推成什么？回车添加",
-                onChange: (e) => setGoalDraft(e.target.value),
-                onKeyDown: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addGoal(); } },
-              }),
-              h("button", { className: "lg-add-btn", onClick: addGoal }, "加"),
-            ),
-            goals.length === 0
-              ? h("p", { className: "lg-empty" }, "还没有。可以从「我」页的目标里点「放到本周」带过来。")
-              : h(
-                  "ul",
-                  { className: "lg-todo" },
-                  ...[...openGoals, ...doneGoals].map((g) =>
-                    h(
-                      "li",
-                      { key: g.id, className: g.done ? "on" : "" },
-                      h("button", { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("goalToggle", { id: g.id, done: !g.done }) }, g.done ? h(Check) : null),
-                      h("span", { className: "t" }, g.text),
-                      h("button", { className: "lg-del", onClick: () => run("goalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
+              { className: "lg-card" },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "Inbox"),
+                h("span", { className: "lg-count-n" }, open.length ? `${open.length} 件待处理` : inbox.length ? "清空了" : "空"),
+              ),
+              h(
+                "p",
+                { className: "footnote-line", style: { margin: "0 0 10px" } },
+                "这周冒出来的事都先扔这儿——目标里推过来的在，临时想到的也在。",
+              ),
+              h(
+                "div",
+                { className: "lg-add" },
+                h("input", {
+                  value: draft,
+                  placeholder: "想到就写，回车放进 Inbox",
+                  onChange: (e) => setDraft(e.target.value),
+                  onKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); addInbox(); } },
+                }),
+                h("button", { className: "lg-add-btn", onClick: addInbox }, "加"),
+              ),
+              inbox.length === 0
+                ? h("p", { className: "lg-empty" }, "空的。可以临时加一件，也可以去「我」页把目标拆一步放进来。")
+                : h(
+                    "ul",
+                    { className: "lg-todo" },
+                    ...[...open, ...done].map((g) =>
+                      h(
+                        "li",
+                        { key: g.id, className: g.done ? "on" : "" },
+                        h(
+                          "button",
+                          { className: "lg-dot" + (g.done ? " on" : ""), onClick: () => run("inboxToggle", { id: g.id, done: !g.done }) },
+                          g.done ? h(Check) : null,
+                        ),
+                        h(
+                          "div",
+                          { className: "lg-inbox-body" },
+                          editId === g.id
+                            ? h("input", {
+                                className: "lg-inline-in",
+                                value: editText,
+                                autoFocus: true,
+                                onChange: (e) => setEditText(e.target.value),
+                                onBlur: saveEdit,
+                                onKeyDown: (e) => {
+                                  if (e.key === "Enter") { e.preventDefault(); saveEdit(); }
+                                  if (e.key === "Escape") { e.preventDefault(); setEditId(null); }
+                                },
+                              })
+                            : h(
+                                "button",
+                                { className: "lg-inbox-t", onClick: () => { setEditId(g.id); setEditText(g.text); }, title: "点一下改" },
+                                g.text,
+                              ),
+                          g.fromStep
+                            ? h("div", { className: "lg-inbox-meta" }, h("span", { className: "lg-tag" }, "来自目标"))
+                            : null,
+                        ),
+                        h("button", { className: "lg-del", onClick: () => run("inboxRemove", { id: g.id }), "aria-label": "删除" }, "×"),
+                      ),
                     ),
                   ),
-                ),
-          ),
-
-        ),
-
-        /* ---------- 右：统计 + 这周的话 ---------- */
-        h(
-          "div",
-          null,
-          h(
-            "div",
-            { className: "lg-card" },
-            h("div", { className: "lg-card-head" }, h("span", null, "这周你做了多少"), h("span", { className: "lg-count-n" }, "")),
-            h(
-              "ul",
-              { className: "lg-stat" },
-              h("li", null, h("span", { className: "k" }, "规定事项"), h("span", { className: "v" }, `${agg.planDone || 0} / ${agg.planTotal || 0}`)),
-              h("li", null, h("span", { className: "k" }, "专注"), h("span", { className: "v" }, `${focusMin} 分钟 · ${agg.sessions || 0} 段`)),
-              h("li", null, h("span", { className: "k" }, "自由待办"), h("span", { className: "v" }, `${agg.todosDone || 0} / ${agg.todosTotal || 0}`)),
-              h("li", null, h("span", { className: "k" }, "本周目标"), h("span", { className: "v" }, `${doneGoals.length} / ${goals.length}`)),
             ),
-            agg.planTotal ? h("div", { className: "lg-meter" }, h("i", { style: { width: `${planRate}%` } })) : null,
           ),
 
+          /* 右：这周 */
           h(
             "div",
-            { className: "lg-card", style: { marginTop: 16 } },
-            h("div", { className: "lg-card-head" }, h("span", null, "这周的话"), h("span", { className: "lg-count-n" }, week.comment ? "它写的" : "")),
-            week.comment
-              ? h("p", { className: "lg-comment" }, week.comment)
-              : h("p", { className: "lg-empty", style: { margin: 0 } }, "还没写。在对话里说「总结一下这周」，它会看完数据写一段给你——包括建议和该夸你的地方。"),
+            null,
+            h(
+              "div",
+              { className: "lg-card" },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "这周"),
+                h("span", { className: "lg-count-n" }, `${ws.activeDays || 0} 天有记录`),
+              ),
+              h("div", { className: "lg-progress" },
+                bar("从目标推进", ws.fromGoalDone || 0, ws.fromGoal || 0),
+                bar("临时加的事", ws.manualDone || 0, ws.manual || 0),
+                bar("规定事项", ws.planDone || 0, ws.planTotal || 0),
+                bar("今天要做", ws.todoDone || 0, ws.todoTotal || 0),
+                bar("专注", focusMin, Math.max(300, focusMin), `${focusMin} 分钟`),
+                bar("有记录的天", ws.activeDays || 0, 7),
+              ),
+            ),
+            h(
+              "div",
+              { className: "lg-card", style: { marginTop: 16 } },
+              h("div", { className: "lg-card-head" }, h("span", null, "这周的话"), h("span", { className: "lg-count-n" }, week.comment ? "它写的" : "")),
+              week.comment
+                ? h("p", { className: "lg-comment" }, week.comment)
+                : h("p", { className: "lg-empty", style: { margin: 0 } }, "还没写。在对话里说「总结一下这周」。"),
+            ),
           ),
         ),
-        ),
 
-        /* ---------- 整宽：这一周 ---------- */
+        /* ---------- 这一周：七天 ---------- */
         h(
           "div",
           null,
@@ -1096,7 +1169,7 @@ window.__ModuleLoader__.load({
               return h(
                 "div",
                 { key: d.date, className: "lg-cal-day" + (d.today ? " today" : "") + (d.past && !d.today ? " past" : "") },
-                h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${dayNum(d.date)}`)),
+                h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${Number(d.date.slice(8, 10))}`)),
                 h(
                   "ul",
                   { className: "lg-cal-tasks" },
@@ -1125,6 +1198,55 @@ window.__ModuleLoader__.load({
             }),
           ),
           h("p", { className: "footnote-line" }, "在这七天里写下的，就是那一天的「今天要做」——两边是同一份。"),
+        ),
+
+        /* ---------- 本周推荐 ---------- */
+        h(
+          "div",
+          { className: "lg-card", style: { marginTop: 8 } },
+          h(
+            "div",
+            { className: "lg-card-head" },
+            h("span", null, "本周推荐"),
+            h(
+              "button",
+              { className: "lg-pomo", style: { opacity: 1 }, onClick: () => run("recommendWeek", {}) },
+              rec ? "换一批" : "让它推荐",
+            ),
+          ),
+          h("p", { className: "footnote-line", style: { margin: "0 0 14px" } }, "根据你在「我」页写的目标、书单、电影和今天的天气给的。"),
+          !rec || !rec.items.length
+            ? h("p", { className: "lg-empty", style: { margin: 0 } }, "还没有推荐。点右上角「让它推荐」，它会看完你的目标再给三条。")
+            : h(
+                "ul",
+                { className: "lg-recs" },
+                ...rec.items.map((it) =>
+                  h(
+                    "li",
+                    { key: it.id },
+                    h("span", { className: "lg-rec-kind" }, KIND_LABEL[it.kind] || "·"),
+                    h(
+                      "div",
+                      { className: "lg-rec-body" },
+                      h("p", { className: "t" }, it.title),
+                      it.why ? h("p", { className: "w" }, it.why) : null,
+                    ),
+                    it.minutes ? h("span", { className: "lg-rec-min" }, `${it.minutes} 分钟`) : null,
+                    it.minutes
+                      ? h(
+                          "button",
+                          {
+                            className: "lg-pomo" + (state.day && state.day.timer ? " off" : ""),
+                            style: { opacity: 1 },
+                            disabled: !!(state.day && state.day.timer),
+                            onClick: () => run("timerStart", { label: it.title, minutes: it.minutes }),
+                          },
+                          "开始",
+                        )
+                      : null,
+                  ),
+                ),
+              ),
         ),
       );
     }

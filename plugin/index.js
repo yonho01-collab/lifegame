@@ -131,6 +131,47 @@ function findGoalStep(goalId, stepId) {
   return {};
 }
 
+/** 本周统计：给「这周你做了多少」用，四类都有分母 */
+function weekStats() {
+  const wk = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
+  const base = new Date(`${wk}T00:00:00`);
+  const out = {
+    planDone: 0, planTotal: 0,
+    todoDone: 0, todoTotal: 0,
+    focusSeconds: 0, sessions: 0,
+    activeDays: 0,
+    fromGoal: 0, fromGoalDone: 0,
+    manual: 0, manualDone: 0,
+    readDone: 0, readTotal: 0,
+  };
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const day = db.days[key];
+    if (!day) continue;
+    const plan = Array.isArray(day.plan) ? day.plan : [];
+    const todos = Array.isArray(day.todos) ? day.todos : [];
+    const sess = Array.isArray(day.sessions) ? day.sessions : [];
+    out.planDone += plan.filter((p) => p.done).length;
+    out.planTotal += plan.length;
+    out.todoDone += todos.filter((t) => t.done).length;
+    out.todoTotal += todos.length;
+    out.focusSeconds += sess.reduce((n, x) => n + (x.seconds || 0), 0);
+    out.sessions += sess.length;
+    if (plan.some((p) => p.done) || todos.some((t) => t.done) || sess.length) out.activeDays++;
+  }
+  const w = getWeek();
+  out.fromGoal = w.inbox.filter((g) => g.fromStep).length;
+  out.fromGoalDone = w.inbox.filter((g) => g.fromStep && g.done).length;
+  out.manual = w.inbox.filter((g) => !g.fromStep).length;
+  out.manualDone = w.inbox.filter((g) => !g.fromStep && g.done).length;
+  const rl = db.readlater || [];
+  out.readTotal = rl.length;
+  out.readDone = rl.filter((r) => r.status === "done").length;
+  return out;
+}
+
 /** 本周七天的看板：日历要用 */
 function weekBoard() {
   const wk = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
@@ -158,11 +199,17 @@ function weekBoard() {
 function getWeek() {
   const k = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
   if (!db.weeks[k]) {
-    db.weeks[k] = { key: k, goals: [], comment: null };
+    db.weeks[k] = { key: k, inbox: [], comment: null, recommend: null };
     persist();
   }
   const w = db.weeks[k];
-  if (!Array.isArray(w.goals)) w.goals = [];
+  // 旧数据迁移：goals → inbox
+  if (!Array.isArray(w.inbox)) {
+    w.inbox = Array.isArray(w.goals) ? w.goals.map((g) => ({ ...g })) : [];
+    delete w.goals;
+  }
+  if (!Array.isArray(w.inbox)) w.inbox = [];
+  if (w.recommend === undefined) w.recommend = null;
   return w;
 }
 
@@ -302,6 +349,7 @@ const publicState = (date) => ({
   day: { ...getDay(date), watching: computeWatching(date) },
   week: getWeek(),
   weekBoard: weekBoard(),
+  weekStats: weekStats(),
   readlater: db.readlater.slice(0, 40),
   corpus: db.corpus.slice(0, 30),
   weather: db.weather,
@@ -432,8 +480,8 @@ function applyOp(op, payload, date) {
       const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
       if (!step) return false;
       const w = getWeek();
-      if (!w.goals.some((g) => g.fromStep === step.id)) {
-        w.goals.push({ id: `g${Date.now()}`, text: step.text, done: false, fromStep: step.id, fromGoal: goal.id, at: new Date().toISOString() });
+      if (!w.inbox.some((g) => g.fromStep === step.id)) {
+        w.inbox.push({ id: `g${Date.now()}`, text: step.text, done: false, fromStep: step.id, fromGoal: goal.id, at: new Date().toISOString() });
       }
       step.placed = true;
       step.placedTo = "week";
@@ -556,24 +604,37 @@ function applyOp(op, payload, date) {
       day.inspiration = { text, from: String(payload.from ?? "").slice(0, 60), at: new Date().toISOString() };
       return true;
     }
-    case "goalAdd": {
+    case "inboxAdd": {
       const w = getWeek();
-      const text = String(payload.text ?? "").trim().slice(0, 160);
+      const text = String(payload.text ?? "").trim().slice(0, 200);
       if (!text) return false;
-      w.goals.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString() });
+      w.inbox.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString(), source: "manual" });
       return true;
     }
-    case "goalToggle": {
-      const g = getWeek().goals.find((x) => x.id === payload.id);
+    case "inboxEdit": {
+      const g = getWeek().inbox.find((x) => x.id === payload.id);
+      if (!g) return false;
+      const text = String(payload.text ?? "").trim().slice(0, 200);
+      if (!text) return false;
+      g.text = text;
+      return true;
+    }
+    case "inboxToggle": {
+      const g = getWeek().inbox.find((x) => x.id === payload.id);
       if (!g) return false;
       g.done = !!payload.done;
+      g.doneAt = g.done ? new Date().toISOString() : null;
       return true;
     }
-    case "goalRemove": {
+    case "inboxRemove": {
       const w = getWeek();
-      const n = w.goals.length;
-      w.goals = w.goals.filter((x) => x.id !== payload.id);
-      return w.goals.length !== n;
+      const n = w.inbox.length;
+      w.inbox = w.inbox.filter((x) => x.id !== payload.id);
+      return w.inbox.length !== n;
+    }
+    case "recommendWeek": {
+      queueMicrotask(() => recommendWeek());
+      return true;
     }
     case "setWeekComment": {
       const w = getWeek();
@@ -629,6 +690,12 @@ function applyOp(op, payload, date) {
       r.enrichedAt = new Date().toISOString();
       return true;
     }
+    case "goalAdd":
+      return applyOp("inboxAdd", payload, date);
+    case "goalToggle":
+      return applyOp("inboxToggle", payload, date);
+    case "goalRemove":
+      return applyOp("inboxRemove", payload, date);
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
@@ -675,7 +742,7 @@ function weekModel() {
   const st = statsFor(todayKey());
   return {
     title: `本周 · ${w.key}`,
-    goals: w.goals.map((g) => ({ title: g.text, done: !!g.done })),
+    goals: w.inbox.map((g) => ({ title: g.text, done: !!g.done })),
     comment: w.comment,
     planDone: st.agg.planDone,
     planTotal: st.agg.planTotal,
@@ -701,8 +768,8 @@ function summaryText(day) {
   const done = day.plan.filter((p) => p.done).length;
   const cur = day.plan.find((p) => !p.done);
   const wk = getWeek();
-  const goalLine = wk.goals.length
-    ? `本周目标：${wk.goals.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}`
+  const goalLine = wk.inbox.length
+    ? `本周 Inbox：${wk.inbox.filter((g) => !g.done).map((g) => g.text).join("；") || "都处理完了"}`
     : "";
   const goals = db.profile.goals || { short: [], long: [] };
   const goalList = [
@@ -918,6 +985,83 @@ async function breakdownGoal(goalId) {
     { id: `st${Date.now()}_1`, text: "找出这周能做的最小一步，放进本周", done: false },
   ];
   goal.brokenAt = new Date().toISOString();
+  db.rev += 1;
+  await persist();
+}
+
+/* ---------------- 本周推荐 ---------------- */
+
+async function recommendWeek() {
+  const w = getWeek();
+  const pick = await pickModel();
+  const want = db.profile.want || { books: [], movies: [], quotes: [] };
+  const goals = db.profile.goals || { short: [], long: [] };
+  const wx = db.weather;
+  const corpus = (db.corpus || []).slice(0, 6);
+  const rl = (db.readlater || []).filter((r) => r.status === "ready").slice(0, 4);
+
+  const ctxLines = [
+    want.books.filter((x) => !x.done).length ? `想读：${want.books.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
+    want.movies.filter((x) => !x.done).length ? `想看：${want.movies.filter((x) => !x.done).map((x) => x.title).join("；")}` : "",
+    goals.short.length ? `短期目标：${goals.short.map((g) => g.text).join("；")}` : "",
+    goals.long.length ? `长期目标：${goals.long.map((g) => g.text).join("；")}` : "",
+    wx && wx.text ? `今天天气：${wx.text} ${wx.temp}°，${wx.tmin}–${wx.tmax}°` : "",
+    corpus.length ? `他收集的说法：${corpus.map((c) => c.text).slice(0, 3).join(" / ")}` : "",
+    rl.length ? `待读文章：${rl.map((r) => `${r.title}（${r.minutes}分钟）`).join("；")}` : "",
+  ].filter(Boolean).join("\n");
+
+  if (llmRef && pick) {
+    const prompt =
+      "你在给一个人安排「这周可以做的三件事」。从他的目标、想读想看的清单、天气出发，给 3 条建议。\n" +
+      "要求：\n" +
+      "1. 每条必须具体到「做什么 + 大概多久」，不要空话；\n" +
+      "2. kind 只能是 book（读书）/ movie（看电影）/ wear（穿搭建议）/ read（读某篇文章）/ out（出门）/ rest（休息）；\n" +
+      "3. 优先用他清单里已有的书和电影，不要凭空推荐新的；\n" +
+      "4. why 一句话说清为什么是这周（跟目标或天气有关）。\n" +
+      "只输出 JSON：{\"items\":[{\"kind\":\"book\",\"title\":\"…\",\"why\":\"…\",\"minutes\":30}]}\n\n" +
+      ctxLines;
+    try {
+      let buf = "";
+      for await (const c of llmRef.stream({ provider: pick.provider, model: pick.model, messages: [{ role: "user", content: [{ type: "text", text: prompt }] }] })) {
+        if (!c) continue;
+        if (typeof c.text === "string") buf += c.text;
+        else if (c.type === "text-delta" && typeof c.delta === "string") buf += c.delta;
+        if (buf.length > 3000) break;
+      }
+      const a = buf.indexOf("{");
+      const b = buf.lastIndexOf("}");
+      if (a >= 0 && b > a) {
+        const obj = JSON.parse(buf.slice(a, b + 1));
+        const items = (Array.isArray(obj.items) ? obj.items : [])
+          .slice(0, 4)
+          .map((it, i) => ({
+            id: `rc${Date.now()}_${i}`,
+            kind: ["book", "movie", "wear", "read", "out", "rest"].includes(it.kind) ? it.kind : "out",
+            title: String(it.title || "").slice(0, 80),
+            why: String(it.why || "").slice(0, 120),
+            minutes: Math.max(0, Math.min(240, Number(it.minutes) || 0)),
+          }))
+          .filter((x) => x.title);
+        if (items.length) {
+          w.recommend = { items, at: new Date().toISOString(), source: "llm" };
+          db.rev += 1;
+          await persist();
+          return;
+        }
+      }
+    } catch {
+      /* 落到兜底 */
+    }
+  }
+
+  // 兜底：从清单里直接取
+  const items = [];
+  const b0 = want.books.filter((x) => !x.done)[0];
+  const m0 = want.movies.filter((x) => !x.done)[0];
+  if (b0) items.push({ id: `rc${Date.now()}_0`, kind: "book", title: b0.title, why: "在你自己的书单里，排第一个", minutes: 30 });
+  if (m0) items.push({ id: `rc${Date.now()}_1`, kind: "movie", title: m0.title, why: "想看的片，挑一个晚上看完", minutes: 0 });
+  if (wx && wx.tmax != null) items.push({ id: `rc${Date.now()}_2`, kind: "wear", title: `${wx.tmin}–${wx.tmax}°，穿一件外搭`, why: "按今天的气温给的", minutes: 0 });
+  w.recommend = { items, at: new Date().toISOString(), source: "local" };
   db.rev += 1;
   await persist();
 }
@@ -1488,9 +1632,9 @@ export function apply(ctx) {
           if (a === "goal_add") {
             const text = String(args.text || "").trim().slice(0, 160);
             if (!text) return { text: "要定什么目标？" };
-            w.goals.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString() });
+            w.inbox.push({ id: `g${Date.now()}`, text, done: false, at: new Date().toISOString(), source: "manual" });
           } else if (a === "goal_done") {
-            const g = w.goals.find((x) => x.id === args.id) || w.goals.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
+            const g = w.inbox.find((x) => x.id === args.id) || w.inbox.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
             if (!g) return { text: "没找到那条目标。" };
             g.done = true;
           } else if (a === "comment") {
