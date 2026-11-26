@@ -195,6 +195,16 @@ window.__ModuleLoader__.load({
 .lg-labelrow button{flex:0 0 auto;min-width:64px;min-height:42px;border-radius:9px;border:0;background:var(--lg-accent);color:var(--lg-on-accent);font-size:14px;font-weight:600;cursor:pointer}
 
 /* 灵感 */
+.lg-topline{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.lg-wxtop{display:inline-flex;align-items:baseline;gap:12px;font-size:12px;color:var(--lg-muted);letter-spacing:.02em}
+.lg-wxline{display:inline-flex;align-items:baseline;gap:7px}
+.lg-wxline b{font-weight:500;font-size:14px;color:var(--lg-accent);font-variant-numeric:tabular-nums}
+.lg-wxline em{font-style:normal;font-size:11.5px;opacity:.85}
+.lg-locbtn{background:none;border:0;padding:2px 0;min-height:24px;color:var(--lg-muted);font-size:12px;font-family:var(--lg-sans);cursor:pointer;border-bottom:1px dashed var(--lg-line);letter-spacing:.02em}
+.lg-locbtn:hover{color:var(--lg-accent)}
+.lg-locin{width:150px;min-height:26px;padding:2px 8px;background:var(--lg-surface-2);border:1px solid var(--lg-accent);border-radius:6px;color:var(--lg-text);font-size:12px;font-family:var(--lg-sans);outline:none}
+.lg-tabspark{margin-left:auto;align-self:center;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--lg-serif);font-size:12.5px;letter-spacing:.03em;color:var(--lg-muted);padding-bottom:2px}
 .lg-wx{display:inline-flex;align-items:baseline;gap:8px;font-size:12px;color:var(--lg-muted)}
 .lg-wx i{font-style:normal;color:var(--lg-text)}
 .lg-wx b{font-weight:500;font-size:15px;color:var(--lg-accent);font-variant-numeric:tabular-nums}
@@ -411,8 +421,7 @@ window.__ModuleLoader__.load({
       const [expanded, setExpanded] = useState(null);
       const [editingId, setEditingId] = useState(null);
       const [editText, setEditText] = useState("");
-      const [editingLoc, setEditingLoc] = useState(false);
-      const [locText, setLocText] = useState("");
+
 
       useEffect(() => {
         if (!day.timer) return;
@@ -646,55 +655,6 @@ window.__ModuleLoader__.load({
           h(
             "div",
             null,
-            h(
-              "div",
-              { className: "lg-card" },
-              h(
-                "div",
-                { className: "lg-card-head" },
-                h("span", null, "灵感"),
-                wx
-                  ? h(
-                      "span",
-                      { className: "lg-wx" },
-                      h("i", null, wx.text),
-                      h("b", null, `${wx.temp}°`),
-                      wx.tmin != null && wx.tmax != null ? h("em", null, `${wx.tmin}–${wx.tmax}°`) : null,
-                    )
-                  : null,
-              ),
-              day.inspiration
-                ? h("div", { className: "lg-insp" }, h("p", { className: "q" }, `「${day.inspiration.text}」`), h("p", { className: "from" }, "它替你想到的"))
-                : h("p", { className: "lg-empty" }, "今天的还没到。它一般早上来，也可以直接跟我说「给我一条今天的灵感」。"),
-              h(
-                "div",
-                { className: "lg-loc" },
-                h("span", { className: "k" }, "位置"),
-                editingLoc
-                  ? h("input", {
-                      value: locText,
-                      autoFocus: true,
-                      placeholder: "写城市或区，如 杭州余杭",
-                      onChange: (e) => setLocText(e.target.value),
-                      onBlur: () => {
-                        const v = locText.trim();
-                        setEditingLoc(false);
-                        if (v && v !== (state.location && state.location.name)) run("setLocation", { name: v });
-                      },
-                      onKeyDown: (e) => {
-                        if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
-                        if (e.key === "Escape") { e.preventDefault(); setEditingLoc(false); }
-                      },
-                    })
-                  : h(
-                      "button",
-                      { onClick: () => { setLocText((state.location && state.location.name) || ""); setEditingLoc(true); }, title: "点一下改位置" },
-                      (state.location && state.location.name) || "设定位置",
-                    ),
-                wx && wx.sunrise && wx.sunset ? h("span", { className: "sun" }, `日出 ${wx.sunrise} · 日落 ${wx.sunset}`) : null,
-              ),
-            ),
-
             h(
               "div",
               { className: "lg-card", style: { marginTop: 16 } },
@@ -1093,7 +1053,11 @@ window.__ModuleLoader__.load({
       const [err, setErr] = useState("");
       const [busy, setBusy] = useState(false);
       const [tab, setTab] = useState("today");
+      const [editingLoc, setEditingLoc] = useState(false);
+      const [locText, setLocText] = useState("");
       const alive = useRef(true);
+      const wx = (state && state.weather) || null;
+      const locName = (state && state.location && state.location.name) || "";
 
       const load = useCallback(async () => {
         try {
@@ -1161,8 +1125,54 @@ window.__ModuleLoader__.load({
             { className: "lg-head" },
             h(
               "div",
-              null,
-              h("p", { className: "lg-eyebrow" }, `${day ? shortDate(day.date) : ""} · 人生游戏`),
+              { style: { flex: "1 1 auto", minWidth: 0 } },
+              h(
+                "div",
+                { className: "lg-topline" },
+                h("p", { className: "lg-eyebrow" }, `${day ? shortDate(day.date) : ""} · 人生游戏`),
+                h(
+                  "span",
+                  { className: "lg-wxtop" },
+                  editingLoc
+                    ? h("input", {
+                        className: "lg-locin",
+                        value: locText,
+                        autoFocus: true,
+                        placeholder: "城市或区，如 杭州余杭",
+                        onChange: (e) => setLocText(e.target.value),
+                        onBlur: () => {
+                          const v = locText.trim();
+                          setEditingLoc(false);
+                          if (v && v !== locName) run("setLocation", { name: v });
+                        },
+                        onKeyDown: (e) => {
+                          if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                          if (e.key === "Escape") { e.preventDefault(); setEditingLoc(false); }
+                        },
+                      })
+                    : h(
+                        "button",
+                        {
+                          className: "lg-locbtn",
+                          onClick: () => {
+                            setLocText(locName);
+                            setEditingLoc(true);
+                          },
+                          title: "点一下改位置",
+                        },
+                        locName || "设定位置",
+                      ),
+                  wx && wx.text
+                    ? h(
+                        "span",
+                        { className: "lg-wxline" },
+                        h("span", null, wx.text),
+                        wx.temp != null ? h("b", null, `${wx.temp}°`) : null,
+                        wx.tmin != null && wx.tmax != null ? h("em", null, `${wx.tmin}–${wx.tmax}°`) : null,
+                      )
+                    : null,
+                ),
+              ),
               h("h1", { className: "lg-h1" }, tab === "today" ? "今天" : tab === "week" ? "本周" : "我"),
             ),
             h("span", { className: "lg-season" }, state ? `${state.season.name}　${state.season.dayIndex} / ${state.season.totalDays}` : ""),
@@ -1178,6 +1188,9 @@ window.__ModuleLoader__.load({
                 t.label,
               ),
             ),
+            day && day.inspiration
+              ? h("span", { className: "lg-tabspark", title: day.inspiration.text }, `「${day.inspiration.text}」`)
+              : null,
           ),
           body,
         ),

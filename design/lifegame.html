@@ -17,6 +17,15 @@
 [data-theme="dark"] [data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
 [data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
 [data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
+[data-slot="main"] .lg-h1row{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+[data-slot="main"] .lg-season{color:var(--lg-muted);font-size:12px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wxtop{display:inline-flex;align-items:baseline;gap:12px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-wxline{display:inline-flex;align-items:baseline;gap:7px}
+[data-slot="main"] .lg-wxline b{font-weight:600;font-size:14px;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wxline em{font-style:normal;color:var(--lg-muted)}
+[data-slot="main"] .lg-locbtn{background:none;border:0;border-bottom:1px dashed var(--dsh-line);min-height:24px;padding:2px 0;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-locbtn:hover{color:var(--lg-accent-text)}
+[data-slot="main"] .lg-tabspark{margin-left:auto;align-self:center;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--lg-muted);font-size:12px;padding-bottom:2px}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
 [data-slot="main"] .lg-tab{padding:9px 0;font-size:13px;color:var(--lg-muted);border-bottom:2px solid transparent}
 [data-slot="main"] .lg-tab.on{color:var(--dsh-fg);border-bottom-color:var(--lg-accent-text)}
@@ -91,9 +100,9 @@
     <div class="dsh-bar"><div class="dsh-iconbtn dsh-corner"><svg class="dsh-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></div></div>
     <div data-slot="main">
       <div class="lg">
-        <div class="lg-top"><span>11/27 · 人生游戏</span><span>降噪季 4 / 14</span></div>
-        <h1 class="lg-h1">今天</h1>
-        <div class="lg-tabs"><span class="lg-tab on">今天</span><span class="lg-tab">本周</span><span class="lg-tab">我</span></div>
+        <div class="lg-top"><span>11/27 · 人生游戏</span><span class="lg-wxtop"><button class="lg-locbtn">杭州 · 余杭</button><span class="lg-wxline"><span>晴</span><b>16°</b><em>9–19°</em></span></span></div>
+        <div class="lg-h1row"><h1 class="lg-h1">今天</h1><span class="lg-season">降噪季 4 / 14</span></div>
+        <div class="lg-tabs"><span class="lg-tab on">今天</span><span class="lg-tab">本周</span><span class="lg-tab">我</span><span class="lg-tabspark">「今天的光是斜的，适合走一段。」</span></div>
 
         <div class="lg-grid">
           <!-- 左：自由待办 -->
@@ -130,13 +139,6 @@
 
           <!-- 右：规定事项 -->
           <div>
-            <div class="lg-card">
-              <div class="lg-head"><span>灵感</span><span class="lg-wx"><i>晴</i><b>16°</b><em>9–19°</em></span></div>
-              <p class="lg-q">「今天的光是斜的，适合走一段。」</p>
-              <p class="lg-from">它替你想到的</p>
-              <div class="lg-loc"><span class="k">位置</span><button>杭州 · 余杭</button><span class="sun">日出 06:32 · 日落 16:58</span></div>
-            </div>
-
             <div class="lg-card">
               <div class="lg-head"><span>规定事项</span><span class="lg-num">2 / 3</span></div>
               <ul class="lg-list">
