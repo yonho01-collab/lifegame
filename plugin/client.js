@@ -651,6 +651,19 @@ window.__ModuleLoader__.load({
       const [url, setUrl] = useState("");
       const [expanded, setExpanded] = useState(null);
       const [dropOn, setDropOn] = useState(false);
+
+      // 拖拽结束一定要清高亮——dragleave 在拖出窗口/被中断时不一定触发
+      useEffect(() => {
+        const clear = () => setDropOn(false);
+        window.addEventListener("dragend", clear);
+        window.addEventListener("drop", clear);
+        window.addEventListener("blur", clear);
+        return () => {
+          window.removeEventListener("dragend", clear);
+          window.removeEventListener("drop", clear);
+          window.removeEventListener("blur", clear);
+        };
+      }, []);
       const [editingId, setEditingId] = useState(null);
       const [editText, setEditText] = useState("");
       const [todoEditId, setTodoEditId] = useState(null);
@@ -846,7 +859,9 @@ window.__ModuleLoader__.load({
                   e.preventDefault();
                   if (!dropOn) setDropOn(true);
                 },
-                onDragLeave: () => setDropOn(false),
+                onDragLeave: (e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) setDropOn(false);
+                },
                 onDrop: (e) => {
                   e.preventDefault();
                   setDropOn(false);
