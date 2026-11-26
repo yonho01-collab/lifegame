@@ -83,6 +83,10 @@
 [data-slot="main"] .lg-loc .sun{margin-left:auto;font-variant-numeric:tabular-nums}
 [data-slot="main"] .lg-q{font-size:14px;line-height:1.8;margin:0 0 8px}
 [data-slot="main"] .lg-from{font-size:12px;color:var(--lg-muted);margin:0}
+[data-slot="main"] .lg-alt{display:flex;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;border:1px solid var(--lg-line);border-radius:var(--lg-radius);background:var(--lg-surface);box-shadow:var(--lg-shadow)}
+[data-slot="main"] .lg-alt .tag{flex:0 0 auto;font-size:12px;color:var(--lg-accent)}
+[data-slot="main"] .lg-alt .txt{flex:1;min-width:0;font-size:12px;color:var(--lg-text)}
+[data-slot="main"] .lg-alt button{flex:0 0 auto;min-height:26px;padding:0 10px;border:1px solid var(--lg-line);border-radius:6px;background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
 [data-slot="main"] .lg-row:first-of-type{border-top:0}
 [data-slot="main"] .lg-row i{font-style:normal;width:44px;flex:0 0 auto;font-variant-numeric:tabular-nums}
@@ -153,6 +157,12 @@
               </ul>
             </div>
 
+
+            <div class="lg-alt">
+              <span class="tag">或者</span>
+              <span class="txt">现在下去走 10 分钟，今天的光很好</span>
+              <button>换</button>
+            </div>
 
             <div class="lg-card">
               <div class="lg-head"><span>之后</span><span class="lg-num">到点会提醒</span></div>

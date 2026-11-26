@@ -899,6 +899,14 @@ window.__ModuleLoader__.load({
 
             h(
               "div",
+              { className: "lg-alt", style: { marginTop: 16 } },
+              h("span", { className: "tag" }, "或者"),
+              h("span", { className: "txt" }, day.alt),
+              h("button", { onClick: () => run("skipAlt", {}) }, "换"),
+            ),
+
+            h(
+              "div",
               { className: "lg-card", style: { marginTop: 16 } },
               h("div", { className: "lg-card-head" }, h("span", null, "之后"), h("span", { className: "lg-count-n" }, "到点会提醒")),
               ...later.map((x, i) =>
@@ -939,14 +947,6 @@ window.__ModuleLoader__.load({
                       ),
                     ),
               ),
-            ),
-
-            h(
-              "div",
-              { className: "lg-alt", style: { marginTop: 16 } },
-              h("span", { className: "tag" }, "或者"),
-              h("span", { className: "txt" }, day.alt),
-              h("button", { onClick: () => run("skipAlt", {}) }, "换"),
             ),
 
           ),
