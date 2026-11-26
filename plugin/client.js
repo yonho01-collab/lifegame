@@ -393,6 +393,10 @@ window.__ModuleLoader__.load({
 .lg-todo > li:last-child{border-bottom:0}
 .lg-todo > li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .lg-todo > li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
+.lg-card.drop-on{border-color:var(--lg-accent);background:var(--lg-accent-soft);box-shadow:0 0 0 3px var(--lg-accent-soft)}
+.lg-drop-hint{font-size:11.5px;color:var(--lg-accent);letter-spacing:.04em}
+.lg-todo > li[draggable="true"]{cursor:grab}
+.lg-todo > li[draggable="true"]:active{cursor:grabbing}
 .lg-read-body{flex:1 1 auto;min-width:0}
 .lg-read-t{display:block;max-width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:var(--lg-text);font-size:15px;line-height:1.5;font-family:var(--lg-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg-read-t:hover{color:var(--lg-accent)}
@@ -572,6 +576,7 @@ window.__ModuleLoader__.load({
       const [label, setLabel] = useState("");
       const [url, setUrl] = useState("");
       const [expanded, setExpanded] = useState(null);
+      const [dropOn, setDropOn] = useState(false);
       const [editingId, setEditingId] = useState(null);
       const [editText, setEditText] = useState("");
       const [todoEditId, setTodoEditId] = useState(null);
@@ -761,12 +766,30 @@ window.__ModuleLoader__.load({
 
             h(
               "div",
-              { className: "lg-card" },
+              {
+                className: "lg-card" + (dropOn ? " drop-on" : ""),
+                onDragOver: (e) => {
+                  e.preventDefault();
+                  if (!dropOn) setDropOn(true);
+                },
+                onDragLeave: () => setDropOn(false),
+                onDrop: (e) => {
+                  e.preventDefault();
+                  setDropOn(false);
+                  const id = e.dataTransfer.getData("text/plain");
+                  if (id) run("readlaterToToday", { id });
+                },
+              },
               h(
                 "div",
                 { className: "lg-card-head" },
                 h("span", null, "今天要做"),
-                h("span", { className: "lg-count-n" }, openTodos.length ? `还剩 ${openTodos.length} 件` : "清空了"),
+                h(
+                  "span",
+                  { style: { marginLeft: "auto", display: "inline-flex", alignItems: "baseline", gap: 10 } },
+                  dropOn ? h("span", { className: "lg-drop-hint" }, "松手就加进来") : null,
+                  h("span", { className: "lg-count-n" }, openTodos.length ? `还剩 ${openTodos.length} 件` : "清空了"),
+                ),
               ),
               h(
                 "div",
@@ -992,7 +1015,17 @@ window.__ModuleLoader__.load({
                 ...rl.map((r) =>
                   h(
                     "li",
-                    { key: r.id, className: r.status === "done" ? "on" : "" },
+                    {
+                      key: r.id,
+                      className: r.status === "done" ? "on" : "",
+                      draggable: r.status !== "done",
+                      onDragStart: (e) => {
+                        e.dataTransfer.setData("text/plain", r.id);
+                        e.dataTransfer.effectAllowed = "copy";
+                        e.stopPropagation();
+                      },
+                      title: r.status !== "done" ? "可以拖到上方的「今天要做」" : "",
+                    },
                     h(
                       "button",
                       {
@@ -1006,7 +1039,7 @@ window.__ModuleLoader__.load({
                       { className: "lg-read-body" },
                       h(
                         "button",
-                        { className: "lg-read-t", onClick: () => setExpanded(expanded === r.id ? null : r.id) },
+                        { className: "lg-read-t", onClick: () => setExpanded(expanded === r.id ? null : r.id), draggable: false },
                         r.title || r.url,
                       ),
                       h(
@@ -1041,7 +1074,17 @@ window.__ModuleLoader__.load({
                       : null,
                     r.status === "failed"
                       ? h("button", { className: "lg-pomo", onClick: () => run("readlaterRetry", { id: r.id }) }, "重试")
-                      : null,
+                      : r.status !== "done"
+                        ? h(
+                            "button",
+                            {
+                              className: "lg-pomo",
+                              onClick: () => run("readlaterToToday", { id: r.id }),
+                              title: "加进今天的「今天要做」",
+                            },
+                            "加进今天",
+                          )
+                        : null,
                     h("button", { className: "lg-del", onClick: () => run("readlaterRemove", { id: r.id }), "aria-label": "删除" }, "×"),
                   ),
                 ),
