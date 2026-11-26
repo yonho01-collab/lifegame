@@ -31,7 +31,7 @@ let chain = Promise.resolve();
 const defaultPlan = (p) => [
   { id: "meditate", title: `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: "09:30", done: false },
   { id: "move", title: `动一动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
-  { id: "create", title: "写 200 字", kind: "output", minutes: 25, slot: "19:35", done: false },
+  { id: "create", title: "写一段话", kind: "output", minutes: 25, slot: "19:35", done: false },
 ];
 
 const defaultAfter = [
@@ -45,13 +45,14 @@ const seed = () => ({
   appliedOps: [],
   profile: {
     sleepTarget: "00:30",
-    meditationMinutes: 10,
-    moveMinutes: 20,
+    meditationMinutes: 5,
+    moveMinutes: 10,
     budget: "500-1500",
     fitnessLevel: "1-2/week",
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
   days: {},
+  weeks: {},
 });
 
 /* ---------------- 存取 ---------------- */
@@ -66,6 +67,7 @@ async function load() {
   if (!db.days) db.days = {};
   if (!db.weeks) db.weeks = {};
   await persist();
+  normalizeDays();
 }
 
 function persist() {
@@ -112,6 +114,30 @@ function getWeek() {
   const w = db.weeks[k];
   if (!Array.isArray(w.goals)) w.goals = [];
   return w;
+}
+
+/** 把旧数据里的三项对齐到当前规则（保留完成状态） */
+function normalizeDays() {
+  let changed = 0;
+  for (const key of Object.keys(db.days)) {
+    const day = db.days[key];
+    if (!day || !Array.isArray(day.plan)) continue;
+    for (const item of day.plan) {
+      const before = `${item.title}|${item.minutes}`;
+      if (item.id === "meditate") {
+        item.title = `冥想 ${db.profile.meditationMinutes} 分钟`;
+        item.minutes = db.profile.meditationMinutes;
+      } else if (item.id === "move") {
+        item.title = `动一动 ${db.profile.moveMinutes} 分钟`;
+        item.minutes = db.profile.moveMinutes;
+      } else if (item.id === "create") {
+        item.title = "写一段话";
+      }
+      if (`${item.title}|${item.minutes}` !== before) changed += 1;
+    }
+  }
+  if (changed) persist();
+  return changed;
 }
 
 function getDay(date) {
@@ -218,7 +244,12 @@ function applyOp(op, payload, date) {
     }
     case "timerStart": {
       if (day.timer) return false;
-      day.timer = { label: String(payload.label ?? "").slice(0, 60), startedAt: new Date().toISOString() };
+      const minutes = Math.max(0, Math.min(180, Number(payload.minutes) || 0));
+      day.timer = {
+        label: String(payload.label ?? "").slice(0, 60),
+        minutes,
+        startedAt: new Date().toISOString(),
+      };
       return true;
     }
     case "timerStop": {
@@ -226,7 +257,7 @@ function applyOp(op, payload, date) {
       const started = new Date(day.timer.startedAt).getTime();
       const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
       if (!Array.isArray(day.sessions)) day.sessions = [];
-      const label = String(payload.label || day.timer.label || "专注").slice(0, 60);
+      const label = String(payload.label || day.timer.label || "").slice(0, 60);
       day.sessions.push({
         id: `s${Date.now()}`,
         label,
@@ -587,7 +618,8 @@ export function apply(ctx) {
           additionalProperties: false,
           properties: {
             action: { type: "string", enum: ["start", "stop", "status"] },
-            label: { type: "string", description: "action=start 时在做什么，如「写 200 字」" },
+            label: { type: "string", description: "action=start 时在做什么，如「把上周的周报补完」" },
+            minutes: { type: "number", description: "番茄时长（分钟）；不传为自由计时" },
           },
           required: ["action"],
         },
@@ -601,8 +633,12 @@ export function apply(ctx) {
           const day = getDay(todayKey());
           const a = args && args.action;
           if (a === "start") {
-            if (day.timer) return outShape(`已经在计时了（${day.timer.label}）。`, viewModel(day));
-            day.timer = { label: String(args.label || "专注").slice(0, 60), startedAt: new Date().toISOString() };
+            if (day.timer) return outShape(`已经在计时了（${day.timer.label || "专注"}）。`, viewModel(day));
+            day.timer = {
+              label: String(args.label || "专注").slice(0, 60),
+              minutes: Math.max(0, Math.min(180, Number(args.minutes) || 0)),
+              startedAt: new Date().toISOString(),
+            };
           } else if (a === "stop") {
             if (!day.timer) return outShape("现在没有在计时。", viewModel(day));
             const seconds = Math.max(1, Math.round((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000));

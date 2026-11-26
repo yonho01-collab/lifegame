@@ -218,6 +218,9 @@ window.__ModuleLoader__.load({
 .lg-todo li:last-child{border-bottom:0}
 .lg-todo li .t{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.55}
 .lg-todo li.on .t{color:var(--lg-muted);text-decoration:line-through;text-decoration-color:var(--lg-line);text-decoration-thickness:1px}
+.lg-pomo{flex:0 0 auto;min-height:30px;padding:0 12px;border-radius:7px;border:1px solid rgba(201,168,106,.45);background:none;color:var(--lg-accent);font-size:12px;cursor:pointer;letter-spacing:.04em;transition:background .12s,border-color .12s}
+.lg-pomo:hover{background:rgba(201,168,106,.12)}
+.lg-pomo.off{display:none}
 .lg-del{flex:0 0 auto;width:32px;height:32px;display:grid;place-items:center;border:0;background:none;color:var(--lg-muted);cursor:pointer;font-size:16px;border-radius:8px;opacity:.55}
 .lg-del:hover{color:var(--danger);background:var(--lg-surface-2)}
 .lg-empty{margin:10px 0 2px;font-size:13.5px;line-height:1.8;color:var(--lg-muted)}
@@ -383,6 +386,8 @@ window.__ModuleLoader__.load({
 
       const sessions = Array.isArray(day.sessions) ? day.sessions : [];
       const elapsed = day.timer ? Math.max(0, Math.floor((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000)) : 0;
+      const isPomo = !!(day.timer && day.timer.minutes > 0);
+      const remain = isPomo ? Math.max(0, day.timer.minutes * 60 - elapsed) : 0;
       const focusMin = Math.round(sessions.reduce((n, x) => n + (x.seconds || 0), 0) / 60);
       const longest = sessions.length ? Math.round(Math.max(...sessions.map((x) => x.seconds || 0)) / 60) : 0;
 
@@ -394,6 +399,19 @@ window.__ModuleLoader__.load({
         setDraft("");
         run("todoAdd", { text });
       };
+
+      const stopTimer = async () => {
+        const r = await run("timerStop", {});
+        const last = r && r.state && r.state.day && r.state.day.sessions && r.state.day.sessions.slice(-1)[0];
+        if (last && !last.label) {
+          setPending(last);
+          setLabel("");
+        } else {
+          setPending(null);
+        }
+      };
+
+      const startPomo = (text) => run("timerStart", { label: text, minutes: 25 });
 
       const saveLabel = async () => {
         if (!pending) return;
@@ -433,7 +451,7 @@ window.__ModuleLoader__.load({
                 "div",
                 { className: "lg-card-head" },
                 h("span", null, "专注"),
-                h("span", { className: "lg-count-n" }, day.timer ? "计时中" : pending ? "刚记下" : "不用全屏"),
+                h("span", { className: "lg-count-n" }, day.timer ? (isPomo ? "番茄中" : "计时中") : pending ? "刚记下" : "不用全屏"),
               ),
 
               // 计时中：页内实时走，不用跳全屏
@@ -441,16 +459,17 @@ window.__ModuleLoader__.load({
                 ? h(
                     "div",
                     { className: "lg-focus" },
-                    h("span", { className: "lg-live" }, fmt(elapsed)),
+                    h("span", { className: "lg-live" }, isPomo ? fmt(remain) : fmt(elapsed)),
+                    h("button", { className: "lg-focus-btn strong", onClick: stopTimer }, isPomo && remain === 0 ? "记下" : "结束"),
                     h(
-                      "button",
-                      { className: "lg-focus-btn strong", onClick: () => run("timerStop", {}).then((r) => {
-                          const last = r && r.state && r.state.day && r.state.day.sessions && r.state.day.sessions.slice(-1)[0];
-                          if (last) { setPending(last); setLabel(""); }
-                        }) },
-                      "结束",
+                      "p",
+                      { className: "sub" },
+                      isPomo
+                        ? remain === 0
+                          ? `番茄结束了${day.timer.label ? ` · ${day.timer.label}` : ""}。做完了吗？`
+                          : `番茄 ${day.timer.minutes} 分钟 · ${day.timer.label || "专注"}`
+                        : "在做事就开着，做完回来点结束——然后填一句在做什么。",
                     ),
-                    h("p", { className: "sub" }, "在做事就开着，做完回来点结束——然后填一句在做什么。"),
                   )
                 : null,
 
@@ -544,6 +563,18 @@ window.__ModuleLoader__.load({
                           t.done ? h(Check) : null,
                         ),
                         h("span", { className: "t" }, t.text),
+                        t.done
+                          ? null
+                          : h(
+                              "button",
+                              {
+                                className: "lg-pomo" + (day.timer ? " off" : ""),
+                                disabled: !!day.timer,
+                                onClick: () => startPomo(t.text),
+                                title: "25 分钟番茄，做这件事",
+                              },
+                              "开始",
+                            ),
                         h("button", { className: "lg-del", onClick: () => run("todoRemove", { id: t.id }), "aria-label": "删除" }, "×"),
                       ),
                     ),

@@ -42,6 +42,8 @@
 [data-slot="main"] .lg-dot.on{background:var(--dsh-accent);border-color:var(--dsh-accent)}
 [data-slot="main"] .lg-li .t{flex:1}
 [data-slot="main"] .lg-li .s{color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-pomo{flex:0 0 auto;height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--dsh-line);background:none;color:var(--lg-accent-text);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-pomo:hover{border-color:var(--lg-accent-text);color:var(--lg-accent-text)}
 [data-slot="main"] .lg-q{font-size:14px;line-height:1.8;margin:0 0 8px}
 [data-slot="main"] .lg-from{font-size:12px;color:var(--lg-muted);margin:0}
 [data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
@@ -83,16 +85,16 @@
 
             <div class="lg-now">
               <span class="k">现在 22:47</span>
-              <span class="v">下一件规定事项：写 200 字</span>
+              <span class="v">下一件规定事项：写一段话</span>
               <button class="lg-btn">开始</button>
             </div>
 
             <div class="lg-card">
               <div class="lg-head"><span>专注</span><span class="lg-num">不用全屏</span></div>
               <div class="lg-focus">
-                <span class="lg-min">39</span><span class="lg-unit">分钟</span>
-                <button class="lg-btn" style="margin-left:auto">开始</button>
-                <p class="lg-sub">今天 2 段，最长 24 分钟。</p>
+                <span class="lg-min">16:59</span><span class="lg-unit">剩余</span>
+                <button class="lg-btn" style="margin-left:auto">结束</button>
+                <p class="lg-sub">番茄 25 分钟 · 把上周的周报补完</p>
               </div>
             </div>
 
@@ -100,8 +102,8 @@
               <div class="lg-head"><span>今天要做</span><span class="lg-num">还剩 2 件</span></div>
               <div class="lg-inp"><input placeholder="写一件要做的事，回车添加"><button>加</button></div>
               <ul class="lg-list">
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">把上周的周报补完</span></li>
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">给物业打电话问停水</span></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">把上周的周报补完</span><button class="lg-pomo">开始</button></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">给物业打电话问停水</span><button class="lg-pomo">开始</button></li>
                 <li class="lg-li done"><span class="lg-dot on"></span><span class="t">把相机电池充上</span></li>
               </ul>
             </div>
@@ -112,9 +114,9 @@
             <div class="lg-card">
               <div class="lg-head"><span>规定事项</span><span class="lg-num">2 / 3</span></div>
               <ul class="lg-list">
-                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">冥想 10 分钟</span><span class="s">09:30</span></li>
-                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">动一动 20 分钟</span><span class="s">09:50</span></li>
-                <li class="lg-li"><span class="lg-dot"></span><span class="t">写 200 字</span><span class="s">19:35</span></li>
+                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">冥想 5 分钟</span><span class="s">09:30</span></li>
+                <li class="lg-li done"><span class="lg-dot on"></span><span class="t">动一动 10 分钟</span><span class="s">09:50</span></li>
+                <li class="lg-li"><span class="lg-dot"></span><span class="t">写一段话</span><span class="s">19:35</span></li>
               </ul>
             </div>
 
