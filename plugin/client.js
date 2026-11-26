@@ -39,7 +39,16 @@ window.__ModuleLoader__.load({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ opId: newId(), op, payload, date: todayStr() }),
       });
-      if (!r.ok) throw new Error(`op ${r.status}`);
+      if (!r.ok) {
+        let detail = "";
+        try {
+          const j = await r.json();
+          detail = j && j.error ? String(j.error) : "";
+        } catch {
+          /* 忽略 */
+        }
+        throw new Error(detail || `op ${r.status}`);
+      }
       return r.json();
     }
 
@@ -80,6 +89,9 @@ window.__ModuleLoader__.load({
 .lg-h1{letter-spacing:-.02em;font-family:var(--lg-serif);font-weight:500;font-size:42px;line-height:1.1;letter-spacing:.06em;margin:0}
 @media (max-width:820px){ .lg-h1{letter-spacing:-.02em;font-size:30px} }
 .lg-season{font-size:12px;letter-spacing:.1em;color:var(--lg-muted);padding-bottom:8px;white-space:nowrap}
+.lg-notice{display:flex;align-items:flex-start;gap:12px;margin:14px 0 0;padding:11px 14px;border:1px solid var(--lg-danger-line);border-radius:var(--lg-radius);background:#fef3f2;color:var(--lg-danger);font-size:13px;line-height:1.6}
+.lg-notice span{flex:1 1 auto;min-width:0}
+.lg-notice button{flex:0 0 auto;border:0;background:none;color:var(--lg-danger);font-size:15px;cursor:pointer;line-height:1;padding:2px 4px}
 .lg-rule{height:1px;background:var(--lg-line);margin:18px 0 26px}
 
 /* 页签 */
@@ -1247,7 +1259,15 @@ window.__ModuleLoader__.load({
                     ),
                     h(
                       "button",
-                      { className: "lg-pomo", style: { opacity: 1 }, onClick: () => run("goalBreakdown", { id: g.id }), title: "让模型把这个目标拆成几步" },
+                      {
+                        className: "lg-pomo",
+                        style: { opacity: 1 },
+                        onClick: () => {
+                          setOpenGoal(g.id);
+                          run("goalBreakdown", { id: g.id });
+                        },
+                        title: "让模型把这个目标拆成几步",
+                      },
                       steps.length ? "重拆" : "拆解",
                     ),
                     h("button", { className: "lg-del", onClick: () => run("lifeGoalRemove", { id: g.id }), "aria-label": "删除" }, "×"),
@@ -1452,6 +1472,7 @@ window.__ModuleLoader__.load({
     function LifegamePanel() {
       const [state, setState] = useState(null);
       const [err, setErr] = useState("");
+      const [notice, setNotice] = useState("");
       const [busy, setBusy] = useState(false);
       const [tab, setTab] = useState("today");
       const [editingLoc, setEditingLoc] = useState(false);
@@ -1491,8 +1512,12 @@ window.__ModuleLoader__.load({
             const r = await sendOp(op, payload);
             if (r?.state) setState(r.state);
             else await load();
+            setNotice("");
             return r;
-          } catch {
+          } catch (e) {
+            const msg = String((e && e.message) || e);
+            // 最常见的原因：宿主没重启，新 op 还不存在
+            setNotice(/unknown op/i.test(msg) ? "这一步没生效——插件宿主还没重启，重启 DSH 后再试。" : `没保存成功：${msg}`);
             await load();
             return null;
           } finally {
@@ -1510,8 +1535,8 @@ window.__ModuleLoader__.load({
           tab === "today"
             ? h(TodayView, { state, run, busy })
             : tab === "week"
-              ? h(WeekView, { state })
-              : h(MeView, { state });
+              ? h(WeekView, { state, run })
+              : h(MeView, { state, run });
       }
 
       const day = state?.day;
@@ -1594,6 +1619,14 @@ window.__ModuleLoader__.load({
               ),
             ),
           ),
+          notice
+            ? h(
+                "div",
+                { className: "lg-notice" },
+                h("span", null, notice),
+                h("button", { onClick: () => setNotice(""), "aria-label": "关闭" }, "×"),
+              )
+            : null,
           h("div", { className: "lg-rule" }),
           h(
             "nav",
