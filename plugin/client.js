@@ -212,6 +212,7 @@ window.__ModuleLoader__.load({
 .lg-cal-add button:hover{color:var(--lg-accent);border-color:var(--lg-line)}
 @media (max-width:1100px){ .lg-cal{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width:700px){ .lg-cal{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.lg-plan-no{flex:0 0 46px;font-size:11.5px;color:var(--lg-muted);font-variant-numeric:tabular-nums;padding-top:2px}
 .lg-slot{min-height:20px;padding:0 8px;margin-left:6px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:11px;font-family:var(--lg-sans);cursor:pointer}
 .lg-slot:hover{color:var(--lg-accent);border-color:var(--lg-focus)}
 .lg-slot.on{color:var(--lg-accent);border-color:var(--lg-focus)}
@@ -1077,6 +1078,7 @@ window.__ModuleLoader__.load({
       const [dateOpen, setDateOpen] = useState(null);
       const [drafts, setDrafts] = useState({});
       const [noteEdit, setNoteEdit] = useState({});
+      const [recOpen, setRecOpen] = useState(null);
 
       const open = inbox.filter((g) => !g.done);
       const done = inbox.filter((g) => g.done);
@@ -1338,6 +1340,15 @@ window.__ModuleLoader__.load({
                       it.why ? h("p", { className: "w" }, it.why) : null,
                     ),
                     it.minutes ? h("span", { className: "lg-rec-min" }, `${it.minutes} 分钟`) : null,
+                    h(
+                      "button",
+                      {
+                        className: "lg-slot" + (it.placed ? " on" : ""),
+                        onClick: () => setRecOpen(recOpen === it.id ? null : it.id),
+                        title: "安排到某一天",
+                      },
+                      it.placed ? dayLabelOf(it.placed) : "安排",
+                    ),
                     it.minutes
                       ? h(
                           "button",
@@ -1348,6 +1359,25 @@ window.__ModuleLoader__.load({
                             onClick: () => run("timerStart", { label: it.title, minutes: it.minutes }),
                           },
                           "开始",
+                        )
+                      : null,
+                    recOpen === it.id
+                      ? h(
+                          "div",
+                          { className: "lg-slot-pick", style: { flex: "1 1 100%", margin: "8px 0 0" } },
+                          ...board.map((d) => {
+                            const dt = new Date(`${d.date}T00:00:00`);
+                            return h(
+                              "button",
+                              {
+                                key: d.date,
+                                className: "lg-slot-opt" + (it.placed === d.date ? " on" : "") + (d.today ? " today" : ""),
+                                onClick: () => { setRecOpen(null); run("recommendToDay", { recId: it.id, date: d.date }); },
+                                title: `${dt.getMonth() + 1}/${Number(d.date.slice(8, 10))}`,
+                              },
+                              d.today ? "今天" : `周${WD[dt.getDay()]}`,
+                            );
+                          }),
                         )
                       : null,
                   ),
@@ -1370,6 +1400,8 @@ window.__ModuleLoader__.load({
       const corpus = (state && state.corpus) || [];
       const want = (state.profile && state.profile.want) || { books: [], movies: [], quotes: [] };
       const [wantKind, setWantKind] = useState("books");
+      const [planTplEdit, setPlanTplEdit] = useState(null);
+      const [planTplText, setPlanTplText] = useState("");
       const [wantTitle, setWantTitle] = useState("");
       const [wantExtra, setWantExtra] = useState("");
 
@@ -1687,6 +1719,50 @@ window.__ModuleLoader__.load({
           ),
           goalBlock("short", "短期目标", "这一阵想做成什么？比如「这两周把早睡调回来」。", draftS, setDraftS),
           goalBlock("long", "长期目标", "一两年后想成为什么样？比如「能自己拍一支短片」。", draftL, setDraftL),
+
+          h(
+            "div",
+            { className: "lg-card", style: { marginTop: 16 } },
+            h(
+              "div",
+              { className: "lg-card-head" },
+              h("span", null, "每天的规矩"),
+              h("span", { className: "lg-count-n" }, "改了之后，每天都这样"),
+            ),
+            h("p", { className: "footnote-line", style: { margin: "0 0 12px" } }, "「今天」页里的规定事项就是这三条。写「N 分钟」会自动改时长。"),
+            h(
+              "ul",
+              { className: "lg-todo" },
+              ...(state.day && Array.isArray(state.day.plan) ? state.day.plan : []).map((p) =>
+                h(
+                  "li",
+                  { key: p.id },
+                  h("span", { className: "lg-plan-no" }, p.slot),
+                  planTplEdit === p.id
+                    ? h("input", {
+                        className: "lg-inline-in",
+                        value: planTplText,
+                        autoFocus: true,
+                        onChange: (e) => setPlanTplText(e.target.value),
+                        onBlur: () => {
+                          const v = planTplText.trim();
+                          setPlanTplEdit(null);
+                          if (v) run("planTemplate", { id: p.id, title: v });
+                        },
+                        onKeyDown: (e) => {
+                          if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                          if (e.key === "Escape") { e.preventDefault(); setPlanTplEdit(null); }
+                        },
+                      })
+                    : h(
+                        "button",
+                        { className: "lg-inbox-t", onClick: () => { setPlanTplEdit(p.id); setPlanTplText(p.title); }, title: "点一下改，以后每天都这样" },
+                        p.title,
+                      ),
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }

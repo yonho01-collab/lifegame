@@ -28,11 +28,14 @@ let chain = Promise.resolve();
 
 /* ---------------- 默认数据 ---------------- */
 
-const defaultPlan = (p) => [
-  { id: "meditate", title: `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: "09:30", done: false },
-  { id: "move", title: `运动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
-  { id: "create", title: "写一段话", kind: "output", minutes: 25, slot: "19:35", done: false },
-];
+const defaultPlan = (p) => {
+  const tpl = (p && p.customPlan) || {};
+  return [
+    { id: "meditate", title: tpl.meditate || `冥想 ${p.meditationMinutes} 分钟`, kind: "time", minutes: p.meditationMinutes, slot: "09:30", done: false },
+    { id: "move", title: tpl.move || `运动 ${p.moveMinutes} 分钟`, kind: "time", minutes: p.moveMinutes, slot: "09:50", done: false },
+    { id: "create", title: tpl.create || "写一段话", kind: "output", minutes: 25, slot: "19:35", done: false },
+  ];
+};
 
 const defaultAfter = [
   { time: "21:30", title: "读《禅与摩托车维修艺术》20 分钟" },
@@ -51,6 +54,7 @@ const seed = () => ({
     fitnessLevel: "1-2/week",
     location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
     goals: { short: [], long: [] },
+    customPlan: {},
     want: { books: [], movies: [], quotes: [] },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
@@ -74,6 +78,7 @@ async function load() {
   if (!Array.isArray(db.corpus)) db.corpus = [];
   if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
+  if (!db.profile.customPlan) db.profile.customPlan = {};
   if (!db.profile.want) db.profile.want = { books: [], movies: [], quotes: [] };
   for (const k of ["books", "movies", "quotes"]) {
     if (!Array.isArray(db.profile.want[k])) db.profile.want[k] = [];
@@ -593,6 +598,27 @@ function applyOp(op, payload, date) {
       day.after[i] = { time: time || cur.time, title };
       return true;
     }
+    /** 改「每天的规矩」：写入模板，并同步今天 */
+    case "planTemplate": {
+      const id = String(payload.id || "");
+      if (!["meditate", "move", "create"].includes(id)) return false;
+      const title = String(payload.title ?? "").trim().slice(0, 40);
+      if (!title) return false;
+      db.profile.customPlan[id] = title;
+      const m = title.match(/(\d{1,3})\s*(?:分钟|min)/i);
+      const mins = m ? Math.max(1, Math.min(180, Number(m[1]) || 0)) : 0;
+      if (mins) {
+        if (id === "meditate") db.profile.meditationMinutes = mins;
+        if (id === "move") db.profile.moveMinutes = mins;
+      }
+      const today = getDay(todayKey());
+      const item = today.plan.find((p) => p.id === id);
+      if (item) {
+        item.title = title;
+        if (mins) item.minutes = mins;
+      }
+      return true;
+    }
     case "planEdit": {
       const item = day.plan.find((p) => p.id === payload.id);
       if (!item) return false;
@@ -686,6 +712,29 @@ function applyOp(op, payload, date) {
       const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
       g.date = date;
       if (date) syncInboxTodo(g);
+      return true;
+    }
+    /** 把一条推荐安排到某天：那天就出现（和日历/今天同一份数据） */
+    case "recommendToDay": {
+      const w = getWeek();
+      const rec = w.recommend;
+      if (!rec || !Array.isArray(rec.items)) return false;
+      const it = rec.items.find((x) => x.id === payload.recId);
+      if (!it) return false;
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
+      if (!date) return false;
+      const day = getDay(date);
+      if (!Array.isArray(day.todos)) day.todos = [];
+      if (!day.todos.some((t) => t.fromRec === it.id)) {
+        day.todos.push({
+          id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          text: it.title,
+          done: false,
+          at: new Date().toISOString(),
+          fromRec: it.id,
+        });
+      }
+      it.placed = date;
       return true;
     }
     case "noteAdd": {
