@@ -52,15 +52,19 @@ window.__ModuleLoader__.load({
   --lg-serif:"Songti SC","Noto Serif SC","Source Han Serif SC",serif;
   --lg-sans:"PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei",system-ui,sans-serif;
   background:var(--lg-bg); color:var(--lg-text);
-  height:100%; display:flex; flex-direction:column; overflow:hidden;
+  height:100%; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.14) transparent;
+}
+.lg-scope::-webkit-scrollbar{width:6px;height:6px}
+.lg-scope::-webkit-scrollbar-track{background:transparent}
+.lg-scope::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
+.lg-scope::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
   font-family:var(--lg-sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 .lg-scope *{box-sizing:border-box}
 .lg-page{
-  width:100%; max-width:1120px; margin:0 auto;
-  flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
+  width:100%; max-width:1120px; margin:0 auto; flex:0 0 auto;
   padding:calc(var(--dsh-frame-top-clearance,0px) + 34px) 40px 96px;
-  -webkit-overflow-scrolling:touch;
 }
 @media (max-width:820px){ .lg-page{padding:calc(var(--dsh-frame-top-clearance,0px) + 20px) 20px 72px} }
 
@@ -191,6 +195,16 @@ window.__ModuleLoader__.load({
 .lg-labelrow button{flex:0 0 auto;min-width:64px;min-height:42px;border-radius:9px;border:0;background:var(--lg-accent);color:var(--lg-on-accent);font-size:14px;font-weight:600;cursor:pointer}
 
 /* 灵感 */
+.lg-wx{display:inline-flex;align-items:baseline;gap:8px;font-size:12px;color:var(--lg-muted)}
+.lg-wx i{font-style:normal;color:var(--lg-text)}
+.lg-wx b{font-weight:500;font-size:15px;color:var(--lg-accent);font-variant-numeric:tabular-nums}
+.lg-wx em{font-style:normal;font-size:11.5px;opacity:.8}
+.lg-loc{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--lg-line);font-size:11.5px;color:var(--lg-muted)}
+.lg-loc .k{letter-spacing:.14em;flex:0 0 auto}
+.lg-loc button{background:none;border:0;padding:0;color:var(--lg-muted);font-size:11.5px;font-family:var(--lg-sans);cursor:pointer;border-bottom:1px dashed var(--lg-line)}
+.lg-loc button:hover{color:var(--lg-accent)}
+.lg-loc .sun{margin-left:auto;font-variant-numeric:tabular-nums}
+.lg-loc input{flex:1 1 auto;min-width:0;min-height:30px;padding:2px 8px;background:var(--lg-surface-2);border:1px solid var(--lg-accent);border-radius:6px;color:var(--lg-text);font-size:12px;font-family:var(--lg-sans);outline:none}
 .lg-insp{margin:0}
 .lg-insp .q{font-family:var(--lg-serif);font-size:17px;line-height:1.9;letter-spacing:.03em;color:var(--lg-text);margin:0 0 10px}
 .lg-insp .from{font-size:11.5px;color:var(--lg-muted);letter-spacing:.06em;margin:0}
@@ -397,6 +411,8 @@ window.__ModuleLoader__.load({
       const [expanded, setExpanded] = useState(null);
       const [editingId, setEditingId] = useState(null);
       const [editText, setEditText] = useState("");
+      const [editingLoc, setEditingLoc] = useState(false);
+      const [locText, setLocText] = useState("");
 
       useEffect(() => {
         if (!day.timer) return;
@@ -406,6 +422,7 @@ window.__ModuleLoader__.load({
 
       const sessions = Array.isArray(day.sessions) ? day.sessions : [];
       const elapsed = day.timer ? Math.max(0, Math.floor((Date.now() - new Date(day.timer.startedAt).getTime()) / 1000)) : 0;
+      const wx = state.weather || null;
       const rl = Array.isArray(state.readlater) ? state.readlater : [];
       const rlPending = rl.filter((r) => r.status === "pending");
       const rlReady = rl.filter((r) => r.status === "ready");
@@ -625,13 +642,62 @@ window.__ModuleLoader__.load({
             ),
           ),
 
-          /* ---------- 右：规定事项 ---------- */
+          /* ---------- 右：灵感（右上角）+ 规定事项 ---------- */
           h(
             "div",
             null,
             h(
               "div",
               { className: "lg-card" },
+              h(
+                "div",
+                { className: "lg-card-head" },
+                h("span", null, "灵感"),
+                wx
+                  ? h(
+                      "span",
+                      { className: "lg-wx" },
+                      h("i", null, wx.text),
+                      h("b", null, `${wx.temp}°`),
+                      wx.tmin != null && wx.tmax != null ? h("em", null, `${wx.tmin}–${wx.tmax}°`) : null,
+                    )
+                  : null,
+              ),
+              day.inspiration
+                ? h("div", { className: "lg-insp" }, h("p", { className: "q" }, `「${day.inspiration.text}」`), h("p", { className: "from" }, "它替你想到的"))
+                : h("p", { className: "lg-empty" }, "今天的还没到。它一般早上来，也可以直接跟我说「给我一条今天的灵感」。"),
+              h(
+                "div",
+                { className: "lg-loc" },
+                h("span", { className: "k" }, "位置"),
+                editingLoc
+                  ? h("input", {
+                      value: locText,
+                      autoFocus: true,
+                      placeholder: "写城市或区，如 杭州余杭",
+                      onChange: (e) => setLocText(e.target.value),
+                      onBlur: () => {
+                        const v = locText.trim();
+                        setEditingLoc(false);
+                        if (v && v !== (state.location && state.location.name)) run("setLocation", { name: v });
+                      },
+                      onKeyDown: (e) => {
+                        if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                        if (e.key === "Escape") { e.preventDefault(); setEditingLoc(false); }
+                      },
+                    })
+                  : h(
+                      "button",
+                      { onClick: () => { setLocText((state.location && state.location.name) || ""); setEditingLoc(true); }, title: "点一下改位置" },
+                      (state.location && state.location.name) || "设定位置",
+                    ),
+                wx && wx.sunrise && wx.sunset ? h("span", { className: "sun" }, `日出 ${wx.sunrise} · 日落 ${wx.sunset}`) : null,
+              ),
+            ),
+
+            h(
+              "div",
+              { className: "lg-card", style: { marginTop: 16 } },
               h(
                 "div",
                 { className: "lg-card-head" },
@@ -682,20 +748,6 @@ window.__ModuleLoader__.load({
                   ),
                 ),
               ),
-            ),
-
-            h(
-              "div",
-              { className: "lg-card", style: { marginTop: 16 } },
-              h(
-                "div",
-                { className: "lg-card-head" },
-                h("span", null, "灵感"),
-                h("span", { className: "lg-count-n" }, day.inspiration ? day.inspiration.from || "" : ""),
-              ),
-              day.inspiration
-                ? h("div", { className: "lg-insp" }, h("p", { className: "q" }, `「${day.inspiration.text}」`), h("p", { className: "from" }, "它替你想到的"))
-                : h("p", { className: "lg-empty" }, "今天的还没到。它一般早上来，也可以直接跟我说「给我一条今天的灵感」。"),
             ),
 
             h(

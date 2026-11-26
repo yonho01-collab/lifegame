@@ -10,7 +10,11 @@
 <style>
 [data-slot="main"]{--lg-muted:#575c64;--lg-accent-text:#2a55b5}
 [data-theme="dark"] [data-slot="main"]{--lg-muted:#9aa0aa;--lg-accent-text:#9dc0ff}
-[data-slot="main"] .lg{padding:26px 32px 40px;height:100%;overflow-y:auto}
+[data-slot="main"] .lg{padding:26px 32px 40px;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.18) transparent}
+[data-slot="main"] .lg::-webkit-scrollbar{width:6px}
+[data-slot="main"] .lg::-webkit-scrollbar-track{background:transparent}
+[data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:999px}
+[data-theme="dark"] [data-slot="main"] .lg::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
 [data-slot="main"] .lg-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--lg-muted);margin-bottom:6px}
 [data-slot="main"] .lg-h1{font-size:22px;font-weight:600;margin:0 0 14px}
 [data-slot="main"] .lg-tabs{display:flex;gap:22px;border-bottom:1px solid var(--dsh-line);margin-bottom:20px}
@@ -52,6 +56,13 @@
 [data-slot="main"] .lg-hint{margin:10px 0 0;color:var(--lg-muted);font-size:12px;line-height:1.7}
 [data-slot="main"] .lg-pomo{flex:0 0 auto;height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--dsh-line);background:none;color:var(--lg-accent-text);font-size:12px;font-family:inherit;cursor:pointer}
 [data-slot="main"] .lg-pomo:hover{border-color:var(--lg-accent-text);color:var(--lg-accent-text)}
+[data-slot="main"] .lg-wx{display:inline-flex;align-items:baseline;gap:8px;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-wx i{font-style:normal;color:var(--dsh-fg)}
+[data-slot="main"] .lg-wx b{font-weight:600;font-size:15px;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-wx em{font-style:normal;color:var(--dsh-fg)}
+[data-slot="main"] .lg-loc{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--dsh-line);color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-loc button{background:none;border:0;min-height:26px;padding:3px 0;border-bottom:1px dashed var(--dsh-line);color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-loc .sun{margin-left:auto;font-variant-numeric:tabular-nums}
 [data-slot="main"] .lg-q{font-size:14px;line-height:1.8;margin:0 0 8px}
 [data-slot="main"] .lg-from{font-size:12px;color:var(--lg-muted);margin:0}
 [data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
@@ -120,6 +131,13 @@
           <!-- 右：规定事项 -->
           <div>
             <div class="lg-card">
+              <div class="lg-head"><span>灵感</span><span class="lg-wx"><i>晴</i><b>16°</b><em>9–19°</em></span></div>
+              <p class="lg-q">「今天的光是斜的，适合走一段。」</p>
+              <p class="lg-from">它替你想到的</p>
+              <div class="lg-loc"><span class="k">位置</span><button>杭州 · 余杭</button><span class="sun">日出 06:32 · 日落 16:58</span></div>
+            </div>
+
+            <div class="lg-card">
               <div class="lg-head"><span>规定事项</span><span class="lg-num">2 / 3</span></div>
               <ul class="lg-list">
                 <li class="lg-li done"><span class="lg-dot on"></span><span class="t">冥想 5 分钟</span><span class="s">09:30</span></li>
@@ -128,11 +146,6 @@
               </ul>
             </div>
 
-            <div class="lg-card">
-              <div class="lg-head"><span>灵感</span><span class="lg-num">天气</span></div>
-              <p class="lg-q">「今天的光是斜的，适合走一段。」</p>
-              <p class="lg-from">它替你想到的</p>
-            </div>
 
             <div class="lg-card">
               <div class="lg-head"><span>之后</span><span class="lg-num">到点会提醒</span></div>

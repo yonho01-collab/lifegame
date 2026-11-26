@@ -49,6 +49,7 @@ const seed = () => ({
     moveMinutes: 5,
     budget: "500-1500",
     fitnessLevel: "1-2/week",
+    location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
   },
   season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
   days: {},
@@ -68,6 +69,7 @@ async function load() {
   if (!db.days) db.days = {};
   if (!db.weeks) db.weeks = {};
   if (!Array.isArray(db.readlater)) db.readlater = [];
+  if (!db.profile.location) db.profile.location = { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 };
   await persist();
   normalizeDays();
 }
@@ -203,6 +205,8 @@ const publicState = (date) => ({
   day: getDay(date),
   week: getWeek(),
   readlater: db.readlater.slice(0, 40),
+  weather: db.weather,
+  location: db.profile.location,
   stats: statsFor(date),
 });
 
@@ -244,6 +248,21 @@ function applyOp(op, payload, date) {
       const n = day.todos.length;
       day.todos = day.todos.filter((x) => x.id !== payload.id);
       return day.todos.length !== n;
+    }
+    case "setLocation": {
+      const name = String(payload.name ?? "").trim().slice(0, 40);
+      if (!name) return false;
+      db.profile.location = { name, lat: null, lon: null };
+      queueMicrotask(async () => {
+        const g = await geocode(name);
+        if (g) {
+          db.profile.location = { name: g.name || name, lat: g.lat, lon: g.lon };
+          db.rev += 1;
+          persist();
+        }
+        await fetchWeather();
+      });
+      return true;
     }
     case "planEdit": {
       const item = day.plan.find((p) => p.id === payload.id);
@@ -442,7 +461,10 @@ function summaryText(day) {
   const goalLine = wk.goals.length
     ? `本周目标：${wk.goals.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}`
     : "";
+  const w = db.weather;
+  const weatherLine = w && w.text ? `天气（${w.place || ""}）：${w.text} ${w.temp != null ? w.temp + "°" : ""}${w.tmax != null ? `（${w.tmin}–${w.tmax}°）` : ""}` : "";
   return [
+    weatherLine,
     goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
     cur ? `下一件：${cur.title}（${cur.slot}）。` : "今天的都做完了。",
@@ -487,6 +509,93 @@ function readBody(req) {
   });
 }
 
+
+/* ---------------- 天气与位置 ---------------- */
+
+const WMO = {
+  0: "晴", 1: "晴间多云", 2: "多云", 3: "阴",
+  45: "雾", 48: "雾凇",
+  51: "毛毛雨", 53: "小雨", 55: "中雨", 56: "冻雨", 57: "冻雨",
+  61: "小雨", 63: "中雨", 65: "大雨", 66: "冻雨", 67: "冻雨",
+  71: "小雪", 73: "中雪", 75: "大雪", 77: "雪粒",
+  80: "阵雨", 81: "阵雨", 82: "强阵雨", 85: "阵雪", 86: "阵雪",
+  95: "雷阵雨", 96: "雷暴冰雹", 99: "雷暴冰雹",
+};
+
+async function fetchWeather() {
+  const loc = (db.profile && db.profile.location) || null;
+  if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lon)) return null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
+      "&current=temperature_2m,weather_code,relative_humidity_2m" +
+      "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
+      "&timezone=Asia%2FShanghai&forecast_days=1";
+    const res = await fetch(url, { signal: ctrl.signal, headers: { accept: "application/json" } });
+    clearTimeout(timer);
+    const j = await res.json();
+    const cur = j.current || {};
+    const d = (j.daily || {});
+    db.weather = {
+      code: cur.weather_code ?? null,
+      text: WMO[cur.weather_code] || "",
+      temp: Number.isFinite(cur.temperature_2m) ? Math.round(cur.temperature_2m) : null,
+      humidity: Number.isFinite(cur.relative_humidity_2m) ? Math.round(cur.relative_humidity_2m) : null,
+      tmax: Array.isArray(d.temperature_2m_max) ? Math.round(d.temperature_2m_max[0]) : null,
+      tmin: Array.isArray(d.temperature_2m_min) ? Math.round(d.temperature_2m_min[0]) : null,
+      rain: Array.isArray(d.precipitation_probability_max) ? d.precipitation_probability_max[0] : null,
+      sunrise: Array.isArray(d.sunrise) ? String(d.sunrise[0]).slice(11, 16) : "",
+      sunset: Array.isArray(d.sunset) ? String(d.sunset[0]).slice(11, 16) : "",
+      place: loc.name,
+      at: new Date().toISOString(),
+    };
+    db.rev += 1;
+    persist();
+    return db.weather;
+  } catch {
+    return null;
+  }
+}
+
+async function geocodeOne(name) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=zh&format=json`;
+    const res = await fetch(url, { signal: ctrl.signal, headers: { accept: "application/json" } });
+    clearTimeout(timer);
+    const j = await res.json();
+    const hit = (j.results || [])[0];
+    if (!hit) return null;
+    return {
+      name: [hit.name, hit.admin1, hit.admin2].filter(Boolean).slice(0, 2).join(" · "),
+      lat: hit.latitude,
+      lon: hit.longitude,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 「杭州余杭」这种区县级查不到时，退到城市级 */
+async function geocode(name) {
+  const tries = [];
+  const push = (v) => {
+    const t = String(v || "").trim();
+    if (t && !tries.includes(t)) tries.push(t);
+  };
+  push(name);
+  push(name.replace(/[·,，\s]/g, ""));
+  push(name.split(/[·,，\s]/)[0].replace(/(市|区|县|镇|街道)$/g, ""));
+  push(name.replace(/[·,，\s]/g, "").slice(0, 2));
+  for (const q of tries) {
+    const g = await geocodeOne(q);
+    if (g) return { name, lat: g.lat, lon: g.lon };
+  }
+  return null;
+}
 
 /* ---------------- 后台解析：插件自己抓页 + 调模型 ---------------- */
 
@@ -667,6 +776,19 @@ export function apply(ctx) {
   const home = process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
   dataFile = path.join(home, NS, "db.json");
   const ready = load().then(() => log(`state → ${dataFile}`));
+
+  // 天气：启动后拉一次，之后每小时一次
+  ctx.effect(() => {
+    const pull = () => {
+      fetchWeather().catch(() => {});
+    };
+    const t0 = setTimeout(pull, 2500);
+    const t = setInterval(pull, 3600_000);
+    return () => {
+      clearTimeout(t0);
+      clearInterval(t);
+    };
+  }, "lifegame: weather");
 
   // 模型调用：只有装了 llm 的主机才进来；Remote 下 App 侧不参与
   ctx.inject(["llm"], (c) => {
