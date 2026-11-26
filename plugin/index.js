@@ -119,6 +119,28 @@ function weekKeyOf(d) {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
 }
 
+/** Inbox 条目 → 那天待办 的同步 */
+function clearInboxTodo(inboxId) {
+  for (const key of Object.keys(db.days)) {
+    const arr = db.days[key].todos;
+    if (Array.isArray(arr)) db.days[key].todos = arr.filter((t) => t.fromInbox !== inboxId);
+  }
+}
+
+function syncInboxTodo(item) {
+  if (!item || !item.date) return;
+  clearInboxTodo(item.id);
+  const day = getDay(item.date);
+  if (!Array.isArray(day.todos)) day.todos = [];
+  day.todos.push({
+    id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    text: item.text.trim() || "（空）",
+    done: !!item.done,
+    at: new Date().toISOString(),
+    fromInbox: item.id,
+  });
+}
+
 function findGoalStep(goalId, stepId) {
   const g = db.profile.goals || { short: [], long: [] };
   for (const scope of ["short", "long"]) {
@@ -162,11 +184,12 @@ function weekStats() {
     if (plan.some((p) => p.done) || todos.some((t) => t.done) || sess.length) out.activeDays++;
   }
   const w = getWeek();
-  out.fromGoal = w.notes.filter((g) => g.fromStep).length;
-  out.fromGoalDone = w.notes.filter((g) => g.fromStep && g.done).length;
-  out.manual = w.notes.filter((g) => !g.fromStep).length;
-  out.manualDone = w.notes.filter((g) => !g.fromStep && g.done).length;
-  out.assigned = w.notes.filter((g) => g.date).length;
+  out.fromGoal = w.inbox.filter((g) => g.fromStep).length;
+  out.fromGoalDone = w.inbox.filter((g) => g.fromStep && g.done).length;
+  out.manual = w.inbox.filter((g) => !g.fromStep).length;
+  out.manualDone = w.inbox.filter((g) => !g.fromStep && g.done).length;
+  out.assigned = w.inbox.filter((g) => g.date).length;
+  out.notes = w.notes.length;
   const rl = db.readlater || [];
   out.readTotal = rl.length;
   out.readDone = rl.filter((r) => r.status === "done").length;
@@ -200,26 +223,26 @@ function weekBoard() {
 function getWeek() {
   const k = weekKeyOf(new Date(`${todayKey()}T00:00:00`));
   if (!db.weeks[k]) {
-    db.weeks[k] = { key: k, notes: [], comment: null, recommend: null };
+    db.weeks[k] = { key: k, inbox: [], notes: [], comment: null, recommend: null };
     persist();
   }
   const w = db.weeks[k];
-  // 旧数据迁移：goals → inbox → notes
-  if (!Array.isArray(w.notes)) {
-    const old = Array.isArray(w.inbox) ? w.inbox : Array.isArray(w.goals) ? w.goals : [];
-    w.notes = old.map((g) => ({
-      id: g.id || `n${Math.random().toString(36).slice(2)}`,
+  // 迁移：goals → inbox；v31 把 inbox 搬进 notes 的，搬回来
+  if (!Array.isArray(w.inbox)) {
+    const src = Array.isArray(w.notes) && w.notes.length ? w.notes : Array.isArray(w.goals) ? w.goals : [];
+    w.inbox = src.map((g) => ({
+      id: g.id || `g${Math.random().toString(36).slice(2)}`,
       text: g.text || "",
-      color: "paper",
-      date: null,
       done: !!g.done,
+      date: null,
       fromStep: g.fromStep,
       fromGoal: g.fromGoal,
       at: g.at || new Date().toISOString(),
     }));
-    delete w.inbox;
+    if (Array.isArray(w.notes)) w.notes = [];
     delete w.goals;
   }
+  if (!Array.isArray(w.inbox)) w.inbox = [];
   if (!Array.isArray(w.notes)) w.notes = [];
   if (w.recommend === undefined) w.recommend = null;
   return w;
@@ -492,13 +515,12 @@ function applyOp(op, payload, date) {
       const { goal, step } = findGoalStep(payload.goalId, payload.stepId);
       if (!step) return false;
       const w = getWeek();
-      if (!w.notes.some((g) => g.fromStep === step.id)) {
-        w.notes.push({
-          id: `n${Date.now()}`,
+      if (!w.inbox.some((g) => g.fromStep === step.id)) {
+        w.inbox.push({
+          id: `g${Date.now()}`,
           text: step.text,
-          color: "accent",
-          date: null,
           done: false,
+          date: null,
           fromStep: step.id,
           fromGoal: goal.id,
           at: new Date().toISOString(),
@@ -625,160 +647,81 @@ function applyOp(op, payload, date) {
       day.inspiration = { text, from: String(payload.from ?? "").slice(0, 60), at: new Date().toISOString() };
       return true;
     }
+    case "inboxAdd": {
+      const w = getWeek();
+      const text = String(payload.text ?? "").trim().slice(0, 200);
+      if (!text) return false;
+      w.inbox.unshift({ id: `g${Date.now()}`, text, done: false, date: null, at: new Date().toISOString() });
+      return true;
+    }
+    case "inboxEdit": {
+      const g = getWeek().inbox.find((x) => x.id === payload.id);
+      if (!g) return false;
+      const text = String(payload.text ?? "").trim().slice(0, 200);
+      if (!text) return false;
+      g.text = text;
+      syncInboxTodo(g);
+      return true;
+    }
+    case "inboxToggle": {
+      const g = getWeek().inbox.find((x) => x.id === payload.id);
+      if (!g) return false;
+      g.done = !!payload.done;
+      g.doneAt = g.done ? new Date().toISOString() : null;
+      syncInboxTodo(g);
+      return true;
+    }
+    case "inboxRemove": {
+      const w = getWeek();
+      const n = w.inbox.length;
+      clearInboxTodo(payload.id);
+      w.inbox = w.inbox.filter((x) => x.id !== payload.id);
+      return w.inbox.length !== n;
+    }
+    /** 把 Inbox 一条安排到某天（null = 收回，不排） */
+    case "inboxDate": {
+      const g = getWeek().inbox.find((x) => x.id === payload.id);
+      if (!g) return false;
+      clearInboxTodo(g.id);
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
+      g.date = date;
+      if (date) syncInboxTodo(g);
+      return true;
+    }
     case "noteAdd": {
       const w = getWeek();
-      const text = String(payload.text ?? "").slice(0, 400);
-      if (!text.trim()) return false;
       w.notes.unshift({
         id: `n${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        text,
+        text: String(payload.text ?? "").slice(0, 400),
         color: String(payload.color ?? "paper").slice(0, 12),
-        date: null,
-        done: false,
         at: new Date().toISOString(),
       });
       return true;
     }
     case "noteEdit": {
-      const w = getWeek();
-      const note = w.notes.find((x) => x.id === payload.id);
-      if (!note) return false;
-      note.text = String(payload.text ?? "").slice(0, 400);
-      // 同步到已分配的那一天
-      if (note.date) {
-        for (const key of Object.keys(db.days)) {
-          const t = (db.days[key].todos || []).find((x) => x.fromNote === note.id);
-          if (t) t.text = note.text.trim() || "（空）";
-        }
-      }
+      const n = getWeek().notes.find((x) => x.id === payload.id);
+      if (!n) return false;
+      n.text = String(payload.text ?? "").slice(0, 400);
       return true;
     }
     case "noteColor": {
-      const note = getWeek().notes.find((x) => x.id === payload.id);
-      if (!note) return false;
-      note.color = String(payload.color ?? "paper").slice(0, 12);
-      return true;
-    }
-    case "noteToggle": {
-      const note = getWeek().notes.find((x) => x.id === payload.id);
-      if (!note) return false;
-      note.done = !!payload.done;
-      note.doneAt = note.done ? new Date().toISOString() : null;
-      if (note.date) {
-        for (const key of Object.keys(db.days)) {
-          const t = (db.days[key].todos || []).find((x) => x.fromNote === note.id);
-          if (t) t.done = note.done;
-        }
-      }
-      return true;
-    }
-    case "noteDate": {
-      const w = getWeek();
-      const note = w.notes.find((x) => x.id === payload.id);
-      if (!note) return false;
-      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(payload.date || "")) ? String(payload.date) : null;
-      // 先从旧的日期上摘下来
-      for (const key of Object.keys(db.days)) {
-        const arr = db.days[key].todos;
-        if (Array.isArray(arr)) db.days[key].todos = arr.filter((t) => t.fromNote !== note.id);
-      }
-      note.date = date;
-      // 再挂到新的那天
-      if (date) {
-        const day = getDay(date);
-        if (!Array.isArray(day.todos)) day.todos = [];
-        day.todos.push({
-          id: `t${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-          text: note.text.trim() || "（空）",
-          done: !!note.done,
-          at: new Date().toISOString(),
-          fromNote: note.id,
-        });
-      }
+      const n = getWeek().notes.find((x) => x.id === payload.id);
+      if (!n) return false;
+      n.color = String(payload.color ?? "paper").slice(0, 12);
       return true;
     }
     case "noteRemove": {
       const w = getWeek();
       const n = w.notes.length;
-      for (const key of Object.keys(db.days)) {
-        const arr = db.days[key].todos;
-        if (Array.isArray(arr)) db.days[key].todos = arr.filter((t) => t.fromNote !== payload.id);
-      }
       w.notes = w.notes.filter((x) => x.id !== payload.id);
       return w.notes.length !== n;
     }
-    case "inboxAdd":
-      return applyOp("noteAdd", { text: payload.text }, date);
-    case "inboxEdit":
-      return applyOp("noteEdit", payload, date);
-    case "inboxToggle":
-      return applyOp("noteToggle", payload, date);
-    case "inboxRemove":
-      return applyOp("noteRemove", payload, date);
-    case "recommendWeek": {
-      queueMicrotask(() => recommendWeek());
-      return true;
-    }
-    case "setWeekComment": {
-      const w = getWeek();
-      w.comment = String(payload.text ?? "").slice(0, 1200) || null;
-      return true;
-    }
-    case "readlaterAdd": {
-      const url = String(payload.url ?? "").trim().slice(0, 2000);
-      if (!/^https?:\/\//i.test(url)) return false;
-      if (db.readlater.some((x) => x.url === url)) return false;
-      const newId = `r${Date.now()}`;
-      db.readlater.unshift({
-        id: newId,
-        url,
-        title: String(payload.title ?? "").slice(0, 200) || "",
-        status: "pending",
-        summary: "",
-        outline: [],
-        minutes: 0,
-        addedAt: new Date().toISOString(),
-      });
-      queueMicrotask(() => kickParse(newId));
-      return true;
-    }
-    case "readlaterRemove": {
-      const n = db.readlater.length;
-      db.readlater = db.readlater.filter((x) => x.id !== payload.id);
-      return db.readlater.length !== n;
-    }
-    case "readlaterDone": {
-      const r = db.readlater.find((x) => x.id === payload.id);
-      if (!r) return false;
-      r.status = payload.done ? "done" : r.summary ? "ready" : "pending";
-      r.doneAt = payload.done ? new Date().toISOString() : null;
-      return true;
-    }
-    case "readlaterRetry": {
-      const r = db.readlater.find((x) => x.id === payload.id);
-      if (!r) return false;
-      r.status = "pending";
-      r.tries = 0;
-      queueMicrotask(() => kickParse(r.id));
-      return true;
-    }
-    case "readlaterEnrich": {
-      const r = db.readlater.find((x) => x.id === payload.id);
-      if (!r) return false;
-      if (payload.title) r.title = String(payload.title).slice(0, 200);
-      r.summary = String(payload.summary ?? "").slice(0, 600);
-      r.outline = Array.isArray(payload.outline) ? payload.outline.slice(0, 12).map((x) => String(x).slice(0, 120)) : [];
-      r.minutes = Math.max(1, Math.min(120, Number(payload.minutes) || 0)) || 0;
-      r.status = r.status === "done" ? "done" : "ready";
-      r.enrichedAt = new Date().toISOString();
-      return true;
-    }
     case "goalAdd":
-      return applyOp("noteAdd", payload, date);
+      return applyOp("inboxAdd", payload, date);
     case "goalToggle":
-      return applyOp("noteToggle", payload, date);
+      return applyOp("inboxToggle", payload, date);
     case "goalRemove":
-      return applyOp("noteRemove", payload, date);
+      return applyOp("inboxRemove", payload, date);
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
@@ -825,7 +768,7 @@ function weekModel() {
   const st = statsFor(todayKey());
   return {
     title: `本周 · ${w.key}`,
-    goals: w.notes.map((g) => ({ title: g.text, done: !!g.done })),
+    goals: w.inbox.map((g) => ({ title: g.text, done: !!g.done })),
     comment: w.comment,
     planDone: st.agg.planDone,
     planTotal: st.agg.planTotal,
@@ -851,9 +794,10 @@ function summaryText(day) {
   const done = day.plan.filter((p) => p.done).length;
   const cur = day.plan.find((p) => !p.done);
   const wk = getWeek();
-  const goalLine = wk.notes.length
-    ? `本周便签：${wk.notes.filter((g) => !g.done).map((g) => g.text).join("；") || "都处理完了"}`
+  const goalLine = wk.inbox.length
+    ? `本周 Inbox：${wk.inbox.filter((g) => !g.done).map((g) => g.text).join("；") || "都处理完了"}`
     : "";
+  const noteLine = wk.notes.length ? `本周便签：${wk.notes.map((x) => x.text).filter(Boolean).slice(0, 5).join(" / ")}` : "";
   const goals = db.profile.goals || { short: [], long: [] };
   const goalList = [
     goals.short.length ? `短期目标：${goals.short.map((g) => `${g.text}${g.done ? "（已达成）" : ""}`).join("；")}` : "",
@@ -869,6 +813,7 @@ function summaryText(day) {
   return [
     weatherLine,
     goalList,
+    noteLine,
     wantLine,
     goalLine,
     `今天 ${day.plan.length} 件，已完成 ${done} 件。`,
@@ -1715,9 +1660,9 @@ export function apply(ctx) {
           if (a === "goal_add") {
             const text = String(args.text || "").trim().slice(0, 160);
             if (!text) return { text: "要定什么目标？" };
-            w.notes.unshift({ id: `n${Date.now()}`, text, color: "paper", date: null, done: false, at: new Date().toISOString() });
+            w.inbox.unshift({ id: `g${Date.now()}`, text, done: false, date: null, at: new Date().toISOString() });
           } else if (a === "goal_done") {
-            const g = w.notes.find((x) => x.id === args.id) || w.notes.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
+            const g = w.inbox.find((x) => x.id === args.id) || w.inbox.find((x) => !x.done && args.text && x.text.includes(String(args.text)));
             if (!g) return { text: "没找到那条目标。" };
             g.done = true;
           } else if (a === "comment") {

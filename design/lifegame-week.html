@@ -109,41 +109,48 @@
 [data-slot="main"] .lg-row{display:flex;gap:12px;font-size:13px;color:var(--lg-muted);padding:7px 0;border-top:1px solid var(--dsh-line)}
 [data-slot="main"] .lg-row:first-of-type{border-top:0}
 [data-slot="main"] .lg-row i{font-style:normal;width:44px;flex:0 0 auto;font-variant-numeric:tabular-nums}
-[data-slot="main"] .lg-weekhead{display:flex;align-items:flex-end;gap:20px;margin:0 0 22px;flex-wrap:wrap}
-[data-slot="main"] .lg-minis{display:flex;gap:18px;flex-wrap:wrap;flex:1 1 auto;min-width:0}
-[data-slot="main"] .lg-mini{min-width:76px}
-[data-slot="main"] .lg-mini .k{display:block;color:var(--lg-muted);font-size:12px;letter-spacing:.06em}
-[data-slot="main"] .lg-mini .v{display:block;color:var(--lg-text);font-size:12px;margin:2px 0 5px;font-variant-numeric:tabular-nums}
-[data-slot="main"] .lg-minibar{height:3px;border-radius:999px;background:var(--lg-surface-2);overflow:hidden}
-[data-slot="main"] .lg-minibar i{display:block;height:100%;background:var(--lg-accent);border-radius:999px}
-[data-slot="main"] .lg-newnote{flex:0 0 auto;min-height:36px;padding:0 16px;border-radius:var(--lg-radius);border:1px solid var(--lg-line);background:var(--lg-surface);color:var(--lg-text);font-size:12px;font-family:inherit;cursor:pointer;box-shadow:var(--lg-shadow)}
-[data-slot="main"] .lg-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px;align-items:start}
-[data-slot="main"] .lg-note{position:relative;background:var(--note-bg,#fff);border:1px solid var(--lg-line);border-radius:var(--lg-radius);padding:20px 14px 10px;box-shadow:var(--lg-shadow);display:flex;flex-direction:column;gap:8px;min-height:132px}
-[data-slot="main"] .lg-note.n-paper{--note-bg:#ffffff}
-[data-slot="main"] .lg-note.n-warm{--note-bg:#fffbf0}
-[data-slot="main"] .lg-note.n-blue{--note-bg:#f2f6ff}
-[data-slot="main"] .lg-note.n-green{--note-bg:#f1f8f2}
-[data-slot="main"] .lg-note.n-rec{--note-bg:#fbfbfc}
-[data-slot="main"] .lg-note.ghost{border-style:dashed;box-shadow:none;align-items:center;justify-content:center}
-[data-slot="main"] .lg-note-top{display:flex;align-items:center;gap:8px;justify-content:space-between;min-height:16px}
-[data-slot="main"] .lg-note-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--lg-muted);font-size:14px;line-height:1;cursor:pointer}
-[data-slot="main"] .lg-note-text{width:100%;flex:1 1 auto;min-height:84px;border:0;background:none;resize:none;outline:none;font-family:inherit;font-size:12px;line-height:1.7;color:var(--lg-text);padding:0}
-[data-slot="main"] .lg-note-text.static{font-size:12px;margin:0;line-height:1.55;min-height:0;color:var(--lg-text)}
-[data-slot="main"] .lg-note-why{margin:0;color:var(--lg-muted);font-size:12px;line-height:1.6}
-[data-slot="main"] .lg-note-foot{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid var(--lg-line)}
-[data-slot="main"] .lg-note-days{display:flex;gap:2px;flex-wrap:nowrap;overflow:hidden}
-[data-slot="main"] .lg-note-day{flex:0 0 auto;min-width:24px;min-height:24px;padding:0 4px;border:1px solid transparent;border-radius:5px;background:none;color:var(--lg-muted);font-size:12px;line-height:1;font-family:inherit;cursor:pointer;white-space:nowrap}
-[data-slot="main"] .lg-note-day.on{background:var(--lg-ink);border-color:var(--lg-ink);color:var(--lg-on-ink)}
-[data-slot="main"] .lg-note-day.today{border-color:var(--lg-accent)}
-[data-slot="main"] .lg-note-colors{display:flex;gap:5px;flex:0 0 auto}
+[data-slot="main"] .lg-imeta{display:flex;align-items:center;gap:8px;margin-top:6px}
+[data-slot="main"] .lg-slot{min-height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-slot.on{color:var(--lg-accent);border-color:var(--lg-focus)}
+[data-slot="main"] .lg-progress{display:flex;flex-direction:column;gap:14px}
+[data-slot="main"] .lg-prow-top{display:flex;align-items:baseline;justify-content:space-between;color:var(--lg-muted);font-size:12px;margin-bottom:6px}
+[data-slot="main"] .lg-prow-top .n{color:var(--lg-text);font-variant-numeric:tabular-nums}
+[data-slot="main"] .lg-pbar{height:4px;border-radius:999px;background:var(--lg-surface-2);overflow:hidden}
+[data-slot="main"] .lg-pbar i{display:block;height:100%;background:var(--lg-accent);border-radius:999px}
+[data-slot="main"] .lg-note-mini{position:relative;background:var(--note-bg,#fff);border:1px solid var(--lg-line);border-radius:var(--lg-radius);padding:10px 12px 8px;box-shadow:var(--lg-shadow);margin-bottom:10px}
+[data-slot="main"] .lg-note-mini.n-paper{--note-bg:#fff}
+[data-slot="main"] .lg-note-mini.n-warm{--note-bg:#fffbf0}
+[data-slot="main"] .lg-note-mini.n-blue{--note-bg:#f2f6ff}
+[data-slot="main"] .lg-note-mini.n-green{--note-bg:#f1f8f2}
+[data-slot="main"] .lg-note-mini textarea{width:100%;border:0;background:none;resize:none;outline:none;font-family:inherit;font-size:12px;line-height:1.7;color:var(--lg-text);padding:0}
+[data-slot="main"] .lg-note-mini-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--lg-muted);font-size:13px;cursor:pointer}
+[data-slot="main"] .lg-note-mini-foot{display:flex;gap:4px;justify-content:flex-end;margin-top:4px}
 [data-slot="main"] .lg-note-c{position:relative;width:24px;height:24px;border:0;background:none;cursor:pointer;padding:0}
 [data-slot="main"] .lg-note-c::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--c,#fff);border:1px solid rgba(24,24,27,.16)}
-[data-slot="main"] .lg-note-c.on{box-shadow:0 0 0 2px var(--lg-accent-soft),0 0 0 1px var(--lg-accent)}
-[data-slot="main"] .lg-note-where{color:var(--lg-muted);font-size:12px}
-[data-slot="main"] .lg-note-start{height:26px;padding:0 10px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-accent);font-size:12px;font-family:inherit;cursor:pointer}
-[data-slot="main"] .lg-rec-kind{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--lg-line);color:var(--lg-muted);font-size:12px}
-[data-slot="main"] .lg-recfresh{min-height:40px;min-width:120px;border:0;background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
-[data-slot="main"] .lg-recfresh:hover{color:var(--lg-accent)}
+[data-slot="main"] .lg-note-c.on::before{box-shadow:0 0 0 2px var(--lg-accent-soft),0 0 0 1px var(--lg-accent)}
+[data-slot="main"] .lg-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+[data-slot="main"] .lg-cal-day{border:1px solid var(--lg-line);border-radius:var(--lg-radius);padding:10px 9px;min-height:130px;display:flex;flex-direction:column;gap:8px;background:var(--lg-surface)}
+[data-slot="main"] .lg-cal-day.today{border-color:var(--lg-accent)}
+[data-slot="main"] .lg-cal-head{display:flex;align-items:baseline;justify-content:space-between;color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-cal-head b{color:var(--lg-text);font-weight:500}
+[data-slot="main"] .lg-cal-day.today .lg-cal-head b{color:var(--lg-accent)}
+[data-slot="main"] .lg-cal-tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+[data-slot="main"] .lg-cal-tasks li{display:flex;gap:5px;align-items:flex-start;font-size:12px;line-height:1.55;color:var(--lg-text)}
+[data-slot="main"] .lg-cal-tasks li.on .tx{color:var(--lg-muted);text-decoration:line-through}
+[data-slot="main"] .lg-cal-tasks .lg-dot{width:15px;height:15px;margin-top:1px;flex:0 0 auto;border-radius:50%;border:1px solid var(--lg-line)}
+[data-slot="main"] .lg-cal-tasks .lg-dot.on{background:var(--lg-accent);border-color:var(--lg-accent)}
+[data-slot="main"] .lg-cal-add{margin-top:auto;display:flex;gap:4px}
+[data-slot="main"] .lg-cal-add input{flex:1;min-width:0;min-height:26px;padding:0 8px;border:1px solid var(--lg-line);border-radius:6px;background:var(--lg-surface);color:var(--lg-text);font-size:12px;font-family:inherit;outline:none}
+[data-slot="main"] .lg-cal-add button{min-height:26px;padding:0 8px;border:1px solid var(--lg-line);border-radius:6px;background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:pointer}
+[data-slot="main"] .lg-recs{list-style:none;margin:0;padding:0}
+[data-slot="main"] .lg-recs li{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--lg-line)}
+[data-slot="main"] .lg-recs li:last-child{border-bottom:0;padding-bottom:0}
+[data-slot="main"] .lg-rec-kind{flex:0 0 auto;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--lg-line);color:var(--lg-muted);font-size:12px}
+[data-slot="main"] .lg-rec-body{flex:1;min-width:0}
+[data-slot="main"] .lg-rec-body .t{margin:0;font-size:12px;color:var(--lg-text)}
+[data-slot="main"] .lg-rec-body .w{margin:4px 0 0;font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-rec-min{flex:0 0 auto;font-size:12px;color:var(--lg-muted)}
+[data-slot="main"] .lg-note-start{flex:0 0 auto;height:26px;padding:0 10px;border-radius:6px;border:1px solid var(--lg-line);background:none;color:var(--lg-accent);font-size:12px;font-family:inherit;cursor:pointer}
 </style>
 </head>
 <body>
@@ -171,62 +178,54 @@
         <div class="lg-h1row"><h1 class="lg-h1">本周</h1><div class="lg-watch inline"><b>它在看着</b><span>今天还剩 3 件</span><span class="lg-sep"></span><span>16:58 日落</span></div></div>
         <div class="lg-tabs"><span class="lg-tab">今天</span><span class="lg-tab on">本周</span><span class="lg-tab">我</span><span class="lg-tabspark"><span class="q">「今天的光是斜的，适合走一段。」</span><span class="from">天气</span><button class="lg-spark-swap">换</button></span></div>
 
-        <div class="lg-weekhead">
-          <div class="lg-minis">
-            <div class="lg-mini"><span class="k">从目标</span><span class="v">1/4</span><div class="lg-minibar"><i style="width:25%"></i></div></div>
-            <div class="lg-mini"><span class="k">临时</span><span class="v">2/3</span><div class="lg-minibar"><i style="width:66%"></i></div></div>
-            <div class="lg-mini"><span class="k">规定事项</span><span class="v">13/21</span><div class="lg-minibar"><i style="width:62%"></i></div></div>
-            <div class="lg-mini"><span class="k">今天要做</span><span class="v">5/11</span><div class="lg-minibar"><i style="width:45%"></i></div></div>
-            <div class="lg-mini"><span class="k">专注</span><span class="v">240/300</span><div class="lg-minibar"><i style="width:80%"></i></div></div>
-            <div class="lg-mini"><span class="k">有记录</span><span class="v">5/7</span><div class="lg-minibar"><i style="width:71%"></i></div></div>
+        <div class="lg-grid">
+          <div>
+            <div class="lg-card">
+              <div class="lg-head"><span>Inbox</span><span class="lg-num">3 件待处理</span></div>
+              <p class="lg-hint" style="margin:0 0 10px">这周冒出来的事都先扔这儿——目标里推过来的在，临时想到的也在。</p>
+              <div class="lg-inp"><input placeholder="想到就写，回车放进 Inbox"><button>加</button></div>
+              <ul class="lg-list">
+                <li class="lg-li"><span style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0"><span class="lg-dot"></span><span><span class="t">把「人生游戏」的今天页跑通</span><span class="lg-imeta"><span class="lg-tag">来自目标</span><button class="lg-slot on">周三</button></span></span></span><span class="lg-x">×</span></li>
+                <li class="lg-li"><span style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0"><span class="lg-dot"></span><span><span class="t">周五晚上留给《花样年华》——不安排别的</span><span class="lg-imeta"><button class="lg-slot on">周五</button></span></span></span><span class="lg-x">×</span></li>
+                <li class="lg-li"><span style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0"><span class="lg-dot"></span><span><span class="t">把相机电池充满，周末去拍一次日落</span><span class="lg-imeta"><button class="lg-slot">排期</button></span></span></span><span class="lg-x">×</span></li>
+                <li class="lg-li done"><span style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0"><span class="lg-dot on"></span><span><span class="t">这周至少做 3 次力量训练</span><span class="lg-imeta"><button class="lg-slot">排期</button></span></span></span><span class="lg-x">×</span></li>
+              </ul>
+            </div>
           </div>
-          <button class="lg-newnote">＋ 新便签</button>
+          <div>
+            <div class="lg-card">
+              <div class="lg-head"><span>这周</span><span class="lg-num">5 天有记录</span></div>
+              <div class="lg-progress"><div class="lg-prow"><div class="lg-prow-top"><span>从目标推进</span><span class="n">1 / 4</span></div><div class="lg-pbar"><i style="width:25%"></i></div></div><div class="lg-prow"><div class="lg-prow-top"><span>临时加的事</span><span class="n">2 / 3</span></div><div class="lg-pbar"><i style="width:66%"></i></div></div><div class="lg-prow"><div class="lg-prow-top"><span>规定事项</span><span class="n">13 / 21</span></div><div class="lg-pbar"><i style="width:62%"></i></div></div><div class="lg-prow"><div class="lg-prow-top"><span>今天要做</span><span class="n">5 / 11</span></div><div class="lg-pbar"><i style="width:45%"></i></div></div><div class="lg-prow"><div class="lg-prow-top"><span>专注</span><span class="n">240 分钟</span></div><div class="lg-pbar"><i style="width:80%"></i></div></div><div class="lg-prow"><div class="lg-prow-top"><span>有记录的天</span><span class="n">5 / 7</span></div><div class="lg-pbar"><i style="width:71%"></i></div></div></div>
+            </div>
+            <div class="lg-card">
+              <div class="lg-head"><span>便签</span><button class="lg-pomo">＋ 贴一张</button></div>
+              <div class="lg-note-mini n-warm"><button class="lg-note-mini-x">×</button><textarea rows="2">周三降温，户外的事往后挪一天</textarea><div class="lg-note-mini-foot"><button class="lg-note-c" style="--c:#ffffff"></button><button class="lg-note-c on" style="--c:#fffbf0"></button><button class="lg-note-c" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+              <div class="lg-note-mini n-blue"><button class="lg-note-mini-x">×</button><textarea rows="2">想试试早上不看手机，先做三天</textarea><div class="lg-note-mini-foot"><button class="lg-note-c" style="--c:#ffffff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
+              <p class="lg-hint" style="margin:10px 0 0">便签只属于这一周——下周会换一张新墙。</p>
+            </div>
+          </div>
         </div>
 
-        <div class="lg-notes">
-          <div class="lg-note n-blue">
-            <button class="lg-note-x">×</button>
-            <div class="lg-note-top"><span class="lg-tag">来自目标</span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
-            <textarea class="lg-note-text" rows="4">把「人生游戏」的今天页跑通</textarea>
-            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day on">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
-          </div><div class="lg-note n-warm">
-            <button class="lg-note-x">×</button>
-            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
-            <textarea class="lg-note-text" rows="4">这周至少做 3 次力量训练</textarea>
-            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
-          </div><div class="lg-note n-blue">
-            <button class="lg-note-x">×</button>
-            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
-            <textarea class="lg-note-text" rows="4">周五晚上留给《花样年华》——不安排别的</textarea>
-            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day on">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
-          </div><div class="lg-note n-green">
-            <button class="lg-note-x">×</button>
-            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
-            <textarea class="lg-note-text" rows="4">把相机电池充满，周末去拍一次日落</textarea>
-            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
-          </div><div class="lg-note n-paper">
-            <button class="lg-note-x">×</button>
-            <div class="lg-note-top"><span></span><div class="lg-note-colors"><button class="lg-note-c" style="--c:#fff"></button><button class="lg-note-c" style="--c:#fffbf0"></button><button class="lg-note-c on" style="--c:#f2f6ff"></button><button class="lg-note-c" style="--c:#f1f8f2"></button></div></div>
-            <textarea class="lg-note-text" rows="4">买一副羽毛球拍，周末打一次</textarea>
-            <div class="lg-note-foot"><div class="lg-note-days"><button class="lg-note-day on">本周</button><button class="lg-note-day">日</button><button class="lg-note-day">一</button><button class="lg-note-day">二</button><button class="lg-note-day">今</button><button class="lg-note-day">四</button><button class="lg-note-day">五</button><button class="lg-note-day">六</button></div></div>
-          </div>
-          <div class="lg-note n-rec">
-            <span class="lg-rec-kind">书</span>
-            <p class="lg-note-text static">《置身事内》</p>
-            <p class="lg-note-why">在你自己的书单里；这周有两次 30 分钟的阅读空窗</p>
-            <div class="lg-note-foot"><span class="lg-note-where">30 分钟</span><button class="lg-note-start">开始</button></div>
-          </div><div class="lg-note n-rec">
-            <span class="lg-rec-kind">影</span>
-            <p class="lg-note-text static">《花样年华》</p>
-            <p class="lg-note-why">想看很久了，周五晚没有安排</p>
-            <div class="lg-note-foot"><span class="lg-note-where"></span></div>
-          </div><div class="lg-note n-rec">
-            <span class="lg-rec-kind">穿</span>
-            <p class="lg-note-text static">16°，带一件薄外套</p>
-            <p class="lg-note-why">早晚温差 7 度，日落 16:58</p>
-            <div class="lg-note-foot"><span class="lg-note-where"></span></div>
-          </div>
-          <div class="lg-note n-rec ghost"><button class="lg-recfresh">换一批推荐</button></div>
+        <p class="lg-sec" style="margin:22px 0 10px">这一周</p>
+        <div class="lg-cal">
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周日</b><span>11/22</span></div><ul class="lg-cal-tasks"><li class="on"><span class="lg-dot on"></span><span class="tx">把周报补完</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周一</b><span>11/23</span></div><ul class="lg-cal-tasks"><li class="on"><span class="lg-dot on"></span><span class="tx">跑步 20 分钟</span></li><li class=""><span class="lg-dot"></span><span class="tx">给物业打电话</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周二</b><span>11/24</span></div><ul class="lg-cal-tasks"><li class=""><span class="lg-dot"></span><span class="tx">写一段话</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day today"><div class="lg-cal-head"><b>今天</b><span>11/25</span></div><ul class="lg-cal-tasks"><li class=""><span class="lg-dot"></span><span class="tx">读完那篇注意力</span></li><li class=""><span class="lg-dot"></span><span class="tx">相机电池充电</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周四</b><span>11/26</span></div><ul class="lg-cal-tasks"><li class=""><span class="lg-dot"></span><span class="tx">复盘这周</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周五</b><span>11/27</span></div><ul class="lg-cal-tasks"></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+          <div class="lg-cal-day"><div class="lg-cal-head"><b>周六</b><span>11/28</span></div><ul class="lg-cal-tasks"><li class=""><span class="lg-dot"></span><span class="tx">去面包店</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
+        </div>
+        <p class="lg-hint" style="margin:8px 0 0">在这七天里写下的，就是那一天的「今天要做」——两边是同一份。</p>
+
+        <div class="lg-card" style="margin-top:16px">
+          <div class="lg-head"><span>本周推荐</span><button class="lg-pomo">换一批</button></div>
+          <p class="lg-hint" style="margin:0 0 10px">根据你在「我」页写的目标、书单、电影和今天的天气给的。</p>
+          <ul class="lg-recs">
+            <li><span class="lg-rec-kind">书</span><div class="lg-rec-body"><p class="t">《置身事内》</p><p class="w">在你自己的书单里；这周有两次 30 分钟的阅读空窗</p></div><span class="lg-rec-min">30 分钟</span><button class="lg-note-start">开始</button></li>
+            <li><span class="lg-rec-kind">影</span><div class="lg-rec-body"><p class="t">《花样年华》</p><p class="w">想看很久了，周五晚没有安排</p></div><span class="lg-rec-min"></span></li>
+            <li><span class="lg-rec-kind">穿</span><div class="lg-rec-body"><p class="t">16°，带一件薄外套</p><p class="w">早晚温差 7 度，日落 16:58</p></div><span class="lg-rec-min"></span></li>
+          </ul>
         </div>
       </div>
     </div>
