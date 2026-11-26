@@ -130,6 +130,9 @@
 [data-slot="main"] .lg-note-c{position:relative;width:24px;height:24px;border:0;background:none;cursor:pointer;padding:0}
 [data-slot="main"] .lg-note-c::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--c,#fff);border:1px solid rgba(24,24,27,.16)}
 [data-slot="main"] .lg-note-c.on::before{box-shadow:0 0 0 2px var(--lg-accent-soft),0 0 0 1px var(--lg-accent)}
+[data-slot="main"] .lg-readrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+[data-slot="main"] .lg-readrow .k{flex:0 0 auto;color:var(--lg-muted);font-size:12px;letter-spacing:.1em}
+[data-slot="main"] .lg-readchip{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:28px;padding:0 12px;border-radius:999px;border:1px dashed var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;font-family:inherit;cursor:grab}
 [data-slot="main"] .lg-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
 [data-slot="main"] .lg-cal-day{border:1px solid var(--lg-line);border-radius:var(--lg-radius);padding:10px 9px;min-height:130px;display:flex;flex-direction:column;gap:8px;background:var(--lg-surface)}
 [data-slot="main"] .lg-cal-day.today{border-color:var(--lg-accent)}
@@ -205,6 +208,12 @@
         </div>
 
         <p class="lg-sec" style="margin:22px 0 10px">这一周</p>
+        <div class="lg-readrow">
+          <span class="k">拖到某一天</span>
+          <button class="lg-readchip">注意力是被训练的，不是被夺走的</button>
+          <button class="lg-readchip">安静的眼睛：一个摄影师的一天</button>
+          <button class="lg-readchip">https://example.com/being-parsed</button>
+        </div>
         <div class="lg-cal">
           <div class="lg-cal-day"><div class="lg-cal-head"><b>周日</b><span>11/22</span></div><ul class="lg-cal-tasks"><li class="on"><span class="lg-dot on"></span><span class="tx">把周报补完</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>
           <div class="lg-cal-day"><div class="lg-cal-head"><b>周一</b><span>11/23</span></div><ul class="lg-cal-tasks"><li class="on"><span class="lg-dot on"></span><span class="tx">跑步 20 分钟</span></li><li class=""><span class="lg-dot"></span><span class="tx">给物业打电话</span></li></ul><div class="lg-cal-add"><input placeholder="加一件"><button>加</button></div></div>

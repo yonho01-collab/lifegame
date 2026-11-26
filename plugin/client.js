@@ -190,6 +190,12 @@ window.__ModuleLoader__.load({
 .lg-muted{color:var(--lg-muted)}
 .lg-eyebrow-sm{margin:0 0 8px;font-size:11.5px;letter-spacing:.2em;color:var(--lg-muted)}
 .footnote-line{margin:2px 0 10px;font-size:12px;line-height:1.7;color:var(--lg-muted)}
+.lg-readrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.lg-readrow .k{flex:0 0 auto;font-size:11.5px;letter-spacing:.1em;color:var(--lg-muted)}
+.lg-readchip{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:28px;padding:0 12px;border-radius:999px;border:1px dashed var(--lg-line);background:none;color:var(--lg-muted);font-size:12px;font-family:var(--lg-sans);cursor:grab}
+.lg-readchip:hover{color:var(--lg-accent);border-color:var(--lg-accent)}
+.lg-readchip:active{cursor:grabbing}
+.lg-cal-day.drop-on{border-color:var(--lg-accent);background:var(--lg-accent-soft)}
 .lg-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .lg-cal-day{background:var(--lg-surface-2);border:1px solid var(--lg-line);border-radius:10px;padding:10px 9px;min-height:150px;display:flex;flex-direction:column;gap:8px}
 .lg-cal-day.today{border-color:var(--lg-focus)}
@@ -1122,6 +1128,8 @@ window.__ModuleLoader__.load({
       const [drafts, setDrafts] = useState({});
       const [noteEdit, setNoteEdit] = useState({});
       const [recOpen, setRecOpen] = useState(null);
+      const [dropDay, setDropDay] = useState(null);
+      const reading = (state.readlater || []).filter((r) => r.status !== "done");
 
       const open = inbox.filter((g) => !g.done);
       const done = inbox.filter((g) => g.done);
@@ -1316,6 +1324,29 @@ window.__ModuleLoader__.load({
           "div",
           null,
           h("p", { className: "lg-sec", style: { marginTop: 8 } }, "这一周"),
+          reading.length
+            ? h(
+                "div",
+                { className: "lg-readrow" },
+                h("span", { className: "k" }, "拖到某一天"),
+                ...reading.slice(0, 8).map((r) =>
+                  h(
+                    "button",
+                    {
+                      key: r.id,
+                      className: "lg-readchip",
+                      draggable: true,
+                      title: r.title || r.url,
+                      onDragStart: (e) => {
+                        e.dataTransfer.setData("text/plain", r.id);
+                        e.dataTransfer.effectAllowed = "copy";
+                      },
+                    },
+                    r.title || r.url,
+                  ),
+                ),
+              )
+            : null,
           h(
             "div",
             { className: "lg-cal" },
@@ -1323,7 +1354,21 @@ window.__ModuleLoader__.load({
               const dt = new Date(`${d.date}T00:00:00`);
               return h(
                 "div",
-                { key: d.date, className: "lg-cal-day" + (d.today ? " today" : "") + (d.past && !d.today ? " past" : "") },
+                {
+                  key: d.date,
+                  className: "lg-cal-day" + (d.today ? " today" : "") + (d.past && !d.today ? " past" : "") + (dropDay === d.date ? " drop-on" : ""),
+                  onDragOver: (e) => {
+                    e.preventDefault();
+                    if (dropDay !== d.date) setDropDay(d.date);
+                  },
+                  onDragLeave: () => setDropDay((cur) => (cur === d.date ? null : cur)),
+                  onDrop: (e) => {
+                    e.preventDefault();
+                    setDropDay(null);
+                    const id = e.dataTransfer.getData("text/plain");
+                    if (id) run("readlaterToToday", { id, date: d.date });
+                  },
+                },
                 h("div", { className: "lg-cal-head" }, h("b", null, d.today ? "今天" : `周${WD[dt.getDay()]}`), h("span", null, `${dt.getMonth() + 1}/${Number(d.date.slice(8, 10))}`)),
                 h(
                   "ul",
