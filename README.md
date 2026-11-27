@@ -27,6 +27,18 @@
 
 ---
 
+## 截图
+
+<p align="center">
+  <img src="market/shots/today.jpg" width="800" alt="今天">
+</p>
+<p align="center">
+  <img src="market/shots/week.jpg" width="396" alt="本周">
+  <img src="market/shots/me.jpg" width="396" alt="我">
+</p>
+
+---
+
 ## 装
 
 需要 DeepSeek Harness（0.2.2 或更新）。

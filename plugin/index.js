@@ -72,7 +72,8 @@ function buildDemo() {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     const key = ymdOf(d);
-    if (i !== 0 && (i * 7) % 5 < 2) continue; // 制造断档
+    // 故意制造断档：有几天完全空着，中间留一段 6 天的连续
+    if (i !== 0 && [3, 5, 9, 16, 18, 21, 22].includes(i)) continue;
     const plan = defaultPlan({ meditationMinutes: 5, moveMinutes: 5 }).map((p, idx) => ({
       ...p,
       done: i === 0 ? idx === 0 : (i + idx) % 3 !== 0,
@@ -313,6 +314,7 @@ function findGoalStep(goalId, stepId) {
 /** 全量统计：给「我」页的活跃度与推进量 */
 function computeStats() {
   const keys = Object.keys(db.days || {}).sort();
+  const ymdOfD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const out = {
     days: keys.length,
     activeDays: 0,
@@ -332,7 +334,6 @@ function computeStats() {
     const s = (d.sessions || []).length > 0;
     return p || t || s;
   };
-  let run = 0;
   for (const k of keys) {
     const d = db.days[k];
     if (!d) continue;
@@ -347,15 +348,47 @@ function computeStats() {
     out.sessions += sess.length;
     if (sess.length) out.daysWithFocus += 1;
     for (const x of sess) out.longestSession = Math.max(out.longestSession, x.seconds || 0);
-    if (isActive(d)) {
-      out.activeDays += 1;
-      run += 1;
-      out.longestStreak = Math.max(out.longestStreak, run);
-    } else {
-      run = 0;
+    if (isActive(d)) out.activeDays += 1;
+  }
+  // 「第 N 天」= 从第一条记录到今天的日历跨度，不是记录条数
+  if (keys.length) {
+    const [y, m, d] = keys[0].split("-").map(Number);
+    const first = new Date(y, m - 1, d);
+    const now = new Date();
+    const span = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(first.getFullYear(), first.getMonth(), first.getDate())) / 86400000) + 1;
+    out.days = Math.max(span, 1);
+  } else {
+    out.days = 1;
+  }
+
+  // 连续天数按日历算：中间缺一天就断（之前按记录列表算，断掉的日子被跳过，会虚高）
+  const activeOn = (k) => isActive(db.days[k]);
+  const cursor = new Date();
+  if (!activeOn(ymdOfD(cursor))) cursor.setDate(cursor.getDate() - 1);   // 今天还没开始，从昨天算
+  let calStreak = 0;
+  for (let i = 0; i < 400; i++) {
+    if (!activeOn(ymdOfD(cursor))) break;
+    calStreak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  out.streak = calStreak;
+
+  // 最长连续段：同样按日历逐天查
+  if (keys.length) {
+    const [fy, fm, fd] = keys[0].split("-").map(Number);
+    const walk = new Date(fy, fm - 1, fd);
+    const end = new Date();
+    let run2 = 0;
+    while (walk <= end) {
+      if (activeOn(ymdOfD(walk))) {
+        run2 += 1;
+        out.longestStreak = Math.max(out.longestStreak, run2);
+      } else {
+        run2 = 0;
+      }
+      walk.setDate(walk.getDate() + 1);
     }
   }
-  out.streak = run;   // 从最后一天往前推的连续天数（keys 已排序）
   const rl = db.readlater || [];
   out.readTotal = rl.length;
   out.readDone = rl.filter((r) => r.status === "done").length;
