@@ -46,28 +46,133 @@ const defaultAfter = [
   { time: "00:15", title: "关灯 · 目标 00:30 前睡着" },
 ];
 
-const seed = () => ({
-  rev: 1,
-  appliedOps: [],
-  profile: {
-    sleepTarget: "00:30",
-    meditationMinutes: 5,
-    moveMinutes: 5,
-    budget: "500-1500",
-    fitnessLevel: "1-2/week",
-    location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
-    goals: { short: [], long: [] },
-    customPlan: {},
-    customSlots: {},
-    theme: "paper",
-    collect: { book: [], movie: [], article: [], image: [], skill: [] },
-    want: { books: [], movies: [], quotes: [] },
-  },
-  season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: "2026-11-24" },
-  days: {},
-  weeks: {},
-  readlater: [],
-});
+/* ---------- 示例数据（只给第一次装的新用户看，带 _demo 标记，可一键清空） ---------- */
+
+const DEMO_TODOS = [
+  "把上周的周报补完",
+  "给物业打电话问停水",
+  "读完那篇讲注意力的长文",
+];
+const DEMO_INBOX = ["这周把简历更新一版", "找一个能拍短片的朋友聊聊", "把相机电池充满"];
+const DEMO_NOTES = ["周三降温，户外的事往后挪一天", "想试试早上不看手机，先做三天"];
+const DEMO_BOOKS = ["程序员修炼之道", "置身事内", "禅与摩托车维修艺术"];
+const DEMO_MOVIES = ["猫鼠游戏", "花样年华"];
+const DEMO_ARTICLES = ["注意力是被训练的，不是被夺走的"];
+const DEMO_SKILLS = ["剪辑"];
+
+const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** 造一份"像在用的人"的数据：让点阵、统计、三页都不是空的 */
+function buildDemo() {
+  const now = new Date();
+  const today = ymdOf(now);
+  const days = {};
+  // 过去 24 天：有记录的天占六成，完成条数 1–4
+  for (let i = 24; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = ymdOf(d);
+    if (i !== 0 && (i * 7) % 5 < 2) continue; // 制造断档
+    const plan = defaultPlan({ meditationMinutes: 5, moveMinutes: 5 }).map((p, idx) => ({
+      ...p,
+      done: i === 0 ? idx === 0 : (i + idx) % 3 !== 0,
+      doneAt: i === 0 ? (idx === 0 ? new Date().toISOString() : null) : new Date(d.getTime() + 3600_000 * (9 + idx)).toISOString(),
+      _demo: true,
+    }));
+    const todos = i === 0
+      ? DEMO_TODOS.map((text, idx) => ({
+          id: `demo_t${idx}`,
+          text,
+          done: idx === 2,
+          at: new Date().toISOString(),
+          _demo: true,
+        }))
+      : (i % 3 === 0
+          ? [{ id: `demo_t${i}`, text: "顺手记一件小事", done: true, at: new Date(d.getTime()).toISOString(), _demo: true }]
+          : []);
+    const sessions = i % 4 === 0 || i === 0
+      ? [
+          { id: `demo_s${i}a`, seconds: 1500, label: i === 0 ? "继续改进《人生游戏》" : "读一段书", startedAt: new Date(d.getTime() + 3600_000 * 10).toISOString(), endedAt: new Date(d.getTime() + 3600_000 * 10 + 1500_000).toISOString(), _demo: true },
+          ...(i % 8 === 0 ? [{ id: `demo_s${i}b`, seconds: 900, label: "整理笔记", startedAt: new Date(d.getTime() + 3600_000 * 16).toISOString(), endedAt: new Date(d.getTime() + 3600_000 * 16 + 900_000).toISOString(), _demo: true }] : []),
+        ]
+      : [];
+    days[key] = {
+      date: key,
+      plan,
+      after: i === 0 ? defaultAfter.map((x) => ({ ...x, _demo: true })) : [],
+      todos,
+      sessions,
+      timer: null,
+      inspiration: i === 0 ? { text: "今天的光是斜的，适合走一段。", from: "天气", at: new Date().toISOString(), _demo: true } : null,
+      alt: i === 0 ? "现在下去走 10 分钟，今天的光很好" : "",
+      teaser: "",
+      watching: [],
+      _demo: true,
+    };
+  }
+
+  // 本周
+  const wk = new Date(now);
+  const dowMon = (wk.getDay() + 6) % 7;
+  wk.setDate(wk.getDate() - dowMon);
+  const weekKey = ymdOf(wk);
+  const weeks = {
+    [weekKey]: {
+      key: weekKey,
+      inbox: DEMO_INBOX.map((text, i) => ({ id: `demo_i${i}`, text, done: false, date: null, at: new Date().toISOString(), _demo: true })),
+      notes: DEMO_NOTES.map((text, i) => ({ id: `demo_n${i}`, text, color: i === 0 ? "warm" : "blue", at: new Date().toISOString(), _demo: true })),
+      recommend: null,
+      comment: null,
+      _demo: true,
+    },
+  };
+
+  const mkCollect = (kind, titles) =>
+    titles.map((title, i) => ({ id: `demo_c_${kind}${i}`, title, note: "", url: "", done: false, at: new Date().toISOString(), _demo: true }));
+
+  return {
+    rev: 1,
+    schemaVersion: 2,
+    appliedOps: [],
+    demo: true,
+    profile: {
+      sleepTarget: "00:30",
+      meditationMinutes: 5,
+      moveMinutes: 5,
+      budget: "500-1500",
+      fitnessLevel: "1-2/week",
+      location: { name: "杭州 · 余杭", lat: 30.4192, lon: 120.3017 },
+      goals: {
+        short: [
+          { id: "demo_g1", text: "这两周把早睡调回 00:30 前", done: false, steps: [
+            { id: "demo_s1", text: "22:45 把手机放到客厅", done: true, placed: false },
+            { id: "demo_s2", text: "睡前不看工作消息", done: false, placed: false },
+          ], _demo: true },
+          { id: "demo_g2", text: "把「人生游戏」用满一个月", done: true, steps: [], _demo: true },
+        ],
+        long: [
+          { id: "demo_g3", text: "能自己拍一支 3 分钟的短片", done: false, steps: [], _demo: true },
+        ],
+      },
+      customPlan: {},
+      customSlots: {},
+      theme: "paper",
+      collect: {
+        book: mkCollect("book", DEMO_BOOKS),
+        movie: mkCollect("movie", DEMO_MOVIES),
+        article: mkCollect("article", DEMO_ARTICLES),
+        image: [],
+        skill: mkCollect("skill", DEMO_SKILLS),
+      },
+    },
+    season: { name: "降噪季", dayIndex: 4, totalDays: 14, startedAt: ymdOf(new Date(now.getTime() - 86400_000 * 4)) },
+    days,
+    weeks,
+    readlater: [],
+  };
+}
+
+const seed = () => buildDemo();
 
 /* ---------------- 存取 ---------------- */
 
@@ -100,6 +205,7 @@ async function load() {
   if (!db.profile.customPlan) db.profile.customPlan = {};
   if (!db.profile.customSlots) db.profile.customSlots = {};
   if (!["paper", "sepia", "celadon", "dusk", "ink"].includes(db.profile.theme)) db.profile.theme = "paper";
+  if (db.demo === undefined) db.demo = false;
 
   // 收集仓库 + 迁移（want.books/movies → collect；quotes 与 corpus 已废弃）
   const KINDS = ["book", "movie", "article", "image", "skill"];
@@ -522,6 +628,7 @@ const publicState = (date) => ({
   stats: computeStats(),
   llmReady: llmProbe,
   theme: db.profile.theme || "paper",
+  demo: !!(db.demo || db.profile.demo),
   span: statsFor(date),
 });
 
@@ -1093,6 +1200,45 @@ function applyOp(op, payload, date) {
       return applyOp("inboxToggle", payload, date);
     case "goalRemove":
       return applyOp("inboxRemove", payload, date);
+    /** 一键清空示例数据（只删带 _demo 标记的） */
+    case "clearDemo": {
+      const strip = (arr) => (Array.isArray(arr) ? arr.filter((x) => !(x && x._demo)) : arr);
+      for (const key of Object.keys(db.days || {})) {
+        const day = db.days[key];
+        if (!day) continue;
+        if (day._demo) {
+          delete db.days[key];
+          continue;
+        }
+        day.plan = strip(day.plan);
+        day.todos = strip(day.todos);
+        day.after = strip(day.after);
+        day.sessions = strip(day.sessions);
+        if (day.inspiration && day.inspiration._demo) day.inspiration = null;
+      }
+      for (const wkey of Object.keys(db.weeks || {})) {
+        const w = db.weeks[wkey];
+        if (!w) continue;
+        w.inbox = strip(w.inbox);
+        w.notes = strip(w.notes);
+        if (w._demo && !w.inbox.length && !w.notes.length) delete db.weeks[wkey];
+        else delete w._demo;
+      }
+      const p = db.profile;
+      for (const scope of ["short", "long"]) {
+        p.goals[scope] = strip(p.goals[scope]).map((g) => {
+          const copy = { ...g };
+          delete copy._demo;
+          return copy;
+        });
+      }
+      for (const k of ["book", "movie", "article", "image", "skill"]) {
+        if (Array.isArray(p.collect[k])) p.collect[k] = strip(p.collect[k]);
+      }
+      p.demo = false;
+      db.demo = false;
+      return true;
+    }
     case "setTheme": {
       const t = String(payload.theme || "");
       if (!["paper", "sepia", "celadon", "dusk", "ink"].includes(t)) return false;

@@ -485,6 +485,10 @@ window.__ModuleLoader__.load({
 
 /* 灵感 */
 .lg-topline{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.lg-demo{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:10px 14px;border-radius:var(--lg-radius);border:1px dashed var(--lg-line);background:var(--lg-accent-soft);font-size:12.5px;color:var(--lg-muted);line-height:1.6}
+.lg-demo span{flex:1 1 auto;min-width:0}
+.lg-demo-clear{flex:0 0 auto;height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--lg-line);background:var(--lg-surface);color:var(--lg-text);font-size:12px;font-family:var(--lg-sans);cursor:pointer}
+.lg-demo-clear:hover{border-color:var(--lg-accent);color:var(--lg-accent)}
 .lg-themes{display:inline-flex;align-items:center;gap:6px;margin-left:4px}
 .lg-theme-dot{position:relative;width:24px;height:24px;padding:0;border:0;background:none;cursor:pointer}
 .lg-theme-dot::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--tdot);border:1px solid var(--dline)}
@@ -2633,6 +2637,24 @@ window.__ModuleLoader__.load({
               )
             : null,
           h("div", { className: "lg-rule" }),
+          state && state.demo
+            ? h(
+                "div",
+                { className: "lg-demo" },
+                h("span", null, h("b", { style: { fontWeight: 500, color: "var(--lg-text)" } }, "示例数据"), " —— 看清楚之后，一键清空就能开始你自己的。"),
+                h(
+                  "button",
+                  {
+                    className: "lg-demo-clear",
+                    onClick: () => {
+                      if (window.confirm && !window.confirm("清空所有示例数据？你自己加的记录不受影响。")) return;
+                      run("clearDemo", {});
+                    },
+                  },
+                  "清空示例",
+                ),
+              )
+            : null,
           h(
             "nav",
             { className: "lg-tabs" },
