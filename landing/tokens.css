@@ -1,0 +1,66 @@
+/* 极简白 —— 大留白、细线、黑白加一点蓝
+   只给插件槽位内用；选择器前缀 [data-slot="main"] 由各屏自带 */
+:root{
+  /* 配色 */
+  --lg-bg:#fafaf9;
+  --lg-surface:#ffffff;
+  --lg-surface-2:#f4f4f5;
+  --lg-surface-3:#efeff1;
+  --lg-text:#18181b;
+  --lg-muted:#6b6b73;
+  --lg-line:#e4e4e7;
+  --lg-ink:#18181b;            /* 主色：按钮底 */
+  --lg-on-ink:#ffffff;
+  --lg-accent:#2563eb;         /* 点缀：图形、大字、选中态、链接 */
+  --lg-on-accent:#ffffff;
+  --lg-hover:#f1f1f3;
+  --lg-placeholder:#a1a1aa;
+  --lg-focus:rgba(37,99,235,.32);
+  --lg-accent-soft:rgba(37,99,235,.08);
+  --lg-danger:#b42318;
+
+  /* 字体 */
+  --lg-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+
+  /* 形状 */
+  --lg-radius:10px;
+  --lg-radius-sm:6px;
+  --lg-shadow:0 1px 2px rgba(24,24,27,.06);
+}
+
+/* ---------- 皮肤 ----------
+   同一套 token 名，五组值。在 <html> 或任意外层容器上加 data-theme 即可切换。 */
+:root[data-theme="sepia"]{
+  --lg-bg:#fbf7ef; --lg-surface:#fffdf8; --lg-surface-2:#f5efe3; --lg-surface-3:#efe7d8;
+  --lg-text:#2b2620; --lg-muted:#7a6e5d; --lg-line:#e6dccb;
+  --lg-ink:#2b2620; --lg-on-ink:#fffdf8;
+  --lg-accent:#b45309; --lg-on-accent:#ffffff;
+  --lg-hover:#f2ebdc; --lg-placeholder:#a89c88;
+  --lg-focus:rgba(180,83,9,.3); --lg-accent-soft:rgba(180,83,9,.08);
+  --lg-danger:#9a3412;
+}
+:root[data-theme="celadon"]{
+  --lg-bg:#f6faf8; --lg-surface:#ffffff; --lg-surface-2:#edf5f1; --lg-surface-3:#e3efe9;
+  --lg-text:#17211d; --lg-muted:#5f7268; --lg-line:#d8e6df;
+  --lg-ink:#17211d; --lg-on-ink:#ffffff;
+  --lg-accent:#0f766e; --lg-on-accent:#ffffff;
+  --lg-hover:#eaf3ee; --lg-placeholder:#9bb3a9;
+  --lg-focus:rgba(15,118,110,.3); --lg-accent-soft:rgba(15,118,110,.08);
+}
+:root[data-theme="dusk"]{
+  --lg-bg:#f9f7fc; --lg-surface:#ffffff; --lg-surface-2:#f3f0f9; --lg-surface-3:#ebe6f3;
+  --lg-text:#1c1826; --lg-muted:#6b6380; --lg-line:#e2dcee;
+  --lg-ink:#1c1826; --lg-on-ink:#ffffff;
+  --lg-accent:#7c3aed; --lg-on-accent:#ffffff;
+  --lg-hover:#f1edf8; --lg-placeholder:#a79fbb;
+  --lg-focus:rgba(124,58,237,.3); --lg-accent-soft:rgba(124,58,237,.08);
+}
+:root[data-theme="ink"]{
+  --lg-bg:#0f0f11; --lg-surface:#17171a; --lg-surface-2:#1e1e22; --lg-surface-3:#26262b;
+  --lg-text:#ededef; --lg-muted:#9a9aa3; --lg-line:#2e2e34;
+  --lg-ink:#ededef; --lg-on-ink:#0f0f11;
+  --lg-accent:#6b9bff; --lg-on-accent:#0f0f11;
+  --lg-hover:#232327; --lg-placeholder:#6a6a73;
+  --lg-focus:rgba(107,155,255,.38); --lg-accent-soft:rgba(107,155,255,.12);
+  --lg-danger:#ff7b72;
+}

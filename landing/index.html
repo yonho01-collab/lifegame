@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="dsh-design" content="web">
+<title>人生游戏 · Lifegame</title>
+<meta name="description" content="一天一屏，管四件慢功夫：耐心、轻盈、专注、健康。DeepSeek Harness 插件。">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  :root{
+    --w-max: 1080px;
+    --font: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", system-ui, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--lg-bg); color:var(--lg-text);
+    font-family:var(--font); font-size:16px; line-height:1.7;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--w-max); margin:0 auto; padding:0 28px}
+  a{color:inherit}
+
+  /* ---------- 顶栏 ---------- */
+  header{border-bottom:1px solid var(--lg-line); background:var(--lg-bg)}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:64px}
+  .brand{display:flex; align-items:center; gap:10px; min-height:44px; font-size:14px; letter-spacing:.02em; text-decoration:none}
+  .brand svg{display:block; flex:0 0 auto}
+  .top nav{display:flex; gap:22px; font-size:14px; color:var(--lg-muted)}
+  .top nav a{text-decoration:none; min-height:44px; display:inline-flex; align-items:center}
+  .top nav a:hover{color:var(--lg-text)}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:88px 0 72px; border-bottom:1px solid var(--lg-line)}
+  .hero h1{
+    margin:0 0 22px; font-size:clamp(40px, 6vw, 64px); line-height:1.08;
+    letter-spacing:-.03em; font-weight:600;
+    text-wrap:balance;
+  }
+  .hero .lede{
+    margin:0 0 40px; max-width:34em; font-size:16px;
+    line-height:1.75; color:var(--lg-muted);
+  }
+  .hero .lede b{color:var(--lg-text); font-weight:500}
+  .install{
+    display:inline-flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:14px 16px 14px 20px; border:1px solid var(--lg-line); border-radius:10px;
+    background:var(--lg-surface); font-size:14px; color:var(--lg-muted);
+  }
+  .install code{
+    font-family:var(--mono); font-size:14px; color:var(--lg-text);
+    letter-spacing:-.01em; user-select:all;
+  }
+  .install .hint{font-size:12px; color:var(--lg-muted)}
+  .hero-foot{
+    display:flex; gap:28px; flex-wrap:wrap; margin-top:34px;
+    font-size:13px; color:var(--lg-muted); letter-spacing:.02em;
+  }
+
+  /* ---------- 区块 ---------- */
+  section{padding:76px 0; border-bottom:1px solid var(--lg-line)}
+  .eyebrow{
+    margin:0 0 18px; font-size:12px; letter-spacing:.14em;
+    color:var(--lg-muted); text-transform:uppercase;
+  }
+  h2{
+    margin:0 0 20px; font-size:clamp(26px, 3.4vw, 34px); line-height:1.3;
+    letter-spacing:-.02em; font-weight:600; text-wrap:balance;
+  }
+  .sub{margin:0 0 44px; max-width:33em; color:var(--lg-muted); font-size:16px}
+
+  /* ---------- 三页说明 ---------- */
+  .tabs-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--lg-line); border:1px solid var(--lg-line); border-radius:12px; overflow:hidden}
+  .tab-card{background:var(--lg-surface); padding:30px 26px 32px}
+  .tab-card h3{margin:0 0 4px; font-size:19px; font-weight:600; letter-spacing:.01em}
+  .tab-card .tm{margin:0 0 16px; font-size:12px; letter-spacing:.1em; color:var(--lg-muted)}
+  .tab-card p{margin:0; font-size:14px; line-height:1.75; color:var(--lg-muted)}
+  .tab-card p + p{margin-top:10px}
+
+  /* ---------- 截图 ---------- */
+  .shots{display:grid; gap:26px}
+  .shot{border:1px solid var(--lg-line); border-radius:12px; overflow:hidden; background:var(--lg-surface)}
+  .shot img{display:block; width:100%; height:auto}
+  .shot figcaption{
+    padding:13px 18px; border-top:1px solid var(--lg-line);
+    font-size:13px; color:var(--lg-muted);
+  }
+  .shots-pair{display:grid; grid-template-columns:1fr 1fr; gap:26px}
+
+  /* ---------- 安装步骤 ---------- */
+  ol.steps{list-style:none; margin:0; padding:0; display:grid; gap:0; counter-reset:s}
+  ol.steps li{
+    position:relative; display:grid; grid-template-columns:44px 1fr; gap:20px;
+    padding:26px 0; border-top:1px solid var(--lg-line);
+  }
+  ol.steps li:first-child{border-top:0; padding-top:0}
+  ol.steps li::before{
+    counter-increment:s; content:counter(s);
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:30px; margin-top:2px; border-radius:50%;
+    border:1px solid var(--lg-line); background:var(--lg-surface);
+    font-size:13px; color:var(--lg-muted); font-variant-numeric:tabular-nums;
+  }
+  ol.steps h3{margin:0 0 6px; font-size:16px; font-weight:600}
+  ol.steps p{margin:0; font-size:14px; color:var(--lg-muted); line-height:1.75}
+  ol.steps code{
+    font-family:var(--mono); font-size:.92em; padding:2px 6px; border-radius:5px;
+    background:var(--lg-surface-2); color:var(--lg-text); border:1px solid var(--lg-line);
+  }
+
+  /* ---------- 数据 ---------- */
+  .facts{display:grid; grid-template-columns:repeat(2, 1fr); gap:1px; background:var(--lg-line); border:1px solid var(--lg-line); border-radius:12px; overflow:hidden}
+  .fact{background:var(--lg-surface); padding:26px 24px}
+  .fact b{display:block; margin-bottom:6px; font-size:16px; font-weight:600}
+  .fact span{font-size:14px; line-height:1.75; color:var(--lg-muted)}
+
+  /* ---------- 页脚 ---------- */
+  footer{padding:56px 0 72px; font-size:13px; color:var(--lg-muted)}
+  footer .row{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:baseline}
+  footer a{text-decoration:none; border-bottom:1px solid var(--lg-line)}
+  footer a:hover{border-color:var(--lg-text); color:var(--lg-text)}
+
+  @media (max-width: 860px){
+    .tabs-grid, .facts{grid-template-columns:1fr}
+    .shots-pair{grid-template-columns:1fr}
+    .hero{padding:60px 0 52px}
+    section{padding:56px 0}
+    .top nav{display:none}
+  }
+  @media (max-width: 520px){
+    .wrap{padding:0 20px}
+    .hero h1{font-size:38px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap top">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true">
+        <rect x="13" y="30" width="6" height="18" rx="2" fill="#D4D4D8"/>
+        <rect x="23" y="22" width="6" height="26" rx="2" fill="#A1A1AA"/>
+        <rect x="33" y="15" width="6" height="33" rx="2" fill="#18181B"/>
+        <rect x="43" y="26" width="6" height="22" rx="2" fill="#2563EB"/>
+      </svg>
+      人生游戏
+    </a>
+    <nav>
+      <a href="#what">它是什么</a>
+      <a href="#shots">长什么样</a>
+      <a href="#install">怎么装</a>
+      <a href="https://github.com/yonho01-collab/lifegame">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<div class="wrap hero">
+  <h1>一天一屏，<br>管四件慢功夫。</h1>
+  <p class="lede">
+    耐心、轻盈、专注、健康。不是待办清单，也不是打卡 App。
+    它只做一件事：<b>每天开始的时候，告诉你今天最重要的三件事和现在该干什么</b>，然后你自己决定。
+  </p>
+
+  <div class="install">
+    <span>装</span>
+    <code>dsh-lifegame</code>
+    <span class="hint">DSH → 插件 → 添加插件</span>
+  </div>
+
+  <div class="hero-foot">
+    <span>DeepSeek Harness 插件</span>
+    <span>数据只存本机</span>
+    <span>MIT 开源</span>
+  </div>
+</div>
+
+<section id="what">
+  <div class="wrap">
+    <p class="eyebrow">Three screens</p>
+    <h2>三页，一天、一周、一段日子</h2>
+    <p class="sub">从「现在该干什么」到「这半年过得怎么样」，中间不需要跳到别的工具。</p>
+
+    <div class="tabs-grid">
+      <div class="tab-card">
+        <h3>今天</h3>
+        <p class="tm">TODAY</p>
+        <p>顶部先告诉你现在是几点、下一件规定的事是什么，一个按钮就能开始。</p>
+        <p>下面三件每天固定的事：冥想、运动、写一段话。标题和时间都能改。</p>
+        <p>右边的「它在看着」会说三句真话——还剩几件、几点日落、断了几天。</p>
+      </div>
+      <div class="tab-card">
+        <h3>本周</h3>
+        <p class="tm">WEEK</p>
+        <p>这周冒出来的事都先丢进 Inbox，想清楚了再排到某一天。</p>
+        <p>便签只属于这一周，下周换一张新的。</p>
+        <p>七天日历里写的东西，就是那天「今天要做」的东西——同一份数据，不是两个列表。</p>
+      </div>
+      <div class="tab-card">
+        <h3>我</h3>
+        <p class="tm">ME</p>
+        <p>九十天是一张 13 周 × 7 天的格子，按每天完成量分四档蓝，断在哪一眼看得见。</p>
+        <p>短期和长期目标可以拆成步骤，再一步一步放到本周、放到今天。</p>
+        <p>还有一个仓库，收集你喜欢的书、电影、文章、图片、技能。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap">
+    <p class="eyebrow">Screenshots</p>
+    <h2>真实界面</h2>
+    <p class="sub">截图用的是插件自带的示例数据。装上就能看到，点「清空示例」就开始用你自己的。</p>
+
+    <div class="shots">
+      <figure class="shot">
+        <img src="shots/today.jpg" alt="今天的页面：顶部是现在该干什么，左边专注计时和今天的待办，右边三件规定事项和到点会提醒的事" loading="lazy" width="1600" height="1111">
+        <figcaption>今天 —— 顶部是「现在该干什么」，左边专注计时，右边三件规定事项。</figcaption>
+      </figure>
+
+      <div class="shots-pair">
+        <figure class="shot">
+          <img src="shots/week.jpg" alt="本周的页面：左边 Inbox 可以排期到某一天，右边是这一周的便签，下面是七天日历" loading="lazy" width="1600" height="1111">
+          <figcaption>本周 —— Inbox 可以排期，便签只属于这一周。</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="shots/me.jpg" alt="我的页面：九十天活跃格按每天完成量分四档蓝，右侧是统计图表与目标，下面是收藏仓库" loading="lazy" width="1600" height="1111">
+          <figcaption>我 —— 九十天活跃格、统计、目标、收藏仓库。</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <p class="eyebrow">Install</p>
+    <h2>三步装好</h2>
+    <p class="sub">需要一个已经装好的 DeepSeek Harness（0.2.2 或更新）。</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <h3>打开插件页</h3>
+          <p>在 DSH 左侧栏点「插件」，找到「添加插件」。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>填包名</h3>
+          <p>输入 <code>dsh-lifegame</code>，确认。它会从 npm 下载，几秒钟。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>重启，点侧栏</h3>
+          <p>重启 DSH，左侧栏会多一个「人生游戏」。第一次打开自带示例数据，看一眼就懂。</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="data">
+  <div class="wrap">
+    <p class="eyebrow">Privacy</p>
+    <h2>数据在你自己电脑上</h2>
+    <p class="sub">没有账号，没有云同步，没有「我们可能会…」。</p>
+
+    <div class="facts">
+      <div class="fact">
+        <b>只写本机</b>
+        <span>所有记录存在 <code>$DSH_HOME/lifegame/db.json</code>，不上传任何服务器。</span>
+      </div>
+      <div class="fact">
+        <b>自动备份</b>
+        <span>每次启动前会留一份上一版，万一文件坏了还能捞回来。</span>
+      </div>
+      <div class="fact">
+        <b>模型只在你点的时候调</b>
+        <span>推荐、目标拆解、每日一句都要你主动点，不会后台偷偷跑。</span>
+      </div>
+      <div class="fact">
+        <b>卸载不删数据</b>
+        <span>移除插件后数据还在。想彻底清掉，删掉那个目录就行。</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>人生游戏 · Lifegame — MIT 许可证</span>
+    <span>
+      <a href="https://github.com/yonho01-collab/lifegame">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.npmjs.com/package/dsh-lifegame">npm</a>
+    </span>
+  </div>
+</footer>
+
+</body>
+</html>
