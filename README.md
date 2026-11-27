@@ -2,7 +2,7 @@
 
 一天一屏，管四件慢功夫：**耐心、轻盈、专注、健康**。
 
-一个 [DeepSeek Harness](https://github.com/) 插件。侧栏一个页面，Agent 在旁边随时推荐，读写同一份数据。
+一个 [DeepSeek Harness](https://github.com/) 插件 · [npm](https://www.npmjs.com/package/dsh-lifegame)。侧栏一个页面，Agent 在旁边随时推荐，读写同一份数据。
 
 不是待办清单，也不是打卡 App。它只做一件事：**在每天开始的时候，告诉你「今天最重要的三件事」和「你现在该干什么」**，然后让你自己做决定。
 
@@ -31,28 +31,28 @@
 
 需要 DeepSeek Harness（0.2.2 或更新）。
 
-### 方式一：从 GitHub 下载（现在就能用）
+### 方式一：从 npm（最省事）
+
+在 DSH 里：**插件** → **添加插件** → 填 `dsh-lifegame`
+
+或者在对话里说「装 dsh-lifegame 这个插件」，Agent 会调 `plugin_manager` 完成。
+
+### 方式二：从 GitHub 下载
 
 1. 打开 [Releases](https://github.com/yonho01-collab/lifegame/releases)
 2. 下载 `dsh-lifegame-1.0.0.tgz`
-3. 双击解压，得到 `package` 文件夹
-4. 在 DSH 里：**插件** → **添加插件** → 选这个 `package` 文件夹
-5. 重启 DSH，左侧栏会多一个「人生游戏」
-
-### 方式二：交给 Agent 装
-
-把 tgz 的路径发给 Agent，说「装这个插件」，它会调 `plugin_manager` 完成。
+3. 解压得到 `package` 文件夹
+4. **插件** → **添加插件** → 选这个文件夹
 
 ### 方式三：从源码（开发者）
 
 ```bash
 git clone https://github.com/yonho01-collab/lifegame.git
-cd lifegame
 ```
 
-然后在 DSH 里 **插件** → **添加插件** → 选 `plugin/` 目录。改代码即生效，不用重装。
+然后 **插件** → **添加插件** → 选 `plugin/` 目录。改代码即生效，不用重装。
 
-> npm 发布后会多一条 `插件 → 添加插件 → 填 dsh-lifegame` 的方式，目前还没有。
+装完重启 DSH，左侧栏会多一个「人生游戏」。
 
 ## 第一次打开会看到什么
 

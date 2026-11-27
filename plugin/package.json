@@ -4,6 +4,7 @@
   "description": "人生游戏：把「耐心 / 轻盈 / 专注 / 健康」变成每天一屏的节奏。侧栏一个页面，Agent 在旁边随时推荐。",
   "type": "module",
   "license": "MIT",
+  "author": "yonho01-collab",
   "keywords": [
     "dsh",
     "dsh-bundle",
@@ -12,6 +13,15 @@
     "habit",
     "focus"
   ],
+  "homepage": "https://github.com/yonho01-collab/lifegame#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yonho01-collab/lifegame.git",
+    "directory": "plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/yonho01-collab/lifegame/issues"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -30,6 +40,13 @@
     "docs",
     "README.md"
   ],
+  "scripts": {
+    "check": "node check-ops.mjs",
+    "pack": "npm pack"
+  },
+  "engines": {
+    "dsh": ">=0.2.2"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -70,9 +87,5 @@
         }
       ]
     }
-  },
-  "scripts": {
-    "check": "node check-ops.mjs",
-    "pack": "npm pack"
   }
 }
