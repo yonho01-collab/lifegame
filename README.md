@@ -29,21 +29,30 @@
 
 ## 装
 
-需要 DeepSeek Harness 的插件管理。
+需要 DeepSeek Harness（0.2.2 或更新）。
 
-**从仓库安装**（指向插件目录）：
+### 方式一：从 GitHub 下载（现在就能用）
 
+1. 打开 [Releases](https://github.com/yonho01-collab/lifegame/releases)
+2. 下载 `dsh-lifegame-1.0.0.tgz`
+3. 双击解压，得到 `package` 文件夹
+4. 在 DSH 里：**插件** → **添加插件** → 选这个 `package` 文件夹
+5. 重启 DSH，左侧栏会多一个「人生游戏」
+
+### 方式二：交给 Agent 装
+
+把 tgz 的路径发给 Agent，说「装这个插件」，它会调 `plugin_manager` 完成。
+
+### 方式三：从源码（开发者）
+
+```bash
+git clone https://github.com/yonho01-collab/lifegame.git
+cd lifegame
 ```
-plugin_manager install_bundle <本仓库路径>/plugin
-```
 
-**从 tgz 安装**（见 Releases）：
+然后在 DSH 里 **插件** → **添加插件** → 选 `plugin/` 目录。改代码即生效，不用重装。
 
-```
-plugin_manager install_bundle <下载的>.tgz
-```
-
-装完重启 DSH，左侧栏会多一个「人生游戏」。
+> npm 发布后会多一条 `插件 → 添加插件 → 填 dsh-lifegame` 的方式，目前还没有。
 
 ## 第一次打开会看到什么
 
