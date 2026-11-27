@@ -52,7 +52,7 @@
 ### 方式二：从 GitHub 下载
 
 1. 打开 [Releases](https://github.com/yonho01-collab/lifegame/releases)
-2. 下载 `dsh-lifegame-1.0.1.tgz`
+2. 下载 `dsh-lifegame-1.0.2.tgz`
 3. 解压得到 `package` 文件夹
 4. **插件** → **添加插件** → 选这个文件夹
 
