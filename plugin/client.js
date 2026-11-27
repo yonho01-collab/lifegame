@@ -844,7 +844,9 @@ window.__ModuleLoader__.load({
                 "div",
                 { className: "lg-card-head" },
                 h("span", null, "专注"),
-                h("span", { className: "lg-count-n" }, day.timer ? (isPomo ? "番茄中" : "计时中") : pending ? "刚记下" : "不用全屏"),
+                day.timer || pending
+                  ? h("span", { className: "lg-count-n" }, day.timer ? (isPomo ? "番茄中" : "计时中") : "刚记下")
+                  : null,
               ),
 
               // 计时中：页内实时走，不用跳全屏
@@ -2559,6 +2561,107 @@ window.__ModuleLoader__.load({
       );
     }
 
+    const FLOAT_CSS = `
+.lg-float{position:fixed;right:24px;bottom:84px;z-index:60;display:flex;align-items:center;gap:10px;padding:8px 12px 8px 10px;border-radius:999px;border:1px solid #e4e4e7;background:rgba(255,255,255,.96);box-shadow:0 6px 24px rgba(24,24,27,.12);font-family:var(--lg-sans,system-ui,-apple-system,sans-serif);backdrop-filter:blur(8px)}
+.lg-float-ring svg{display:block}
+.lg-float .fr-bg{fill:none;stroke:#e4e4e7;stroke-width:2.5}
+.lg-float .fr-fg{fill:none;stroke:#2563eb;stroke-width:2.5;stroke-linecap:round;transition:stroke-dasharray .8s linear}
+.lg-float-body{display:flex;flex-direction:column;line-height:1.15;min-width:0;max-width:150px}
+.lg-float-body b{font-size:14px;font-weight:600;color:#18181b;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.lg-float-body span{font-size:10.5px;color:#6b6b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg-float-stop{height:24px;padding:0 9px;border-radius:999px;border:1px solid #e4e4e7;background:#fff;color:#6b6b73;font-size:11px;font-family:inherit;cursor:pointer}
+.lg-float-stop:hover{border-color:#18181b;color:#18181b}
+    `;
+
+    /* ================= 番茄浮窗（全局，切页面也看得见） ================= */
+
+    function TimerFloat() {
+      const [st, setSt] = React.useState(null);
+      const [now, setNow] = React.useState(Date.now());
+
+      React.useEffect(() => {
+        let alive = true;
+        const load = async () => {
+          try {
+            const r = await fetch(`${API}state`, { credentials: "same-origin" });
+            const j = await r.json();
+            if (alive) setSt(j);
+          } catch {
+            /* 网络抖一下就算了，下一次再来 */
+          }
+        };
+        load();
+        const poll = setInterval(load, 15000);
+        const tick = setInterval(() => setNow(Date.now()), 1000);
+        return () => {
+          alive = false;
+          clearInterval(poll);
+          clearInterval(tick);
+        };
+      }, []);
+
+      const timer = st && st.day && st.day.timer;
+      if (!timer) return null;
+
+      const started = new Date(timer.startedAt).getTime();
+      const total = Math.max(1, (timer.minutes || 25) * 60);
+      const elapsed = Math.max(0, Math.floor((now - started) / 1000));
+      const remain = Math.max(0, total - elapsed);
+      const pct = Math.min(100, (elapsed / total) * 100);
+      const mm = String(Math.floor(remain / 60)).padStart(2, "0");
+      const ss = String(remain % 60).padStart(2, "0");
+      const r = 13;
+      const c = 2 * Math.PI * r;
+
+      const stop = async () => {
+        try {
+          await fetch(`${API}op`, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ opId: `f${Date.now()}`, op: "timerStop", payload: {}, date: todayStr() }),
+          });
+          setSt((prev) => (prev && prev.day ? { ...prev, day: { ...prev.day, timer: null } } : prev));
+        } catch {
+          /* 面板那边会兜底 */
+        }
+      };
+
+      return h(
+        React.Fragment,
+        null,
+        h("style", { key: "s" }, FLOAT_CSS),
+        h(
+        "div",
+        { className: "lg-float", title: timer.label || "专注中", key: "f" },
+        h(
+          "div",
+          { className: "lg-float-ring" },
+          h(
+            "svg",
+            { viewBox: "0 0 32 32", width: 32, height: 32 },
+            h("circle", { cx: 16, cy: 16, r, className: "fr-bg" }),
+            h("circle", {
+              cx: 16,
+              cy: 16,
+              r,
+              className: "fr-fg",
+              strokeDasharray: `${(c * pct) / 100} ${c}`,
+              transform: "rotate(-90 16 16)",
+            }),
+          ),
+        ),
+        h(
+          "div",
+          { className: "lg-float-body" },
+          h("b", null, `${mm}:${ss}`),
+          timer.label ? h("span", null, timer.label) : null,
+        ),
+        h("button", { className: "lg-float-stop", onClick: stop, title: "结束这段专注" }, "结束"),
+        ),
+      );
+    }
+
     /* ================= 注册 ================= */
 
     return {
@@ -2569,6 +2672,10 @@ window.__ModuleLoader__.load({
         );
         ctx.slots.inject("main", () =>
           ctx.slots.register({ name: "main", key: PANEL }, () => h(PanelBoundary, null, h(LifegamePanel, null))),
+        );
+        // 番茄浮窗：切到别的页面也看得见
+        ctx.slots.inject("shell.overlay", () =>
+          ctx.slots.register({ name: "shell.overlay", id: "lifegame-timer" }, TimerFloat),
         );
       },
     };
