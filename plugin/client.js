@@ -55,8 +55,15 @@ window.__ModuleLoader__.load({
     /* ================= 样式 ================= */
 
     const CSS = `
+/* ---------- 皮肤 ----------
+   五套配色，都是同一套 token 名字，只有值不同。
+   切换靠 .lg-scope 上的 data-theme。 */
 .lg-scope{
-  /* 极简白：大留白、细线、黑白加一点蓝 */
+  --lg-radius:10px;
+  --lg-serif:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --lg-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+
+  /* 默认：纸白 */
   --lg-bg:#fafaf9; --lg-surface:#ffffff; --lg-surface-2:#f4f4f5; --lg-surface-3:#efeff1;
   --lg-text:#18181b; --lg-muted:#6b6b73; --lg-line:#e4e4e7;
   --lg-ink:#18181b; --lg-on-ink:#ffffff;
@@ -64,18 +71,92 @@ window.__ModuleLoader__.load({
   --lg-hover:#f1f1f3; --lg-placeholder:#a1a1aa;
   --lg-focus:rgba(37,99,235,.32); --lg-accent-soft:rgba(37,99,235,.08);
   --lg-danger:#b42318; --lg-danger-line:rgba(180,35,24,.4);
-  --lg-radius:10px; --lg-shadow:0 1px 2px rgba(24,24,27,.06);
-  --lg-serif:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
-  --lg-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --lg-shadow:0 1px 2px rgba(24,24,27,.06);
+  --lg-scroll:rgba(24,24,27,.16); --lg-scroll-h:rgba(24,24,27,.26);
+  --lg-grid-2:rgba(37,99,235,.45);
+
   background:var(--lg-bg); color:var(--lg-text);
   height:100%; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden;
-  scrollbar-width:thin; scrollbar-color:rgba(24,24,27,.16) transparent;
+  scrollbar-width:thin; scrollbar-color:var(--lg-scroll) transparent;
   font-family:var(--lg-sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
+
+/* 米黄：暖纸，适合白天长时间看 */
+.lg-scope[data-theme="sepia"]{
+  --lg-bg:#fbf7ef; --lg-surface:#fffdf8; --lg-surface-2:#f5efe3; --lg-surface-3:#efe7d8;
+  --lg-text:#2b2620; --lg-muted:#7a6e5d; --lg-line:#e6dccb;
+  --lg-ink:#2b2620; --lg-on-ink:#fffdf8;
+  --lg-accent:#b45309; --lg-on-accent:#ffffff;
+  --lg-hover:#f2ebdc; --lg-placeholder:#a89c88;
+  --lg-focus:rgba(180,83,9,.3); --lg-accent-soft:rgba(180,83,9,.08);
+  --lg-danger:#9a3412; --lg-danger-line:rgba(154,52,18,.4);
+  --lg-shadow:0 1px 2px rgba(90,70,40,.08);
+  --lg-scroll:rgba(90,70,40,.18); --lg-scroll-h:rgba(90,70,40,.3);
+  --lg-grid-2:rgba(180,83,9,.45);
+}
+
+/* 青瓷：淡青绿，安静 */
+.lg-scope[data-theme="celadon"]{
+  --lg-bg:#f6faf8; --lg-surface:#ffffff; --lg-surface-2:#edf5f1; --lg-surface-3:#e3efe9;
+  --lg-text:#17211d; --lg-muted:#5f7268; --lg-line:#d8e6df;
+  --lg-ink:#17211d; --lg-on-ink:#ffffff;
+  --lg-accent:#0f766e; --lg-on-accent:#ffffff;
+  --lg-hover:#eaf3ee; --lg-placeholder:#9bb3a9;
+  --lg-focus:rgba(15,118,110,.3); --lg-accent-soft:rgba(15,118,110,.08);
+  --lg-danger:#b42318; --lg-danger-line:rgba(180,35,24,.4);
+  --lg-shadow:0 1px 2px rgba(23,60,48,.07);
+  --lg-scroll:rgba(23,60,48,.16); --lg-scroll-h:rgba(23,60,48,.28);
+  --lg-grid-2:rgba(15,118,110,.45);
+}
+
+/* 暮紫：淡紫，柔和 */
+.lg-scope[data-theme="dusk"]{
+  --lg-bg:#f9f7fc; --lg-surface:#ffffff; --lg-surface-2:#f3f0f9; --lg-surface-3:#ebe6f3;
+  --lg-text:#1c1826; --lg-muted:#6b6380; --lg-line:#e2dcee;
+  --lg-ink:#1c1826; --lg-on-ink:#ffffff;
+  --lg-accent:#7c3aed; --lg-on-accent:#ffffff;
+  --lg-hover:#f1edf8; --lg-placeholder:#a79fbb;
+  --lg-focus:rgba(124,58,237,.3); --lg-accent-soft:rgba(124,58,237,.08);
+  --lg-danger:#b42318; --lg-danger-line:rgba(180,35,24,.4);
+  --lg-shadow:0 1px 2px rgba(50,35,80,.07);
+  --lg-scroll:rgba(50,35,80,.16); --lg-scroll-h:rgba(50,35,80,.28);
+  --lg-grid-2:rgba(124,58,237,.45);
+}
+
+/* 夜墨：深色，晚上用 */
+.lg-scope[data-theme="ink"]{
+  --lg-bg:#0f0f11; --lg-surface:#17171a; --lg-surface-2:#1e1e22; --lg-surface-3:#26262b;
+  --lg-text:#ededef; --lg-muted:#9a9aa3; --lg-line:#2e2e34;
+  --lg-ink:#ededef; --lg-on-ink:#0f0f11;
+  --lg-accent:#6b9bff; --lg-on-accent:#0f0f11;
+  --lg-hover:#232327; --lg-placeholder:#6a6a73;
+  --lg-focus:rgba(107,155,255,.38); --lg-accent-soft:rgba(107,155,255,.12);
+  --lg-danger:#ff7b72; --lg-danger-line:rgba(255,123,114,.4);
+  --lg-shadow:0 1px 2px rgba(0,0,0,.4);
+  --lg-scroll:rgba(255,255,255,.18); --lg-scroll-h:rgba(255,255,255,.3);
+  --lg-grid-2:rgba(107,155,255,.5);
+}
+/* 深色下：勾选圈、输入框、分隔线要提亮一档，否则看不见 */
+.lg-scope[data-theme="ink"] .lg-dot{border-color:#4a4a54}
+.lg-scope[data-theme="ink"] .lg-dot:hover{border-color:var(--lg-accent)}
+.lg-scope[data-theme="ink"] .lg-todo > li{border-color:#2a2a30}
+.lg-scope[data-theme="ink"] .lg-add input,
+.lg-scope[data-theme="ink"] .lg-add textarea,
+.lg-scope[data-theme="ink"] .lg-card{box-shadow:none}
+.lg-scope[data-theme="ink"] .lg-inline-in{border-color:#3a3a42}
+.lg-scope[data-theme="ink"] .lg-cal-day{border-color:#2e2e34}
+.lg-scope[data-theme="ink"] .lg-traces i{background:#232327}
+.lg-scope[data-theme="ink"] .lg-traces i.lv1{background:rgba(107,155,255,.28)}
+
+/* 深色下便签压暗一点，别太刺眼 */
+.lg-scope[data-theme="ink"] .lg-note-mini,
+.lg-scope[data-theme="ink"] .lg-note{filter:brightness(.82) saturate(.9)}
+.lg-scope[data-theme="ink"] .lg-note-mini textarea,
+.lg-scope[data-theme="ink"] .lg-note-text{filter:brightness(1.22)}
 .lg-scope::-webkit-scrollbar{width:6px;height:6px}
 .lg-scope::-webkit-scrollbar-track{background:transparent}
-.lg-scope::-webkit-scrollbar-thumb{background:rgba(24,24,27,.14);border-radius:999px}
-.lg-scope::-webkit-scrollbar-thumb:hover{background:rgba(24,24,27,.26)}
+.lg-scope::-webkit-scrollbar-thumb{background:var(--lg-scroll);border-radius:999px}
+.lg-scope::-webkit-scrollbar-thumb:hover{background:var(--lg-scroll-h)}
 .lg-scope *{box-sizing:border-box}
 .lg-page{
   width:100%; max-width:var(--lg-maxw,1560px); min-width:0; margin:0 auto; flex:0 0 auto;
@@ -191,7 +272,7 @@ window.__ModuleLoader__.load({
 .lg-months span{font-size:10.5px;color:var(--lg-muted);letter-spacing:.04em;min-height:12px;white-space:nowrap}
 .lg-traces i{aspect-ratio:1;border-radius:3px;background:var(--lg-surface-2);display:block}
 .lg-traces i.lv1{background:var(--lg-accent-soft)}
-.lg-traces i.lv2{background:rgba(37,99,235,.45)}
+.lg-traces i.lv2{background:var(--lg-grid-2)}
 .lg-traces i.lv3{background:var(--lg-accent)}
 .lg-traces i.future{background:transparent}
 .lg-traces i.today{box-shadow:0 0 0 1.5px var(--lg-accent),0 0 0 3px var(--lg-accent-soft)}
@@ -404,6 +485,11 @@ window.__ModuleLoader__.load({
 
 /* 灵感 */
 .lg-topline{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.lg-themes{display:inline-flex;align-items:center;gap:6px;margin-left:4px}
+.lg-theme-dot{position:relative;width:24px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+.lg-theme-dot::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--tdot);border:1px solid var(--dline)}
+.lg-theme-dot:hover::before{transform:scale(1.12)}
+.lg-theme-dot.on::before{box-shadow:0 0 0 2px var(--lg-surface),0 0 0 3px var(--lg-accent)}
 .lg-wxtop{display:inline-flex;align-items:baseline;gap:12px;font-size:12px;color:var(--lg-muted);letter-spacing:.02em}
 .lg-wxline{display:inline-flex;align-items:baseline;gap:7px}
 .lg-wxline b{font-weight:500;font-size:14px;color:var(--lg-accent);font-variant-numeric:tabular-nums}
@@ -2315,6 +2401,14 @@ window.__ModuleLoader__.load({
       );
     }
 
+    const THEMES = [
+      { id: "paper", name: "纸白", dot: "#fafaf9", line: "#e4e4e7" },
+      { id: "sepia", name: "米黄", dot: "#fbf7ef", line: "#e6dccb" },
+      { id: "celadon", name: "青瓷", dot: "#edf5f1", line: "#0f766e" },
+      { id: "dusk", name: "暮紫", dot: "#f3f0f9", line: "#7c3aed" },
+      { id: "ink", name: "夜墨", dot: "#17171a", line: "#3a3a42" },
+    ];
+
     const TABS = [
       { id: "today", label: "今天" },
       { id: "week", label: "本周" },
@@ -2439,7 +2533,7 @@ window.__ModuleLoader__.load({
       const day = state?.day;
       return h(
         "div",
-        { className: "lg-scope" },
+        { className: "lg-scope", "data-theme": (state && state.theme) || "paper" },
         h(Styles),
         h(
           "div",
@@ -2495,6 +2589,20 @@ window.__ModuleLoader__.load({
                         wx.tmin != null && wx.tmax != null ? h("em", null, `${wx.tmin}–${wx.tmax}°`) : null,
                       )
                     : null,
+                ),
+                h(
+                  "span",
+                  { className: "lg-themes", role: "group", "aria-label": "换肤" },
+                  ...THEMES.map((t) =>
+                    h("button", {
+                      key: t.id,
+                      className: "lg-theme-dot" + (((state && state.theme) || "paper") === t.id ? " on" : ""),
+                      style: { "--tdot": t.dot, "--dline": t.line },
+                      title: t.name,
+                      "aria-label": `换成${t.name}`,
+                      onClick: () => run("setTheme", { theme: t.id }),
+                    }),
+                  ),
                 ),
               ),
               h(

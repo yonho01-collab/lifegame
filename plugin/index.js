@@ -59,6 +59,7 @@ const seed = () => ({
     goals: { short: [], long: [] },
     customPlan: {},
     customSlots: {},
+    theme: "paper",
     collect: { book: [], movie: [], article: [], image: [], skill: [] },
     want: { books: [], movies: [], quotes: [] },
   },
@@ -98,6 +99,7 @@ async function load() {
   if (!db.profile.goals) db.profile.goals = { short: [], long: [] };
   if (!db.profile.customPlan) db.profile.customPlan = {};
   if (!db.profile.customSlots) db.profile.customSlots = {};
+  if (!["paper", "sepia", "celadon", "dusk", "ink"].includes(db.profile.theme)) db.profile.theme = "paper";
 
   // 收集仓库 + 迁移（want.books/movies → collect；quotes 与 corpus 已废弃）
   const KINDS = ["book", "movie", "article", "image", "skill"];
@@ -519,6 +521,7 @@ const publicState = (date) => ({
   location: db.profile.location,
   stats: computeStats(),
   llmReady: llmProbe,
+  theme: db.profile.theme || "paper",
   span: statsFor(date),
 });
 
@@ -1090,6 +1093,12 @@ function applyOp(op, payload, date) {
       return applyOp("inboxToggle", payload, date);
     case "goalRemove":
       return applyOp("inboxRemove", payload, date);
+    case "setTheme": {
+      const t = String(payload.theme || "");
+      if (!["paper", "sepia", "celadon", "dusk", "ink"].includes(t)) return false;
+      db.profile.theme = t;
+      return true;
+    }
     case "note":
       day.note = String(payload.text ?? "").slice(0, 500);
       return true;
