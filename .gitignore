@@ -3,7 +3,7 @@ node_modules/
 .env
 .env.local
 dsh-image-gen/
-shots/
+/shots/
 
 plugin/*.tgz
 *.bak
