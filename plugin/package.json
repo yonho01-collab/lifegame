@@ -1,6 +1,6 @@
 {
   "name": "dsh-lifegame",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "人生游戏：把「耐心 / 轻盈 / 专注 / 健康」变成每天一屏的节奏。侧栏一个页面，Agent 在旁边随时推荐。",
   "type": "module",
   "license": "MIT",
@@ -45,7 +45,7 @@
     "pack": "npm pack"
   },
   "engines": {
-    "dsh": ">=0.2.2"
+    "dsh": ">=0.2.2-0"
   },
   "dsh": {
     "bundle": {
