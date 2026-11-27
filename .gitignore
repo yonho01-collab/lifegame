@@ -6,3 +6,5 @@ dsh-image-gen/
 shots/
 
 plugin/*.tgz
+*.bak
+.plugin-manager/
